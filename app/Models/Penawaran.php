@@ -23,8 +23,6 @@ class Penawaran extends Model implements HasMedia
         'judul',
         'tipe',
         'jenis_ikan',
-        'volume',
-        'harga',
         'kondisi_ikan',
         'keterangan',
         'status',
@@ -40,21 +38,46 @@ class Penawaran extends Model implements HasMedia
         return $this->hasOne(PenawaranDetailEkspor::class);
     }
 
+    public function rincianGrade(): HasMany
+    {
+        return $this->hasMany(PenawaranRincianGrade::class);
+    }
+
     public function matchSuggestions(): HasMany
     {
         return $this->hasMany(MatchSuggestion::class);
     }
 
-    // Penawaran mengandung tipe ekspor jika "Ekspor" atau "Ekspor & Lokal"
     public function mengandungEkspor(): bool
     {
         return in_array($this->tipe, ['Ekspor', 'Ekspor & Lokal']);
     }
 
+    // total kuantiti dari semua baris rincian grade
+    public function getTotalVolumeAttribute(): float
+    {
+        return $this->rincianGrade->sum('kuantiti');
+    }
+
+    // rentang harga (terendah - tertinggi) dari semua baris rincian grade
+    public function getRentangHargaAttribute(): string
+    {
+        if ($this->rincianGrade->isEmpty()) {
+            return '-';
+        }
+
+        $min = $this->rincianGrade->min('harga');
+        $max = $this->rincianGrade->max('harga');
+
+        return $min == $max
+            ? 'Rp ' . number_format($min, 0)
+            : 'Rp ' . number_format($min, 0) . ' - Rp ' . number_format($max, 0);
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['judul', 'tipe', 'jenis_ikan', 'volume', 'harga', 'status'])
+            ->logOnly(['judul', 'tipe', 'jenis_ikan', 'status'])
             ->logOnlyDirty()
             ->useLogName('penawaran');
     }

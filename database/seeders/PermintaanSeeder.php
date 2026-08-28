@@ -14,9 +14,10 @@ class PermintaanSeeder extends Seeder
 
     private int $jumlahData = 100;
 
+    private array $daftarGrade = ['1.000-Up', '500-1.000 A', '300-500 B', '200-300 C'];
+
     public function run(): void
     {
-        // Membutuhkan UserSeeder (role Cabang & Pusat) sudah dijalankan lebih dulu.
         $semuaUser = User::role(['Cabang', 'Pusat'])->with('cabang')->get();
 
         if ($semuaUser->isEmpty()) {
@@ -27,32 +28,39 @@ class PermintaanSeeder extends Seeder
         for ($i = 1; $i <= $this->jumlahData; $i++) {
             $user = $semuaUser->random();
             $jenis = $this->jenisIkanAcak();
-            $tipe = rand(1, 100) <= 30 ? 'Ekspor' : 'Lokal'; // 30% ekspor
-            $volume = rand(50, 1500);
+            $tipe = rand(1, 100) <= 30 ? 'Ekspor' : 'Lokal';
             $dariPusat = $user->hasRole('Pusat');
 
             $judul = $dariPusat
                 ? "Permintaan {$jenis} " . ($tipe === 'Ekspor' ? 'Ekspor' : 'Domestik') . ' - PT ' . $this->namaPTAcak()
-                : "Permintaan {$jenis} {$volume}kg - " . ($user->cabang->nama_cabang ?? 'Cabang');
+                : "Permintaan {$jenis} - " . ($user->cabang->nama_cabang ?? 'Cabang');
 
             $permintaan = Permintaan::create([
                 'user_id' => $user->id,
                 'judul' => $judul,
                 'tipe' => $tipe,
                 'jenis_ikan' => $jenis,
-                'volume' => $volume,
-                'harga_maksimal' => rand(20, 130) * 1000,
                 'keterangan' => $dariPusat ? 'Kebutuhan buyer, mohon segera dikonfirmasi.' : 'Kebutuhan stok cabang.',
-                // indikator prioritas hanya relevan/diisi untuk permintaan dari Pusat
                 'prioritas_warna' => $dariPusat ? ['merah', 'kuning', 'hijau'][array_rand(['merah', 'kuning', 'hijau'])] : null,
                 'prioritas_tag' => $dariPusat ? $this->tagPrioritasAcak() : null,
                 'status' => 'tersedia',
             ]);
 
+            $jumlahGrade = rand(1, 3);
+            $gradeTerpilih = collect($this->daftarGrade)->random($jumlahGrade);
+            $hargaDasar = rand(65, 130) * 1000;
+
+            foreach ($gradeTerpilih as $index => $grade) {
+                $permintaan->rincianGrade()->create([
+                    'ukuran_grade' => $grade,
+                    'harga' => max(20000, $hargaDasar - ($index * 20000)),
+                    'kuantiti' => rand(50, 1500),
+                ]);
+            }
+
             if ($permintaan->isEkspor()) {
                 PermintaanDetailEkspor::create([
                     'permintaan_id' => $permintaan->id,
-                    'grading' => $this->gradingAcak(),
                     'sertifikasi' => $this->sertifikasiAcak(),
                     'kontinuitas_suplai' => $this->kontinuitasAcak(),
                     'negara_tujuan' => $this->negaraTujuanAcak(),
@@ -60,6 +68,6 @@ class PermintaanSeeder extends Seeder
             }
         }
 
-        $this->command->info("{$this->jumlahData} permintaan berhasil dibuat.");
+        $this->command->info("{$this->jumlahData} permintaan (dengan rincian grade) berhasil dibuat.");
     }
 }

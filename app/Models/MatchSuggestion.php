@@ -17,6 +17,8 @@ class MatchSuggestion extends Model
     protected $fillable = [
         'penawaran_id',
         'permintaan_id',
+        'penawaran_rincian_id',
+        'permintaan_rincian_id',
         'skor_matching',
         'status',
         'approved_by',
@@ -31,6 +33,16 @@ class MatchSuggestion extends Model
     public function permintaan(): BelongsTo
     {
         return $this->belongsTo(Permintaan::class);
+    }
+
+    public function penawaranRincian(): BelongsTo
+    {
+        return $this->belongsTo(PenawaranRincianGrade::class, 'penawaran_rincian_id');
+    }
+
+    public function permintaanRincian(): BelongsTo
+    {
+        return $this->belongsTo(PermintaanRincianGrade::class, 'permintaan_rincian_id');
     }
 
     public function approver(): BelongsTo

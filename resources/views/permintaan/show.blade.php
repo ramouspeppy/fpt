@@ -31,23 +31,44 @@
             <dt class="col-3">Jenis Ikan</dt>
             <dd class="col-9">{{ $permintaan->jenis_ikan }}</dd>
 
-            <dt class="col-3">Volume Dibutuhkan</dt>
-            <dd class="col-9">{{ number_format($permintaan->volume, 0) }} kg</dd>
-
-            <dt class="col-3">Harga Maksimal</dt>
-            <dd class="col-9">{{ $permintaan->harga_maksimal ? 'Rp ' . number_format($permintaan->harga_maksimal, 0) : '-' }}</dd>
-
             <dt class="col-3">Keterangan</dt>
             <dd class="col-9">{{ $permintaan->keterangan ?? '-' }}</dd>
         </dl>
+
+        <hr>
+        <h4>Rincian Grade / Size Dibutuhkan</h4>
+        <div class="table-responsive mb-3">
+            <table class="table table-vcenter card-table">
+                <thead>
+                    <tr>
+                        <th>Ukuran / Grade</th>
+                        <th>Harga per kg</th>
+                        <th>Kuantiti Dibutuhkan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($permintaan->rincianGrade as $rincian)
+                        <tr>
+                            <td>{{ $rincian->ukuran_grade }}</td>
+                            <td>Rp {{ number_format($rincian->harga, 0) }}</td>
+                            <td>{{ number_format($rincian->kuantiti, 0) }} kg</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+                <tfoot>
+                    <tr class="fw-bold">
+                        <td>Total</td>
+                        <td>{{ $permintaan->rentang_harga }}</td>
+                        <td>{{ number_format($permintaan->total_volume, 0) }} kg</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
 
         @if ($permintaan->detailEkspor)
             <hr>
             <h4>Detail Ekspor</h4>
             <dl class="row">
-                <dt class="col-3">Grading</dt>
-                <dd class="col-9">{{ $permintaan->detailEkspor->grading ?? '-' }}</dd>
-
                 <dt class="col-3">Sertifikasi</dt>
                 <dd class="col-9">{{ $permintaan->detailEkspor->sertifikasi ?? '-' }}</dd>
 

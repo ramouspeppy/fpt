@@ -4,21 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\Permintaan;
 use App\Models\PermintaanDetailEkspor;
+use App\Services\MatchingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
-use App\Services\MatchingService;
 
 class PermintaanController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Permintaan::with(['user.cabang'])->latest();
+        $query = Permintaan::with(['user.cabang', 'rincianGrade'])->latest();
 
         if ($request->filled('cari')) {
             $query->where(function ($q) use ($request) {
                 $q->where('judul', 'like', '%' . $request->cari . '%')
-                    ->orWhere('jenis_ikan', 'like', '%' . $request->cari . '%');
+                  ->orWhere('jenis_ikan', 'like', '%' . $request->cari . '%');
             });
         }
 
@@ -40,21 +39,24 @@ class PermintaanController extends Controller
         return view('permintaan.create');
     }
 
-    public function store(Request $request)
+    public function store(Request $request, MatchingService $matchingService)
     {
         $validated = $request->validate([
             'judul' => ['required', 'string', 'max:255'],
             'tipe' => ['required', 'in:Ekspor,Lokal'],
             'jenis_ikan' => ['required', 'string', 'max:255'],
-            'volume' => ['required', 'numeric', 'min:0'],
-            'harga_maksimal' => ['nullable', 'numeric', 'min:0'],
             'keterangan' => ['nullable', 'string'],
             'prioritas_warna' => ['nullable', 'in:merah,kuning,hijau'],
             'prioritas_tag' => ['nullable', 'string', 'max:255'],
-            'grading' => ['nullable', 'string', 'max:255'],
             'sertifikasi' => ['nullable', 'string', 'max:255'],
             'kontinuitas_suplai' => ['nullable', 'string', 'max:255'],
             'negara_tujuan' => ['nullable', 'string', 'max:255'],
+            'grade' => ['required', 'array', 'min:1'],
+            'grade.*' => ['required', 'string', 'max:255'],
+            'harga' => ['required', 'array', 'min:1'],
+            'harga.*' => ['required', 'numeric', 'min:0'],
+            'kuantiti' => ['required', 'array', 'min:1'],
+            'kuantiti.*' => ['required', 'numeric', 'min:0'],
         ]);
 
         $permintaan = Permintaan::create([
@@ -62,32 +64,31 @@ class PermintaanController extends Controller
             'judul' => $validated['judul'],
             'tipe' => $validated['tipe'],
             'jenis_ikan' => $validated['jenis_ikan'],
-            'volume' => $validated['volume'],
-            'harga_maksimal' => $validated['harga_maksimal'] ?? null,
             'keterangan' => $validated['keterangan'] ?? null,
             'prioritas_warna' => $validated['prioritas_warna'] ?? null,
             'prioritas_tag' => $validated['prioritas_tag'] ?? null,
             'status' => 'tersedia',
         ]);
 
+        $this->simpanRincianGrade($permintaan, $validated);
+
         if ($permintaan->isEkspor()) {
             PermintaanDetailEkspor::create([
                 'permintaan_id' => $permintaan->id,
-                'grading' => $validated['grading'] ?? null,
                 'sertifikasi' => $validated['sertifikasi'] ?? null,
                 'kontinuitas_suplai' => $validated['kontinuitas_suplai'] ?? null,
                 'negara_tujuan' => $validated['negara_tujuan'] ?? null,
             ]);
         }
 
-        app(MatchingService::class)->generateForPermintaan($permintaan);
+        $matchingService->generateForPermintaan($permintaan->fresh('rincianGrade'));
 
         return redirect()->route('permintaan.index')->with('status', 'Permintaan berhasil ditambahkan.');
     }
 
     public function show(Permintaan $permintaan)
     {
-        $permintaan->load(['user.cabang', 'detailEkspor']);
+        $permintaan->load(['user.cabang', 'detailEkspor', 'rincianGrade']);
 
         return view('permintaan.show', compact('permintaan'));
     }
@@ -96,7 +97,7 @@ class PermintaanController extends Controller
     {
         $this->authorizePemilikAtauAdmin($permintaan);
 
-        $permintaan->load('detailEkspor');
+        $permintaan->load(['detailEkspor', 'rincianGrade']);
 
         return view('permintaan.edit', compact('permintaan'));
     }
@@ -109,25 +110,38 @@ class PermintaanController extends Controller
             'judul' => ['required', 'string', 'max:255'],
             'tipe' => ['required', 'in:Ekspor,Lokal'],
             'jenis_ikan' => ['required', 'string', 'max:255'],
-            'volume' => ['required', 'numeric', 'min:0'],
-            'harga_maksimal' => ['nullable', 'numeric', 'min:0'],
             'keterangan' => ['nullable', 'string'],
             'prioritas_warna' => ['nullable', 'in:merah,kuning,hijau'],
             'prioritas_tag' => ['nullable', 'string', 'max:255'],
             'status' => ['required', 'in:tersedia,matched,selesai,ditutup'],
-            'grading' => ['nullable', 'string', 'max:255'],
             'sertifikasi' => ['nullable', 'string', 'max:255'],
             'kontinuitas_suplai' => ['nullable', 'string', 'max:255'],
             'negara_tujuan' => ['nullable', 'string', 'max:255'],
+            'grade' => ['required', 'array', 'min:1'],
+            'grade.*' => ['required', 'string', 'max:255'],
+            'harga' => ['required', 'array', 'min:1'],
+            'harga.*' => ['required', 'numeric', 'min:0'],
+            'kuantiti' => ['required', 'array', 'min:1'],
+            'kuantiti.*' => ['required', 'numeric', 'min:0'],
         ]);
 
-        $permintaan->update($validated);
+        $permintaan->update([
+            'judul' => $validated['judul'],
+            'tipe' => $validated['tipe'],
+            'jenis_ikan' => $validated['jenis_ikan'],
+            'keterangan' => $validated['keterangan'] ?? null,
+            'prioritas_warna' => $validated['prioritas_warna'] ?? null,
+            'prioritas_tag' => $validated['prioritas_tag'] ?? null,
+            'status' => $validated['status'],
+        ]);
+
+        $permintaan->rincianGrade()->delete();
+        $this->simpanRincianGrade($permintaan, $validated);
 
         if ($permintaan->isEkspor()) {
             $permintaan->detailEkspor()->updateOrCreate(
                 ['permintaan_id' => $permintaan->id],
                 [
-                    'grading' => $validated['grading'] ?? null,
                     'sertifikasi' => $validated['sertifikasi'] ?? null,
                     'kontinuitas_suplai' => $validated['kontinuitas_suplai'] ?? null,
                     'negara_tujuan' => $validated['negara_tujuan'] ?? null,
@@ -147,6 +161,17 @@ class PermintaanController extends Controller
         $permintaan->delete();
 
         return redirect()->route('permintaan.index')->with('status', 'Permintaan berhasil dihapus.');
+    }
+
+    private function simpanRincianGrade(Permintaan $permintaan, array $validated): void
+    {
+        foreach ($validated['grade'] as $i => $grade) {
+            $permintaan->rincianGrade()->create([
+                'ukuran_grade' => $grade,
+                'harga' => $validated['harga'][$i],
+                'kuantiti' => $validated['kuantiti'][$i],
+            ]);
+        }
     }
 
     private function authorizePemilikAtauAdmin(Permintaan $permintaan): void

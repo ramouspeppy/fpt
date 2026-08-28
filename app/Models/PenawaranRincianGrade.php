@@ -6,17 +6,17 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class PenawaranDetailEkspor extends Model
+class PenawaranRincianGrade extends Model
 {
     use HasFactory;
 
-    protected $table = 'penawaran_detail_ekspor';
+    protected $table = 'penawaran_rincian_grade';
 
     protected $fillable = [
         'penawaran_id',
-        'sertifikasi',
-        'kontinuitas_suplai',
-        'negara_tujuan',
+        'ukuran_grade',
+        'harga',
+        'kuantiti',
     ];
 
     public function penawaran(): BelongsTo

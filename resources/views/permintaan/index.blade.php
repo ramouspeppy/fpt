@@ -33,7 +33,12 @@
                         </span>
                     </div>
                     <div class="text-muted small mb-2">{{ $item->tipe }} &middot; {{ $item->jenis_ikan }}</div>
-                    <div class="mb-1">Volume dibutuhkan: <strong>{{ number_format($item->volume, 0) }} kg</strong></div>
+
+                    <div class="mb-2">
+                        <span class="badge bg-azure-lt">{{ $item->rincianGrade->count() }} grade</span>
+                        Total dibutuhkan: <strong>{{ number_format($item->total_volume, 0) }} kg</strong>
+                        <div class="text-muted small">{{ $item->rentang_harga }} / kg</div>
+                    </div>
 
                     @if ($item->prioritas_tag)
                         <div class="mb-2"><span class="badge bg-orange-lt">{{ $item->prioritas_tag }}</span></div>

@@ -31,7 +31,12 @@
                         </span>
                     </div>
                     <div class="text-muted small mb-2">{{ $item->tipe }} &middot; {{ $item->jenis_ikan }}</div>
-                    <div class="mb-2">Volume: <strong>{{ number_format($item->volume, 0) }} kg</strong></div>
+
+                    <div class="mb-2">
+                        <span class="badge bg-azure-lt">{{ $item->rincianGrade->count() }} grade</span>
+                        Total: <strong>{{ number_format($item->total_volume, 0) }} kg</strong>
+                        <div class="text-muted small">{{ $item->rentang_harga }} / kg</div>
+                    </div>
 
                     <div class="text-muted small">
                         Dibuat oleh: <strong>{{ $item->user->name }}</strong><br>

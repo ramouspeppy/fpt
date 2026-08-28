@@ -14,9 +14,10 @@ class PenawaranSeeder extends Seeder
 
     private int $jumlahData = 100;
 
+    private array $daftarGrade = ['1.000-Up', '500-1.000 A', '300-500 B', '200-300 C'];
+
     public function run(): void
     {
-        // Membutuhkan UserSeeder (role Cabang) sudah dijalankan lebih dulu.
         $userCabang = User::role('Cabang')->with('cabang')->get();
 
         if ($userCabang->isEmpty()) {
@@ -28,24 +29,33 @@ class PenawaranSeeder extends Seeder
             $user = $userCabang->random();
             $jenis = $this->jenisIkanAcak();
             $tipe = $this->acakTipePenawaran();
-            $volume = rand(50, 2000);
 
             $penawaran = Penawaran::create([
                 'user_id' => $user->id,
-                'judul' => "Surplus {$jenis} {$volume}kg - {$user->cabang->nama_cabang}",
+                'judul' => "Surplus {$jenis} - {$user->cabang->nama_cabang}",
                 'tipe' => $tipe,
                 'jenis_ikan' => $jenis,
-                'volume' => $volume,
-                'harga' => rand(15, 120) * 1000,
                 'kondisi_ikan' => $this->kondisiIkanAcak(),
                 'keterangan' => 'Stok surplus musim panen, kualitas baik.',
                 'status' => 'tersedia',
             ]);
 
+            // 1-3 baris rincian grade per penawaran, harga makin kecil untuk grade lebih rendah
+            $jumlahGrade = rand(1, 3);
+            $gradeTerpilih = collect($this->daftarGrade)->random($jumlahGrade);
+            $hargaDasar = rand(60, 120) * 1000;
+
+            foreach ($gradeTerpilih as $index => $grade) {
+                $penawaran->rincianGrade()->create([
+                    'ukuran_grade' => $grade,
+                    'harga' => max(20000, $hargaDasar - ($index * 20000)),
+                    'kuantiti' => rand(50, 2000),
+                ]);
+            }
+
             if ($penawaran->mengandungEkspor()) {
                 PenawaranDetailEkspor::create([
                     'penawaran_id' => $penawaran->id,
-                    'grading' => $this->gradingAcak(),
                     'sertifikasi' => $this->sertifikasiAcak(),
                     'kontinuitas_suplai' => $this->kontinuitasAcak(),
                     'negara_tujuan' => $this->negaraTujuanAcak(),
@@ -53,10 +63,9 @@ class PenawaranSeeder extends Seeder
             }
         }
 
-        $this->command->info("{$this->jumlahData} penawaran berhasil dibuat.");
+        $this->command->info("{$this->jumlahData} penawaran (dengan rincian grade) berhasil dibuat.");
     }
 
-    // distribusi tipe: 60% Lokal, 25% Ekspor, 15% Ekspor & Lokal
     private function acakTipePenawaran(): string
     {
         $angka = rand(1, 100);

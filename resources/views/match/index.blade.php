@@ -8,7 +8,8 @@
         <select name="status" class="form-select" onchange="this.form.submit()">
             <option value="">Semua Status</option>
             <option value="menunggu_review" @selected(request('status')=='menunggu_review')>Menunggu Review (Ekspor)</option>
-            <option value="disetujui" @selected(request('status')=='disetujui')>Disetujui</option>
+            <option value="notifikasi_otomatis" @selected(request('status')=='notifikasi_otomatis')>Notifikasi Otomatis (Lokal)</option>
+            <option value="disetujui" @selected(request('status')=='disetujui')>Disetujui Pusat</option>
             <option value="ditolak" @selected(request('status')=='ditolak')>Ditolak</option>
         </select>
     </form>
@@ -18,6 +19,25 @@
         <button class="btn btn-primary"><i class="ti ti-refresh"></i> Cari Kecocokan Ulang</button>
     </form>
 </div>
+
+@if (auth()->user()->hasRole('Cabang'))
+    <div class="alert alert-info">Menampilkan kecocokan yang melibatkan penawaran/permintaan cabang Anda saja.</div>
+@endif
+
+@php
+    $labelStatus = [
+        'menunggu_review' => 'Menunggu Review',
+        'notifikasi_otomatis' => 'Notifikasi Otomatis',
+        'disetujui' => 'Disetujui Pusat',
+        'ditolak' => 'Ditolak',
+    ];
+    $warnaStatus = [
+        'menunggu_review' => 'orange',
+        'notifikasi_otomatis' => 'blue',
+        'disetujui' => 'green',
+        'ditolak' => 'red',
+    ];
+@endphp
 
 <div class="row row-cards">
     @forelse ($matches as $match)
@@ -30,9 +50,17 @@
                                 <div class="text-muted small">PENAWARAN</div>
                                 <a href="{{ route('penawaran.show', $match->penawaran) }}"><strong>{{ $match->penawaran->judul }}</strong></a>
                                 <div class="small text-muted">
-                                    {{ $match->penawaran->jenis_ikan }} &middot; {{ number_format($match->penawaran->volume, 0) }} kg
-                                    &middot; {{ $match->penawaran->user->cabang->nama_cabang ?? '-' }}
+                                    {{ $match->penawaran->jenis_ikan }} &middot; {{ $match->penawaran->user->cabang->nama_cabang ?? '-' }}
                                 </div>
+                                @if ($match->penawaranRincian)
+                                    <div class="mt-1">
+                                        <span class="badge bg-azure-lt">Grade: {{ $match->penawaranRincian->ukuran_grade }}</span>
+                                        <span class="text-muted small">
+                                            Rp {{ number_format($match->penawaranRincian->harga, 0) }}/kg
+                                            &middot; {{ number_format($match->penawaranRincian->kuantiti, 0) }} kg
+                                        </span>
+                                    </div>
+                                @endif
                             </div>
                             <div class="col-md-2 text-center d-flex align-items-center justify-content-center">
                                 <i class="ti ti-arrows-left-right fs-2 text-muted"></i>
@@ -41,15 +69,23 @@
                                 <div class="text-muted small">PERMINTAAN</div>
                                 <a href="{{ route('permintaan.show', $match->permintaan) }}"><strong>{{ $match->permintaan->judul }}</strong></a>
                                 <div class="small text-muted">
-                                    {{ $match->permintaan->jenis_ikan }} &middot; {{ number_format($match->permintaan->volume, 0) }} kg
-                                    &middot; {{ $match->permintaan->user->cabang->nama_cabang ?? 'Pusat' }}
+                                    {{ $match->permintaan->jenis_ikan }} &middot; {{ $match->permintaan->user->cabang->nama_cabang ?? 'Pusat' }}
                                 </div>
+                                @if ($match->permintaanRincian)
+                                    <div class="mt-1">
+                                        <span class="badge bg-azure-lt">Grade: {{ $match->permintaanRincian->ukuran_grade }}</span>
+                                        <span class="text-muted small">
+                                            Rp {{ number_format($match->permintaanRincian->harga, 0) }}/kg
+                                            &middot; {{ number_format($match->permintaanRincian->kuantiti, 0) }} kg
+                                        </span>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                         <div class="text-end ms-3">
                             <div class="mb-1">
-                                <span class="badge bg-{{ $match->status == 'disetujui' ? 'green' : ($match->status == 'menunggu_review' ? 'orange' : 'red') }}-lt">
-                                    {{ str_replace('_', ' ', ucfirst($match->status)) }}
+                                <span class="badge bg-{{ $warnaStatus[$match->status] ?? 'secondary' }}-lt">
+                                    {{ $labelStatus[$match->status] ?? ucfirst($match->status) }}
                                 </span>
                             </div>
                             <div class="text-muted small mb-2">Skor: {{ $match->skor_matching }}</div>

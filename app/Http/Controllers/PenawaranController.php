@@ -4,23 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\Penawaran;
 use App\Models\PenawaranDetailEkspor;
+use App\Services\MatchingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
-use App\Services\MatchingService;
-
 
 class PenawaranController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Penawaran::with(['user.cabang'])->latest();
+        $query = Penawaran::with(['user.cabang', 'rincianGrade'])->latest();
 
-        // pencarian sederhana
         if ($request->filled('cari')) {
             $query->where(function ($q) use ($request) {
                 $q->where('judul', 'like', '%' . $request->cari . '%')
-                    ->orWhere('jenis_ikan', 'like', '%' . $request->cari . '%');
+                  ->orWhere('jenis_ikan', 'like', '%' . $request->cari . '%');
             });
         }
 
@@ -42,21 +39,24 @@ class PenawaranController extends Controller
         return view('penawaran.create');
     }
 
-    public function store(Request $request)
+    public function store(Request $request, MatchingService $matchingService)
     {
         $validated = $request->validate([
             'judul' => ['required', 'string', 'max:255'],
             'tipe' => ['required', 'in:Ekspor,Lokal,Ekspor & Lokal'],
             'jenis_ikan' => ['required', 'string', 'max:255'],
-            'volume' => ['required', 'numeric', 'min:0'],
-            'harga' => ['nullable', 'numeric', 'min:0'],
             'kondisi_ikan' => ['nullable', 'string', 'max:255'],
             'keterangan' => ['nullable', 'string'],
-            // field ekspor, wajib diisi jika tipe mengandung Ekspor (divalidasi manual di bawah)
-            'grading' => ['nullable', 'string', 'max:255'],
             'sertifikasi' => ['nullable', 'string', 'max:255'],
             'kontinuitas_suplai' => ['nullable', 'string', 'max:255'],
             'negara_tujuan' => ['nullable', 'string', 'max:255'],
+            // rincian grade - minimal 1 baris
+            'grade' => ['required', 'array', 'min:1'],
+            'grade.*' => ['required', 'string', 'max:255'],
+            'harga' => ['required', 'array', 'min:1'],
+            'harga.*' => ['required', 'numeric', 'min:0'],
+            'kuantiti' => ['required', 'array', 'min:1'],
+            'kuantiti.*' => ['required', 'numeric', 'min:0'],
         ]);
 
         $penawaran = Penawaran::create([
@@ -64,31 +64,31 @@ class PenawaranController extends Controller
             'judul' => $validated['judul'],
             'tipe' => $validated['tipe'],
             'jenis_ikan' => $validated['jenis_ikan'],
-            'volume' => $validated['volume'],
-            'harga' => $validated['harga'] ?? null,
             'kondisi_ikan' => $validated['kondisi_ikan'] ?? null,
             'keterangan' => $validated['keterangan'] ?? null,
             'status' => 'tersedia',
         ]);
 
+        $this->simpanRincianGrade($penawaran, $validated);
+
         if ($penawaran->mengandungEkspor()) {
             PenawaranDetailEkspor::create([
                 'penawaran_id' => $penawaran->id,
-                'grading' => $validated['grading'] ?? null,
                 'sertifikasi' => $validated['sertifikasi'] ?? null,
                 'kontinuitas_suplai' => $validated['kontinuitas_suplai'] ?? null,
                 'negara_tujuan' => $validated['negara_tujuan'] ?? null,
             ]);
         }
 
-        app(MatchingService::class)->generateForPenawaran($penawaran);
+        // langsung cari kecocokan begitu penawaran baru tersimpan
+        $matchingService->generateForPenawaran($penawaran->fresh('rincianGrade'));
 
         return redirect()->route('penawaran.index')->with('status', 'Penawaran berhasil ditambahkan.');
     }
 
     public function show(Penawaran $penawaran)
     {
-        $penawaran->load(['user.cabang', 'detailEkspor']);
+        $penawaran->load(['user.cabang', 'detailEkspor', 'rincianGrade']);
 
         return view('penawaran.show', compact('penawaran'));
     }
@@ -97,7 +97,7 @@ class PenawaranController extends Controller
     {
         $this->authorizePemilikAtauAdmin($penawaran);
 
-        $penawaran->load('detailEkspor');
+        $penawaran->load(['detailEkspor', 'rincianGrade']);
 
         return view('penawaran.edit', compact('penawaran'));
     }
@@ -110,24 +110,37 @@ class PenawaranController extends Controller
             'judul' => ['required', 'string', 'max:255'],
             'tipe' => ['required', 'in:Ekspor,Lokal,Ekspor & Lokal'],
             'jenis_ikan' => ['required', 'string', 'max:255'],
-            'volume' => ['required', 'numeric', 'min:0'],
-            'harga' => ['nullable', 'numeric', 'min:0'],
             'kondisi_ikan' => ['nullable', 'string', 'max:255'],
             'keterangan' => ['nullable', 'string'],
             'status' => ['required', 'in:tersedia,matched,selesai,ditutup'],
-            'grading' => ['nullable', 'string', 'max:255'],
             'sertifikasi' => ['nullable', 'string', 'max:255'],
             'kontinuitas_suplai' => ['nullable', 'string', 'max:255'],
             'negara_tujuan' => ['nullable', 'string', 'max:255'],
+            'grade' => ['required', 'array', 'min:1'],
+            'grade.*' => ['required', 'string', 'max:255'],
+            'harga' => ['required', 'array', 'min:1'],
+            'harga.*' => ['required', 'numeric', 'min:0'],
+            'kuantiti' => ['required', 'array', 'min:1'],
+            'kuantiti.*' => ['required', 'numeric', 'min:0'],
         ]);
 
-        $penawaran->update($validated);
+        $penawaran->update([
+            'judul' => $validated['judul'],
+            'tipe' => $validated['tipe'],
+            'jenis_ikan' => $validated['jenis_ikan'],
+            'kondisi_ikan' => $validated['kondisi_ikan'] ?? null,
+            'keterangan' => $validated['keterangan'] ?? null,
+            'status' => $validated['status'],
+        ]);
+
+        // ganti semua rincian grade lama dengan yang baru (paling sederhana untuk versi ini)
+        $penawaran->rincianGrade()->delete();
+        $this->simpanRincianGrade($penawaran, $validated);
 
         if ($penawaran->mengandungEkspor()) {
             $penawaran->detailEkspor()->updateOrCreate(
                 ['penawaran_id' => $penawaran->id],
                 [
-                    'grading' => $validated['grading'] ?? null,
                     'sertifikasi' => $validated['sertifikasi'] ?? null,
                     'kontinuitas_suplai' => $validated['kontinuitas_suplai'] ?? null,
                     'negara_tujuan' => $validated['negara_tujuan'] ?? null,
@@ -149,7 +162,17 @@ class PenawaranController extends Controller
         return redirect()->route('penawaran.index')->with('status', 'Penawaran berhasil dihapus.');
     }
 
-    // Hanya pemilik posting atau Admin yang boleh ubah/hapus (sesuai kesepakatan: status diubah manual oleh pemilik atau admin)
+    private function simpanRincianGrade(Penawaran $penawaran, array $validated): void
+    {
+        foreach ($validated['grade'] as $i => $grade) {
+            $penawaran->rincianGrade()->create([
+                'ukuran_grade' => $grade,
+                'harga' => $validated['harga'][$i],
+                'kuantiti' => $validated['kuantiti'][$i],
+            ]);
+        }
+    }
+
     private function authorizePemilikAtauAdmin(Penawaran $penawaran): void
     {
         $user = Auth::user();

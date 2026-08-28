@@ -11,10 +11,23 @@ class MatchSuggestionController extends Controller
 {
     public function index(Request $request)
     {
+        $user = Auth::user();
+
         $query = MatchSuggestion::with([
             'penawaran.user.cabang',
             'permintaan.user.cabang',
+            'penawaranRincian',
+            'permintaanRincian',
         ])->latest();
+
+        // Cabang hanya lihat match yang melibatkan Penawaran/Permintaan miliknya sendiri.
+        // Pusat & Admin tetap lihat semua match (perlu pengawasan menyeluruh, terutama utk ekspor).
+        if ($user->hasRole('Cabang')) {
+            $query->where(function ($q) use ($user) {
+                $q->whereHas('penawaran', fn ($qq) => $qq->where('user_id', $user->id))
+                  ->orWhereHas('permintaan', fn ($qq) => $qq->where('user_id', $user->id));
+            });
+        }
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -25,7 +38,7 @@ class MatchSuggestionController extends Controller
         return view('match.index', compact('matches'));
     }
 
-    // Tombol "Cari Kecocokan Ulang" - scan semua penawaran/permintaan yang masih tersedia
+    // Tombol "Cari Kecocokan Ulang" - scan semua penawaran yang masih tersedia
     public function jalankan(MatchingService $service)
     {
         $jumlah = $service->runAll();
@@ -42,13 +55,11 @@ class MatchSuggestionController extends Controller
         abort_unless($match->status === 'menunggu_review', 400, 'Match ini tidak dalam status menunggu review.');
 
         $match->update([
-            'status' => 'disetujui',
+            'status' => 'disetujui', // hanya dipakai kalau memang manusia (Pusat) yang klik setuju
             'approved_by' => Auth::id(),
         ]);
 
-        // begitu disetujui, tandai penawaran & permintaan sebagai matched
-        // (penawaran tipe "Ekspor & Lokal" tetap "tersedia" jika masih ada porsi lain yang mungkin match)
-        if (! $match->penawaran->mengandungEkspor() || $match->penawaran->tipe !== 'Ekspor & Lokal') {
+        if ($match->penawaran->tipe !== 'Ekspor & Lokal') {
             $match->penawaran->update(['status' => 'matched']);
         }
         $match->permintaan->update(['status' => 'matched']);

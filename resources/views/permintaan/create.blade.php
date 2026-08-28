@@ -26,26 +26,44 @@
                 </div>
                 <div class="col-md-6 mb-3">
                     <label class="form-label required">Jenis Ikan</label>
-                    <input type="text" name="jenis_ikan" value="{{ old('jenis_ikan') }}" class="form-control @error('jenis_ikan') is-invalid @enderror">
+                    <input type="text" name="jenis_ikan" value="{{ old('jenis_ikan') }}" class="form-control @error('jenis_ikan') is-invalid @enderror" placeholder="mis. Gurita">
                     @error('jenis_ikan') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label required">Volume Dibutuhkan (kg)</label>
-                    <input type="number" step="0.01" name="volume" value="{{ old('volume') }}" class="form-control @error('volume') is-invalid @enderror">
-                    @error('volume') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Harga Maksimal (opsional)</label>
-                    <input type="number" step="0.01" name="harga_maksimal" value="{{ old('harga_maksimal') }}" class="form-control">
                 </div>
             </div>
 
             <div class="mb-3">
                 <label class="form-label">Keterangan</label>
-                <textarea name="keterangan" class="form-control" rows="3">{{ old('keterangan') }}</textarea>
+                <textarea name="keterangan" class="form-control" rows="2">{{ old('keterangan') }}</textarea>
+            </div>
+
+            <!-- Rincian Grade -->
+            <div class="card card-body bg-light mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0">Rincian Grade / Size Dibutuhkan</h4>
+                    <button type="button" id="tambah-baris" class="btn btn-sm btn-outline-primary">
+                        <i class="ti ti-plus"></i> Tambah Baris
+                    </button>
+                </div>
+                <div class="text-muted small mb-2">
+                    Contoh: "1.000-Up = Rp105.000, 7.000kg", "500-1.000 A = Rp85.000, 5.000kg", dst.
+                </div>
+
+                <div id="baris-grade-container">
+                    <div class="row baris-grade mb-2">
+                        <div class="col-md-5">
+                            <input type="text" name="grade[]" class="form-control" placeholder="Ukuran / Grade (mis. 1.000-Up)" required>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="number" step="0.01" name="harga[]" class="form-control" placeholder="Harga per kg" required>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="number" step="0.01" name="kuantiti[]" class="form-control" placeholder="Kuantiti dibutuhkan (kg)" required>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-outline-danger hapus-baris" style="display:none;"><i class="ti ti-trash"></i></button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             @role('Pusat|Admin')
@@ -69,23 +87,18 @@
             </div>
             @endrole
 
-            <!-- Field ekspor - muncul dinamis jika tipe = Ekspor -->
             <div id="field-ekspor" class="card card-body bg-light mb-3" style="display:none;">
                 <h4 class="mb-3">Detail Ekspor</h4>
                 <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Grading (size, kesegaran)</label>
-                        <input type="text" name="grading" value="{{ old('grading') }}" class="form-control">
-                    </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-4 mb-3">
                         <label class="form-label">Sertifikasi</label>
                         <input type="text" name="sertifikasi" value="{{ old('sertifikasi') }}" class="form-control" placeholder="mis. HACCP">
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-4 mb-3">
                         <label class="form-label">Kontinuitas Suplai</label>
                         <input type="text" name="kontinuitas_suplai" value="{{ old('kontinuitas_suplai') }}" class="form-control">
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-4 mb-3">
                         <label class="form-label">Negara Tujuan</label>
                         <input type="text" name="negara_tujuan" value="{{ old('negara_tujuan') }}" class="form-control">
                     </div>
@@ -105,12 +118,33 @@
 <script>
     const tipeSelect = document.getElementById('tipe');
     const fieldEkspor = document.getElementById('field-ekspor');
-
     function toggleFieldEkspor() {
         fieldEkspor.style.display = (tipeSelect.value === 'Ekspor') ? 'block' : 'none';
     }
-
     tipeSelect.addEventListener('change', toggleFieldEkspor);
     toggleFieldEkspor();
+
+    const container = document.getElementById('baris-grade-container');
+    document.getElementById('tambah-baris').addEventListener('click', function () {
+        const baris = container.querySelector('.baris-grade').cloneNode(true);
+        baris.querySelectorAll('input').forEach(input => input.value = '');
+        baris.querySelector('.hapus-baris').style.display = 'inline-block';
+        container.appendChild(baris);
+        perbaruiTombolHapus();
+    });
+
+    container.addEventListener('click', function (e) {
+        if (e.target.closest('.hapus-baris')) {
+            e.target.closest('.baris-grade').remove();
+            perbaruiTombolHapus();
+        }
+    });
+
+    function perbaruiTombolHapus() {
+        const semuaBaris = container.querySelectorAll('.baris-grade');
+        semuaBaris.forEach((baris) => {
+            baris.querySelector('.hapus-baris').style.display = semuaBaris.length > 1 ? 'inline-block' : 'none';
+        });
+    }
 </script>
 @endsection

@@ -4,14 +4,16 @@ namespace App\Services;
 
 use App\Models\MatchSuggestion;
 use App\Models\Penawaran;
+use App\Models\PenawaranRincianGrade;
 use App\Models\Permintaan;
+use App\Models\PermintaanRincianGrade;
 use Illuminate\Support\Collection;
 
 class MatchingService
 {
     /**
-     * Cari kandidat Permintaan yang cocok untuk 1 Penawaran, lalu simpan sebagai MatchSuggestion.
-     * Dipanggil otomatis setelah Penawaran baru dibuat.
+     * Cari kandidat baris rincian Permintaan yang cocok untuk SEMUA baris rincian
+     * milik 1 Penawaran, lalu simpan sebagai MatchSuggestion (per pasangan baris grade).
      */
     public function generateForPenawaran(Penawaran $penawaran): Collection
     {
@@ -19,20 +21,25 @@ class MatchingService
             return collect();
         }
 
-        $kandidat = Permintaan::with('detailEkspor')
-            ->where('status', 'tersedia')
-            ->where('user_id', '!=', $penawaran->user_id) // tidak match ke permintaan dari user yang sama
-            ->whereRaw('LOWER(jenis_ikan) = ?', [mb_strtolower($penawaran->jenis_ikan)])
-            ->get()
-            ->filter(fn (Permintaan $permintaan) => $this->tipeCocok($penawaran->tipe, $permintaan->tipe))
-            ->filter(fn (Permintaan $permintaan) => $this->cabangBerbeda($penawaran, $permintaan));
-
         $hasil = collect();
 
-        foreach ($kandidat as $permintaan) {
-            $match = $this->simpanJikaBelumAda($penawaran, $permintaan);
-            if ($match) {
-                $hasil->push($match);
+        foreach ($penawaran->rincianGrade as $rincianPenawaran) {
+            $kandidat = PermintaanRincianGrade::with(['permintaan.user.cabang'])
+                ->whereRaw('LOWER(ukuran_grade) = ?', [mb_strtolower(trim($rincianPenawaran->ukuran_grade))])
+                ->whereHas('permintaan', function ($q) use ($penawaran) {
+                    $q->where('status', 'tersedia')
+                      ->where('user_id', '!=', $penawaran->user_id)
+                      ->whereRaw('LOWER(jenis_ikan) = ?', [mb_strtolower($penawaran->jenis_ikan)]);
+                })
+                ->get()
+                ->filter(fn (PermintaanRincianGrade $r) => $this->tipeCocok($penawaran->tipe, $r->permintaan->tipe))
+                ->filter(fn (PermintaanRincianGrade $r) => $this->cabangBerbeda($penawaran->user, $r->permintaan->user));
+
+            foreach ($kandidat as $rincianPermintaan) {
+                $match = $this->simpanJikaBelumAda($penawaran, $rincianPenawaran, $rincianPermintaan->permintaan, $rincianPermintaan);
+                if ($match) {
+                    $hasil->push($match);
+                }
             }
         }
 
@@ -40,8 +47,7 @@ class MatchingService
     }
 
     /**
-     * Cari kandidat Penawaran yang cocok untuk 1 Permintaan, lalu simpan sebagai MatchSuggestion.
-     * Dipanggil otomatis setelah Permintaan baru dibuat.
+     * Kebalikan dari generateForPenawaran: dipicu setelah Permintaan baru dibuat.
      */
     public function generateForPermintaan(Permintaan $permintaan): Collection
     {
@@ -49,20 +55,25 @@ class MatchingService
             return collect();
         }
 
-        $kandidat = Penawaran::with('detailEkspor')
-            ->where('status', 'tersedia')
-            ->where('user_id', '!=', $permintaan->user_id)
-            ->whereRaw('LOWER(jenis_ikan) = ?', [mb_strtolower($permintaan->jenis_ikan)])
-            ->get()
-            ->filter(fn (Penawaran $penawaran) => $this->tipeCocok($penawaran->tipe, $permintaan->tipe))
-            ->filter(fn (Penawaran $penawaran) => $this->cabangBerbeda($penawaran, $permintaan));
-
         $hasil = collect();
 
-        foreach ($kandidat as $penawaran) {
-            $match = $this->simpanJikaBelumAda($penawaran, $permintaan);
-            if ($match) {
-                $hasil->push($match);
+        foreach ($permintaan->rincianGrade as $rincianPermintaan) {
+            $kandidat = PenawaranRincianGrade::with(['penawaran.user.cabang'])
+                ->whereRaw('LOWER(ukuran_grade) = ?', [mb_strtolower(trim($rincianPermintaan->ukuran_grade))])
+                ->whereHas('penawaran', function ($q) use ($permintaan) {
+                    $q->where('status', 'tersedia')
+                      ->where('user_id', '!=', $permintaan->user_id)
+                      ->whereRaw('LOWER(jenis_ikan) = ?', [mb_strtolower($permintaan->jenis_ikan)]);
+                })
+                ->get()
+                ->filter(fn (PenawaranRincianGrade $r) => $this->tipeCocok($r->penawaran->tipe, $permintaan->tipe))
+                ->filter(fn (PenawaranRincianGrade $r) => $this->cabangBerbeda($r->penawaran->user, $permintaan->user));
+
+            foreach ($kandidat as $rincianPenawaran) {
+                $match = $this->simpanJikaBelumAda($rincianPenawaran->penawaran, $rincianPenawaran, $permintaan, $rincianPermintaan);
+                if ($match) {
+                    $hasil->push($match);
+                }
             }
         }
 
@@ -70,14 +81,14 @@ class MatchingService
     }
 
     /**
-     * Scan ulang SEMUA penawaran & permintaan yang masih "tersedia".
-     * Berguna untuk backfill data lama (sebelum fitur ini ada) atau tombol "Cari Kecocokan Ulang".
+     * Scan ulang SEMUA penawaran yang masih "tersedia". Untuk backfill data lama
+     * atau tombol "Cari Kecocokan Ulang".
      */
     public function runAll(): int
     {
         $jumlah = 0;
 
-        Penawaran::where('status', 'tersedia')->each(function (Penawaran $penawaran) use (&$jumlah) {
+        Penawaran::where('status', 'tersedia')->with('rincianGrade')->each(function (Penawaran $penawaran) use (&$jumlah) {
             $jumlah += $this->generateForPenawaran($penawaran)->count();
         });
 
@@ -88,12 +99,6 @@ class MatchingService
     // Aturan pencocokan
     // ------------------------------------------------------------------
 
-    /**
-     * Tipe cocok jika:
-     * - Penawaran "Lokal" hanya cocok ke Permintaan "Lokal"
-     * - Penawaran "Ekspor" hanya cocok ke Permintaan "Ekspor"
-     * - Penawaran "Ekspor & Lokal" cocok ke Permintaan "Ekspor" ATAU "Lokal"
-     */
     private function tipeCocok(string $tipePenawaran, string $tipePermintaan): bool
     {
         if ($tipePenawaran === 'Ekspor & Lokal') {
@@ -103,36 +108,14 @@ class MatchingService
         return $tipePenawaran === $tipePermintaan;
     }
 
-    // Untuk versi ini, "lokasi cocok" disederhanakan jadi "bukan dari cabang yang sama"
-    // (belum ada perhitungan jarak/koordinat antar cabang).
-    private function cabangBerbeda(Penawaran $penawaran, Permintaan $permintaan): bool
+    // "lokasi cocok" disederhanakan jadi "bukan dari cabang yang sama"
+    private function cabangBerbeda($userPenawaran, $userPermintaan): bool
     {
-        $cabangPenawaran = $penawaran->user->cabang_id;
-        $cabangPermintaan = $permintaan->user->cabang_id;
-
-        // jika salah satu tidak terikat cabang (mis. user Pusat), anggap boleh match
-        if (is_null($cabangPenawaran) || is_null($cabangPermintaan)) {
+        if (is_null($userPenawaran->cabang_id) || is_null($userPermintaan->cabang_id)) {
             return true;
         }
 
-        return $cabangPenawaran !== $cabangPermintaan;
-    }
-
-    // Untuk match ekspor, grading wajib sama (syarat mutlak tambahan)
-    private function gradingCocokUntukEkspor(Penawaran $penawaran, Permintaan $permintaan): bool
-    {
-        if (! $penawaran->mengandungEkspor() || ! $permintaan->isEkspor()) {
-            return true; // bukan kasus ekspor, tidak relevan
-        }
-
-        $gradingPenawaran = $penawaran->detailEkspor->grading ?? null;
-        $gradingPermintaan = $permintaan->detailEkspor->grading ?? null;
-
-        if (! $gradingPenawaran || ! $gradingPermintaan) {
-            return false; // data ekspor belum lengkap, jangan di-auto-match dulu
-        }
-
-        return mb_strtolower(trim($gradingPenawaran)) === mb_strtolower(trim($gradingPermintaan));
+        return $userPenawaran->cabang_id !== $userPermintaan->cabang_id;
     }
 
     private function apakahMatchIniEkspor(Penawaran $penawaran, Permintaan $permintaan): bool
@@ -140,35 +123,32 @@ class MatchingService
         return $penawaran->mengandungEkspor() && $permintaan->isEkspor();
     }
 
-    // Skor 0-100, dipakai untuk mengurutkan relevansi di halaman daftar match
-    private function hitungSkor(Penawaran $penawaran, Permintaan $permintaan): float
+    // Skor 0-100 berdasarkan kemiripan kuantiti antar baris grade yang cocok
+    private function hitungSkor(PenawaranRincianGrade $rincianPenawaran, PermintaanRincianGrade $rincianPermintaan, bool $iniEkspor): float
     {
-        $skor = 50; // base: jenis ikan & tipe sudah pasti cocok (syarat mutlak)
+        $skor = 50; // base: jenis ikan, tipe, dan grade sudah pasti cocok (syarat mutlak)
 
-        // kemiripan volume: makin dekat volume penawaran & permintaan, makin tinggi skor
-        $volumeKecil = min($penawaran->volume, $permintaan->volume);
-        $volumeBesar = max($penawaran->volume, $permintaan->volume);
-        $rasioVolume = $volumeBesar > 0 ? ($volumeKecil / $volumeBesar) : 0;
-        $skor += $rasioVolume * 30;
+        $kecil = min($rincianPenawaran->kuantiti, $rincianPermintaan->kuantiti);
+        $besar = max($rincianPenawaran->kuantiti, $rincianPermintaan->kuantiti);
+        $rasioKuantiti = $besar > 0 ? ($kecil / $besar) : 0;
+        $skor += $rasioKuantiti * 30;
 
-        // bonus tambahan untuk match ekspor yang grading-nya cocok
-        if ($this->apakahMatchIniEkspor($penawaran, $permintaan)) {
+        if ($iniEkspor) {
             $skor += 20;
         }
 
         return round(min($skor, 100), 2);
     }
 
-    private function simpanJikaBelumAda(Penawaran $penawaran, Permintaan $permintaan): ?MatchSuggestion
-    {
-        // untuk kasus ekspor, grading wajib sama - kalau tidak, jangan buat suggestion
-        if (! $this->gradingCocokUntukEkspor($penawaran, $permintaan)) {
-            return null;
-        }
-
-        // hindari duplikat pasangan yang sama (kecuali sebelumnya ditolak, boleh dicoba ulang)
-        $sudahAda = MatchSuggestion::where('penawaran_id', $penawaran->id)
-            ->where('permintaan_id', $permintaan->id)
+    private function simpanJikaBelumAda(
+        Penawaran $penawaran,
+        PenawaranRincianGrade $rincianPenawaran,
+        Permintaan $permintaan,
+        PermintaanRincianGrade $rincianPermintaan
+    ): ?MatchSuggestion {
+        // hindari duplikat pasangan BARIS GRADE yang sama (kecuali sebelumnya ditolak, boleh dicoba ulang)
+        $sudahAda = MatchSuggestion::where('penawaran_rincian_id', $rincianPenawaran->id)
+            ->where('permintaan_rincian_id', $rincianPermintaan->id)
             ->where('status', '!=', 'ditolak')
             ->exists();
 
@@ -181,9 +161,11 @@ class MatchingService
         return MatchSuggestion::create([
             'penawaran_id' => $penawaran->id,
             'permintaan_id' => $permintaan->id,
-            'skor_matching' => $this->hitungSkor($penawaran, $permintaan),
-            // ekspor -> wajib direview pusat; lokal/biasa -> langsung disetujui (notifikasi otomatis)
-            'status' => $iniEkspor ? 'menunggu_review' : 'disetujui',
+            'penawaran_rincian_id' => $rincianPenawaran->id,
+            'permintaan_rincian_id' => $rincianPermintaan->id,
+            'skor_matching' => $this->hitungSkor($rincianPenawaran, $rincianPermintaan, $iniEkspor),
+            // ekspor -> wajib direview pusat (menunggu_review); lokal/biasa -> notifikasi_otomatis (sistem yang temukan, TANPA approval manusia)
+            'status' => $iniEkspor ? 'menunggu_review' : 'notifikasi_otomatis',
         ]);
     }
 }

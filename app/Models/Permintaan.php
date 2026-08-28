@@ -21,8 +21,6 @@ class Permintaan extends Model
         'judul',
         'tipe',
         'jenis_ikan',
-        'volume',
-        'harga_maksimal',
         'keterangan',
         'prioritas_warna',
         'prioritas_tag',
@@ -39,6 +37,11 @@ class Permintaan extends Model
         return $this->hasOne(PermintaanDetailEkspor::class);
     }
 
+    public function rincianGrade(): HasMany
+    {
+        return $this->hasMany(PermintaanRincianGrade::class);
+    }
+
     public function matchSuggestions(): HasMany
     {
         return $this->hasMany(MatchSuggestion::class);
@@ -49,10 +52,29 @@ class Permintaan extends Model
         return $this->tipe === 'Ekspor';
     }
 
+    public function getTotalVolumeAttribute(): float
+    {
+        return $this->rincianGrade->sum('kuantiti');
+    }
+
+    public function getRentangHargaAttribute(): string
+    {
+        if ($this->rincianGrade->isEmpty()) {
+            return '-';
+        }
+
+        $min = $this->rincianGrade->min('harga');
+        $max = $this->rincianGrade->max('harga');
+
+        return $min == $max
+            ? 'Rp ' . number_format($min, 0)
+            : 'Rp ' . number_format($min, 0) . ' - Rp ' . number_format($max, 0);
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['judul', 'tipe', 'jenis_ikan', 'volume', 'harga_maksimal', 'status', 'prioritas_warna', 'prioritas_tag'])
+            ->logOnly(['judul', 'tipe', 'jenis_ikan', 'status', 'prioritas_warna', 'prioritas_tag'])
             ->logOnlyDirty()
             ->useLogName('permintaan');
     }
