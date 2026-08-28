@@ -26,9 +26,22 @@
                     @error('tipe') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label class="form-label required">Jenis Ikan</label>
-                    <input type="text" name="jenis_ikan" value="{{ old('jenis_ikan') }}" class="form-control @error('jenis_ikan') is-invalid @enderror" placeholder="mis. Gurita">
-                    @error('jenis_ikan') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    <label class="form-label required">Komoditi</label>
+                    <select name="komoditi_id" class="form-select @error('komoditi_id') is-invalid @enderror">
+                        <option value="">-- Pilih Komoditi --</option>
+                        @foreach ($komoditiList as $kategori => $daftar)
+                            <optgroup label="{{ $kategori ?? 'Lainnya' }}">
+                                @foreach ($daftar as $k)
+                                    <option value="{{ $k->id }}" @selected(old('komoditi_id')==$k->id)>{{ $k->nama }}</option>
+                                @endforeach
+                            </optgroup>
+                        @endforeach
+                    </select>
+                    @error('komoditi_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    <div class="form-text">
+                        Tidak menemukan komoditi yang dicari?
+                        <a href="{{ route('komoditi.usulkan') }}" target="_blank">Usulkan komoditi baru</a>
+                    </div>
                 </div>
             </div>
 

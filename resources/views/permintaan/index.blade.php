@@ -32,7 +32,7 @@
                             {{ ucfirst($item->status) }}
                         </span>
                     </div>
-                    <div class="text-muted small mb-2">{{ $item->tipe }} &middot; {{ $item->jenis_ikan }}</div>
+                    <div class="text-muted small mb-2">{{ $item->tipe }} &middot; {{ $item->komoditi->nama ?? '-' }}</div>
 
                     <div class="mb-2">
                         <span class="badge bg-azure-lt">{{ $item->rincianGrade->count() }} grade</span>

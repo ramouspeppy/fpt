@@ -25,8 +25,17 @@
                     </select>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label class="form-label required">Jenis Ikan</label>
-                    <input type="text" name="jenis_ikan" value="{{ old('jenis_ikan', $penawaran->jenis_ikan) }}" class="form-control">
+                    <label class="form-label required">Komoditi</label>
+                    <select name="komoditi_id" class="form-select @error('komoditi_id') is-invalid @enderror">
+                        @foreach ($komoditiList as $kategori => $daftar)
+                            <optgroup label="{{ $kategori ?? 'Lainnya' }}">
+                                @foreach ($daftar as $k)
+                                    <option value="{{ $k->id }}" @selected(old('komoditi_id', $penawaran->komoditi_id)==$k->id)>{{ $k->nama }}</option>
+                                @endforeach
+                            </optgroup>
+                        @endforeach
+                    </select>
+                    @error('komoditi_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-4 mb-3">
                     <label class="form-label required">Status</label>

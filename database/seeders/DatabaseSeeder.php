@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             CabangSeeder::class,
             UserSeeder::class,
+            KomoditiSeeder::class,
             PenawaranSeeder::class,
             PermintaanSeeder::class,
             MatchingSeeder::class,

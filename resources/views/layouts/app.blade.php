@@ -45,6 +45,14 @@
                                 <span class="nav-link-title">Kecocokan</span>
                             </a>
                         </li>
+                        @role('Pusat|Admin')
+                        <li class="nav-item {{ request()->routeIs('komoditi.index') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('komoditi.index') }}">
+                                <span class="nav-link-icon"><i class="ti ti-list"></i></span>
+                                <span class="nav-link-title">Master Komoditi</span>
+                            </a>
+                        </li>
+                        @endrole
                         @role('Admin')
                             <li class="nav-item {{ request()->routeIs('cabang.*') ? 'active' : '' }}">
                                 <a class="nav-link" href="{{ route('cabang.index') }}">

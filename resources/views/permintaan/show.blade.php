@@ -29,7 +29,7 @@
 
         <dl class="row">
             <dt class="col-3">Jenis Ikan</dt>
-            <dd class="col-9">{{ $permintaan->jenis_ikan }}</dd>
+            <dd class="col-9">{{ $permintaan->komoditi->nama ?? '-' }} <span class="text-muted small">({{ $permintaan->komoditi->kategori ?? '-' }})</span></dd>
 
             <dt class="col-3">Keterangan</dt>
             <dd class="col-9">{{ $permintaan->keterangan ?? '-' }}</dd>

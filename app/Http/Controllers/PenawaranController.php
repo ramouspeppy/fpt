@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Komoditi;
 use App\Models\Penawaran;
 use App\Models\PenawaranDetailEkspor;
 use App\Services\MatchingService;
@@ -12,12 +13,12 @@ class PenawaranController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Penawaran::with(['user.cabang', 'rincianGrade'])->latest();
+        $query = Penawaran::with(['user.cabang', 'rincianGrade', 'komoditi'])->latest();
 
         if ($request->filled('cari')) {
             $query->where(function ($q) use ($request) {
                 $q->where('judul', 'like', '%' . $request->cari . '%')
-                  ->orWhere('jenis_ikan', 'like', '%' . $request->cari . '%');
+                  ->orWhereHas('komoditi', fn ($qq) => $qq->where('nama', 'like', '%' . $request->cari . '%'));
             });
         }
 
@@ -36,7 +37,9 @@ class PenawaranController extends Controller
 
     public function create()
     {
-        return view('penawaran.create');
+        $komoditiList = Komoditi::disetujui()->orderBy('kategori')->orderBy('nama')->get()->groupBy('kategori');
+
+        return view('penawaran.create', compact('komoditiList'));
     }
 
     public function store(Request $request, MatchingService $matchingService)
@@ -44,7 +47,7 @@ class PenawaranController extends Controller
         $validated = $request->validate([
             'judul' => ['required', 'string', 'max:255'],
             'tipe' => ['required', 'in:Ekspor,Lokal,Ekspor & Lokal'],
-            'jenis_ikan' => ['required', 'string', 'max:255'],
+            'komoditi_id' => ['required', 'exists:komoditi,id'],
             'kondisi_ikan' => ['nullable', 'string', 'max:255'],
             'keterangan' => ['nullable', 'string'],
             'sertifikasi' => ['nullable', 'string', 'max:255'],
@@ -63,7 +66,7 @@ class PenawaranController extends Controller
             'user_id' => Auth::id(),
             'judul' => $validated['judul'],
             'tipe' => $validated['tipe'],
-            'jenis_ikan' => $validated['jenis_ikan'],
+            'komoditi_id' => $validated['komoditi_id'],
             'kondisi_ikan' => $validated['kondisi_ikan'] ?? null,
             'keterangan' => $validated['keterangan'] ?? null,
             'status' => 'tersedia',
@@ -88,7 +91,7 @@ class PenawaranController extends Controller
 
     public function show(Penawaran $penawaran)
     {
-        $penawaran->load(['user.cabang', 'detailEkspor', 'rincianGrade']);
+        $penawaran->load(['user.cabang', 'detailEkspor', 'rincianGrade', 'komoditi']);
 
         return view('penawaran.show', compact('penawaran'));
     }
@@ -97,9 +100,10 @@ class PenawaranController extends Controller
     {
         $this->authorizePemilikAtauAdmin($penawaran);
 
-        $penawaran->load(['detailEkspor', 'rincianGrade']);
+        $penawaran->load(['detailEkspor', 'rincianGrade', 'komoditi']);
+        $komoditiList = Komoditi::disetujui()->orderBy('kategori')->orderBy('nama')->get()->groupBy('kategori');
 
-        return view('penawaran.edit', compact('penawaran'));
+        return view('penawaran.edit', compact('penawaran', 'komoditiList'));
     }
 
     public function update(Request $request, Penawaran $penawaran)
@@ -109,7 +113,7 @@ class PenawaranController extends Controller
         $validated = $request->validate([
             'judul' => ['required', 'string', 'max:255'],
             'tipe' => ['required', 'in:Ekspor,Lokal,Ekspor & Lokal'],
-            'jenis_ikan' => ['required', 'string', 'max:255'],
+            'komoditi_id' => ['required', 'exists:komoditi,id'],
             'kondisi_ikan' => ['nullable', 'string', 'max:255'],
             'keterangan' => ['nullable', 'string'],
             'status' => ['required', 'in:tersedia,matched,selesai,ditutup'],
@@ -127,7 +131,7 @@ class PenawaranController extends Controller
         $penawaran->update([
             'judul' => $validated['judul'],
             'tipe' => $validated['tipe'],
-            'jenis_ikan' => $validated['jenis_ikan'],
+            'komoditi_id' => $validated['komoditi_id'],
             'kondisi_ikan' => $validated['kondisi_ikan'] ?? null,
             'keterangan' => $validated['keterangan'] ?? null,
             'status' => $validated['status'],

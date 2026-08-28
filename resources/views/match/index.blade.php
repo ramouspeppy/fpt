@@ -50,7 +50,7 @@
                                 <div class="text-muted small">PENAWARAN</div>
                                 <a href="{{ route('penawaran.show', $match->penawaran) }}"><strong>{{ $match->penawaran->judul }}</strong></a>
                                 <div class="small text-muted">
-                                    {{ $match->penawaran->jenis_ikan }} &middot; {{ $match->penawaran->user->cabang->nama_cabang ?? '-' }}
+                                    {{ $match->penawaran->komoditi->nama ?? '-' }} &middot; {{ $match->penawaran->user->cabang->nama_cabang ?? '-' }}
                                 </div>
                                 @if ($match->penawaranRincian)
                                     <div class="mt-1">
@@ -69,7 +69,7 @@
                                 <div class="text-muted small">PERMINTAAN</div>
                                 <a href="{{ route('permintaan.show', $match->permintaan) }}"><strong>{{ $match->permintaan->judul }}</strong></a>
                                 <div class="small text-muted">
-                                    {{ $match->permintaan->jenis_ikan }} &middot; {{ $match->permintaan->user->cabang->nama_cabang ?? 'Pusat' }}
+                                    {{ $match->permintaan->komoditi->nama ?? '-' }} &middot; {{ $match->permintaan->user->cabang->nama_cabang ?? 'Pusat' }}
                                 </div>
                                 @if ($match->permintaanRincian)
                                     <div class="mt-1">

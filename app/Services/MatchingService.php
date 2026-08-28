@@ -11,13 +11,9 @@ use Illuminate\Support\Collection;
 
 class MatchingService
 {
-    /**
-     * Cari kandidat baris rincian Permintaan yang cocok untuk SEMUA baris rincian
-     * milik 1 Penawaran, lalu simpan sebagai MatchSuggestion (per pasangan baris grade).
-     */
     public function generateForPenawaran(Penawaran $penawaran): Collection
     {
-        if ($penawaran->status !== 'tersedia') {
+        if ($penawaran->status !== 'tersedia' || ! $penawaran->komoditi_id) {
             return collect();
         }
 
@@ -29,7 +25,7 @@ class MatchingService
                 ->whereHas('permintaan', function ($q) use ($penawaran) {
                     $q->where('status', 'tersedia')
                       ->where('user_id', '!=', $penawaran->user_id)
-                      ->whereRaw('LOWER(jenis_ikan) = ?', [mb_strtolower($penawaran->jenis_ikan)]);
+                      ->where('komoditi_id', $penawaran->komoditi_id); // KOMODITI SAMA PERSIS, bukan lagi teks
                 })
                 ->get()
                 ->filter(fn (PermintaanRincianGrade $r) => $this->tipeCocok($penawaran->tipe, $r->permintaan->tipe))
@@ -46,12 +42,9 @@ class MatchingService
         return $hasil;
     }
 
-    /**
-     * Kebalikan dari generateForPenawaran: dipicu setelah Permintaan baru dibuat.
-     */
     public function generateForPermintaan(Permintaan $permintaan): Collection
     {
-        if ($permintaan->status !== 'tersedia') {
+        if ($permintaan->status !== 'tersedia' || ! $permintaan->komoditi_id) {
             return collect();
         }
 
@@ -63,7 +56,7 @@ class MatchingService
                 ->whereHas('penawaran', function ($q) use ($permintaan) {
                     $q->where('status', 'tersedia')
                       ->where('user_id', '!=', $permintaan->user_id)
-                      ->whereRaw('LOWER(jenis_ikan) = ?', [mb_strtolower($permintaan->jenis_ikan)]);
+                      ->where('komoditi_id', $permintaan->komoditi_id);
                 })
                 ->get()
                 ->filter(fn (PenawaranRincianGrade $r) => $this->tipeCocok($r->penawaran->tipe, $permintaan->tipe))
@@ -80,10 +73,6 @@ class MatchingService
         return $hasil;
     }
 
-    /**
-     * Scan ulang SEMUA penawaran yang masih "tersedia". Untuk backfill data lama
-     * atau tombol "Cari Kecocokan Ulang".
-     */
     public function runAll(): int
     {
         $jumlah = 0;
@@ -108,7 +97,6 @@ class MatchingService
         return $tipePenawaran === $tipePermintaan;
     }
 
-    // "lokasi cocok" disederhanakan jadi "bukan dari cabang yang sama"
     private function cabangBerbeda($userPenawaran, $userPermintaan): bool
     {
         if (is_null($userPenawaran->cabang_id) || is_null($userPermintaan->cabang_id)) {
@@ -123,10 +111,9 @@ class MatchingService
         return $penawaran->mengandungEkspor() && $permintaan->isEkspor();
     }
 
-    // Skor 0-100 berdasarkan kemiripan kuantiti antar baris grade yang cocok
     private function hitungSkor(PenawaranRincianGrade $rincianPenawaran, PermintaanRincianGrade $rincianPermintaan, bool $iniEkspor): float
     {
-        $skor = 50; // base: jenis ikan, tipe, dan grade sudah pasti cocok (syarat mutlak)
+        $skor = 50;
 
         $kecil = min($rincianPenawaran->kuantiti, $rincianPermintaan->kuantiti);
         $besar = max($rincianPenawaran->kuantiti, $rincianPermintaan->kuantiti);
@@ -146,7 +133,6 @@ class MatchingService
         Permintaan $permintaan,
         PermintaanRincianGrade $rincianPermintaan
     ): ?MatchSuggestion {
-        // hindari duplikat pasangan BARIS GRADE yang sama (kecuali sebelumnya ditolak, boleh dicoba ulang)
         $sudahAda = MatchSuggestion::where('penawaran_rincian_id', $rincianPenawaran->id)
             ->where('permintaan_rincian_id', $rincianPermintaan->id)
             ->where('status', '!=', 'ditolak')
@@ -164,7 +150,6 @@ class MatchingService
             'penawaran_rincian_id' => $rincianPenawaran->id,
             'permintaan_rincian_id' => $rincianPermintaan->id,
             'skor_matching' => $this->hitungSkor($rincianPenawaran, $rincianPermintaan, $iniEkspor),
-            // ekspor -> wajib direview pusat (menunggu_review); lokal/biasa -> notifikasi_otomatis (sistem yang temukan, TANPA approval manusia)
             'status' => $iniEkspor ? 'menunggu_review' : 'notifikasi_otomatis',
         ]);
     }

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Komoditi;
 use App\Models\Permintaan;
 use App\Models\PermintaanDetailEkspor;
 use App\Models\User;
@@ -19,27 +20,33 @@ class PermintaanSeeder extends Seeder
     public function run(): void
     {
         $semuaUser = User::role(['Cabang', 'Pusat'])->with('cabang')->get();
+        $komoditiList = Komoditi::disetujui()->get();
 
         if ($semuaUser->isEmpty()) {
             $this->command->warn('Belum ada user Cabang/Pusat. Jalankan UserSeeder terlebih dahulu.');
             return;
         }
 
+        if ($komoditiList->isEmpty()) {
+            $this->command->warn('Belum ada master data Komoditi. Jalankan KomoditiSeeder terlebih dahulu.');
+            return;
+        }
+
         for ($i = 1; $i <= $this->jumlahData; $i++) {
             $user = $semuaUser->random();
-            $jenis = $this->jenisIkanAcak();
+            $komoditi = $komoditiList->random();
             $tipe = rand(1, 100) <= 30 ? 'Ekspor' : 'Lokal';
             $dariPusat = $user->hasRole('Pusat');
 
             $judul = $dariPusat
-                ? "Permintaan {$jenis} " . ($tipe === 'Ekspor' ? 'Ekspor' : 'Domestik') . ' - PT ' . $this->namaPTAcak()
-                : "Permintaan {$jenis} - " . ($user->cabang->nama_cabang ?? 'Cabang');
+                ? "Permintaan {$komoditi->nama} " . ($tipe === 'Ekspor' ? 'Ekspor' : 'Domestik') . ' - PT ' . $this->namaPTAcak()
+                : "Permintaan {$komoditi->nama} - " . ($user->cabang->nama_cabang ?? 'Cabang');
 
             $permintaan = Permintaan::create([
                 'user_id' => $user->id,
+                'komoditi_id' => $komoditi->id,
                 'judul' => $judul,
                 'tipe' => $tipe,
-                'jenis_ikan' => $jenis,
                 'keterangan' => $dariPusat ? 'Kebutuhan buyer, mohon segera dikonfirmasi.' : 'Kebutuhan stok cabang.',
                 'prioritas_warna' => $dariPusat ? ['merah', 'kuning', 'hijau'][array_rand(['merah', 'kuning', 'hijau'])] : null,
                 'prioritas_tag' => $dariPusat ? $this->tagPrioritasAcak() : null,

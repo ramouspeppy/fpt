@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Komoditi;
 use App\Models\Permintaan;
 use App\Models\PermintaanDetailEkspor;
 use App\Services\MatchingService;
@@ -12,12 +13,12 @@ class PermintaanController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Permintaan::with(['user.cabang', 'rincianGrade'])->latest();
+        $query = Permintaan::with(['user.cabang', 'rincianGrade', 'komoditi'])->latest();
 
         if ($request->filled('cari')) {
             $query->where(function ($q) use ($request) {
                 $q->where('judul', 'like', '%' . $request->cari . '%')
-                  ->orWhere('jenis_ikan', 'like', '%' . $request->cari . '%');
+                  ->orWhereHas('komoditi', fn ($qq) => $qq->where('nama', 'like', '%' . $request->cari . '%'));
             });
         }
 
@@ -36,7 +37,9 @@ class PermintaanController extends Controller
 
     public function create()
     {
-        return view('permintaan.create');
+        $komoditiList = Komoditi::disetujui()->orderBy('kategori')->orderBy('nama')->get()->groupBy('kategori');
+
+        return view('permintaan.create', compact('komoditiList'));
     }
 
     public function store(Request $request, MatchingService $matchingService)
@@ -44,7 +47,7 @@ class PermintaanController extends Controller
         $validated = $request->validate([
             'judul' => ['required', 'string', 'max:255'],
             'tipe' => ['required', 'in:Ekspor,Lokal'],
-            'jenis_ikan' => ['required', 'string', 'max:255'],
+            'komoditi_id' => ['required', 'exists:komoditi,id'],
             'keterangan' => ['nullable', 'string'],
             'prioritas_warna' => ['nullable', 'in:merah,kuning,hijau'],
             'prioritas_tag' => ['nullable', 'string', 'max:255'],
@@ -63,7 +66,7 @@ class PermintaanController extends Controller
             'user_id' => Auth::id(),
             'judul' => $validated['judul'],
             'tipe' => $validated['tipe'],
-            'jenis_ikan' => $validated['jenis_ikan'],
+            'komoditi_id' => $validated['komoditi_id'],
             'keterangan' => $validated['keterangan'] ?? null,
             'prioritas_warna' => $validated['prioritas_warna'] ?? null,
             'prioritas_tag' => $validated['prioritas_tag'] ?? null,
@@ -88,7 +91,7 @@ class PermintaanController extends Controller
 
     public function show(Permintaan $permintaan)
     {
-        $permintaan->load(['user.cabang', 'detailEkspor', 'rincianGrade']);
+        $permintaan->load(['user.cabang', 'detailEkspor', 'rincianGrade', 'komoditi']);
 
         return view('permintaan.show', compact('permintaan'));
     }
@@ -97,9 +100,10 @@ class PermintaanController extends Controller
     {
         $this->authorizePemilikAtauAdmin($permintaan);
 
-        $permintaan->load(['detailEkspor', 'rincianGrade']);
+        $permintaan->load(['detailEkspor', 'rincianGrade', 'komoditi']);
+        $komoditiList = Komoditi::disetujui()->orderBy('kategori')->orderBy('nama')->get()->groupBy('kategori');
 
-        return view('permintaan.edit', compact('permintaan'));
+        return view('permintaan.edit', compact('permintaan', 'komoditiList'));
     }
 
     public function update(Request $request, Permintaan $permintaan)
@@ -109,7 +113,7 @@ class PermintaanController extends Controller
         $validated = $request->validate([
             'judul' => ['required', 'string', 'max:255'],
             'tipe' => ['required', 'in:Ekspor,Lokal'],
-            'jenis_ikan' => ['required', 'string', 'max:255'],
+            'komoditi_id' => ['required', 'exists:komoditi,id'],
             'keterangan' => ['nullable', 'string'],
             'prioritas_warna' => ['nullable', 'in:merah,kuning,hijau'],
             'prioritas_tag' => ['nullable', 'string', 'max:255'],
@@ -128,7 +132,7 @@ class PermintaanController extends Controller
         $permintaan->update([
             'judul' => $validated['judul'],
             'tipe' => $validated['tipe'],
-            'jenis_ikan' => $validated['jenis_ikan'],
+            'komoditi_id' => $validated['komoditi_id'],
             'keterangan' => $validated['keterangan'] ?? null,
             'prioritas_warna' => $validated['prioritas_warna'] ?? null,
             'prioritas_tag' => $validated['prioritas_tag'] ?? null,

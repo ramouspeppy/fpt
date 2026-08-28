@@ -20,7 +20,7 @@
 
         <dl class="row">
             <dt class="col-3">Jenis Ikan</dt>
-            <dd class="col-9">{{ $penawaran->jenis_ikan }}</dd>
+            <dd class="col-9">{{ $penawaran->komoditi->nama ?? '-' }} <span class="text-muted small">({{ $penawaran->komoditi->kategori ?? '-' }})</span></dd>
 
             <dt class="col-3">Kondisi Ikan</dt>
             <dd class="col-9">{{ $penawaran->kondisi_ikan ?? '-' }}</dd>

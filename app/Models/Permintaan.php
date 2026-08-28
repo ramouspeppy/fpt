@@ -18,9 +18,9 @@ class Permintaan extends Model
 
     protected $fillable = [
         'user_id',
+        'komoditi_id',
         'judul',
         'tipe',
-        'jenis_ikan',
         'keterangan',
         'prioritas_warna',
         'prioritas_tag',
@@ -30,6 +30,11 @@ class Permintaan extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function komoditi(): BelongsTo
+    {
+        return $this->belongsTo(Komoditi::class);
     }
 
     public function detailEkspor(): HasOne
@@ -74,7 +79,7 @@ class Permintaan extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['judul', 'tipe', 'jenis_ikan', 'status', 'prioritas_warna', 'prioritas_tag'])
+            ->logOnly(['judul', 'tipe', 'komoditi_id', 'status', 'prioritas_warna', 'prioritas_tag'])
             ->logOnlyDirty()
             ->useLogName('permintaan');
     }

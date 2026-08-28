@@ -20,9 +20,9 @@ class Penawaran extends Model implements HasMedia
 
     protected $fillable = [
         'user_id',
+        'komoditi_id',
         'judul',
         'tipe',
-        'jenis_ikan',
         'kondisi_ikan',
         'keterangan',
         'status',
@@ -31,6 +31,11 @@ class Penawaran extends Model implements HasMedia
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function komoditi(): BelongsTo
+    {
+        return $this->belongsTo(Komoditi::class);
     }
 
     public function detailEkspor(): HasOne
@@ -53,13 +58,11 @@ class Penawaran extends Model implements HasMedia
         return in_array($this->tipe, ['Ekspor', 'Ekspor & Lokal']);
     }
 
-    // total kuantiti dari semua baris rincian grade
     public function getTotalVolumeAttribute(): float
     {
         return $this->rincianGrade->sum('kuantiti');
     }
 
-    // rentang harga (terendah - tertinggi) dari semua baris rincian grade
     public function getRentangHargaAttribute(): string
     {
         if ($this->rincianGrade->isEmpty()) {
@@ -77,7 +80,7 @@ class Penawaran extends Model implements HasMedia
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['judul', 'tipe', 'jenis_ikan', 'status'])
+            ->logOnly(['judul', 'tipe', 'komoditi_id', 'status'])
             ->logOnlyDirty()
             ->useLogName('penawaran');
     }

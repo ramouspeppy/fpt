@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Komoditi;
 use App\Models\Penawaran;
 use App\Models\PenawaranDetailEkspor;
 use App\Models\User;
@@ -19,22 +20,28 @@ class PenawaranSeeder extends Seeder
     public function run(): void
     {
         $userCabang = User::role('Cabang')->with('cabang')->get();
+        $komoditiList = Komoditi::disetujui()->get();
 
         if ($userCabang->isEmpty()) {
             $this->command->warn('Belum ada user dengan role Cabang. Jalankan UserSeeder terlebih dahulu.');
             return;
         }
 
+        if ($komoditiList->isEmpty()) {
+            $this->command->warn('Belum ada master data Komoditi. Jalankan KomoditiSeeder terlebih dahulu.');
+            return;
+        }
+
         for ($i = 1; $i <= $this->jumlahData; $i++) {
             $user = $userCabang->random();
-            $jenis = $this->jenisIkanAcak();
+            $komoditi = $komoditiList->random();
             $tipe = $this->acakTipePenawaran();
 
             $penawaran = Penawaran::create([
                 'user_id' => $user->id,
-                'judul' => "Surplus {$jenis} - {$user->cabang->nama_cabang}",
+                'komoditi_id' => $komoditi->id,
+                'judul' => "Surplus {$komoditi->nama} - {$user->cabang->nama_cabang}",
                 'tipe' => $tipe,
-                'jenis_ikan' => $jenis,
                 'kondisi_ikan' => $this->kondisiIkanAcak(),
                 'keterangan' => 'Stok surplus musim panen, kualitas baik.',
                 'status' => 'tersedia',
