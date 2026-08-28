@@ -65,6 +65,27 @@
             </table>
         </div>
 
+        @if (auth()->id() === $permintaan->user_id || auth()->user()->hasRole('Admin'))
+            <hr>
+            <h4>Ubah Status</h4>
+            <div class="text-muted small mb-2">
+                Status ini murni penanda kondisi nyata di lapangan — tidak diubah otomatis oleh sistem,
+                jadi silakan update sendiri sesuai perkembangan komunikasi dengan pihak yang match.
+            </div>
+            <div class="btn-group" role="group">
+                @foreach (['tersedia' => 'Tersedia', 'matched' => 'Sedang Diproses', 'selesai' => 'Selesai', 'ditutup' => 'Tutup'] as $nilai => $label)
+                    <form method="POST" action="{{ route('permintaan.updateStatus', $permintaan) }}" class="d-inline">
+                        @csrf
+                        @method('PATCH')
+                        <input type="hidden" name="status" value="{{ $nilai }}">
+                        <button type="submit" class="btn btn-sm {{ $permintaan->status === $nilai ? 'btn-primary' : 'btn-outline-secondary' }}">
+                            {{ $label }}
+                        </button>
+                    </form>
+                @endforeach
+            </div>
+        @endif
+
         @if ($permintaan->detailEkspor)
             <hr>
             <h4>Detail Ekspor</h4>

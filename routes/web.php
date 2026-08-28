@@ -24,6 +24,8 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('penawaran', PenawaranController::class);
     Route::resource('permintaan', PermintaanController::class);
+    Route::patch('/penawaran/{penawaran}/status', [PenawaranController::class, 'updateStatus'])->name('penawaran.updateStatus');
+    Route::patch('/permintaan/{permintaan}/status', [PermintaanController::class, 'updateStatus'])->name('permintaan.updateStatus');
 
     Route::get('/match', [MatchSuggestionController::class, 'index'])->name('match.index');
     Route::post('/match/jalankan', [MatchSuggestionController::class, 'jalankan'])->name('match.jalankan');

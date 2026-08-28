@@ -163,6 +163,20 @@ class PermintaanController extends Controller
         return redirect()->route('permintaan.index')->with('status', 'Permintaan berhasil dihapus.');
     }
 
+    // Tombol aksi cepat, sama pola-nya dengan PenawaranController@updateStatus.
+    public function updateStatus(Request $request, Permintaan $permintaan)
+    {
+        $this->authorizePemilikAtauAdmin($permintaan);
+
+        $validated = $request->validate([
+            'status' => ['required', 'in:tersedia,matched,selesai,ditutup'],
+        ]);
+
+        $permintaan->update(['status' => $validated['status']]);
+
+        return redirect()->back()->with('status', 'Status permintaan berhasil diperbarui.');
+    }
+
     private function simpanRincianGrade(Permintaan $permintaan, array $validated): void
     {
         foreach ($validated['grade'] as $i => $grade) {

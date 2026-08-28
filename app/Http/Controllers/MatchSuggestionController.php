@@ -20,8 +20,6 @@ class MatchSuggestionController extends Controller
             'permintaanRincian',
         ])->latest();
 
-        // Cabang hanya lihat match yang melibatkan Penawaran/Permintaan miliknya sendiri.
-        // Pusat & Admin tetap lihat semua match (perlu pengawasan menyeluruh, terutama utk ekspor).
         if ($user->hasRole('Cabang')) {
             $query->where(function ($q) use ($user) {
                 $q->whereHas('penawaran', fn ($qq) => $qq->where('user_id', $user->id))
@@ -38,7 +36,6 @@ class MatchSuggestionController extends Controller
         return view('match.index', compact('matches'));
     }
 
-    // Tombol "Cari Kecocokan Ulang" - scan semua penawaran yang masih tersedia
     public function jalankan(MatchingService $service)
     {
         $jumlah = $service->runAll();
@@ -47,7 +44,6 @@ class MatchSuggestionController extends Controller
             ->with('status', "Pencarian selesai. {$jumlah} kecocokan baru ditemukan.");
     }
 
-    // Hanya Pusat/Admin yang boleh approve, dan hanya untuk match tipe ekspor (status menunggu_review)
     public function approve(MatchSuggestion $match)
     {
         $this->authorizePusatAtauAdmin();
@@ -55,14 +51,15 @@ class MatchSuggestionController extends Controller
         abort_unless($match->status === 'menunggu_review', 400, 'Match ini tidak dalam status menunggu review.');
 
         $match->update([
-            'status' => 'disetujui', // hanya dipakai kalau memang manusia (Pusat) yang klik setuju
+            'status' => 'disetujui',
             'approved_by' => Auth::id(),
         ]);
 
-        if ($match->penawaran->tipe !== 'Ekspor & Lokal') {
-            $match->penawaran->update(['status' => 'matched']);
-        }
-        $match->permintaan->update(['status' => 'matched']);
+        // CATATAN: status Penawaran/Permintaan SENGAJA TIDAK diubah otomatis di sini.
+        // Approval Pusat hanya berarti "match ini valid untuk diteruskan ke cabang",
+        // bukan berarti transaksi sudah pasti terjadi. Status posting (tersedia/matched/
+        // selesai/ditutup) sepenuhnya jadi keputusan manual pemilik posting atau Admin,
+        // lewat tombol aksi cepat di halaman detail Penawaran/Permintaan.
 
         return redirect()->route('match.index')->with('status', 'Match disetujui, notifikasi diteruskan ke kedua cabang.');
     }

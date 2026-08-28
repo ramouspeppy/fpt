@@ -162,6 +162,21 @@ class PenawaranController extends Controller
         return redirect()->route('penawaran.index')->with('status', 'Penawaran berhasil dihapus.');
     }
 
+    // Tombol aksi cepat (mis. "Tandai Sedang Diproses", "Tandai Selesai") tanpa perlu buka form Edit penuh.
+    // Status posting sepenuhnya keputusan manual pemilik/Admin, tidak pernah diubah otomatis oleh sistem.
+    public function updateStatus(Request $request, Penawaran $penawaran)
+    {
+        $this->authorizePemilikAtauAdmin($penawaran);
+
+        $validated = $request->validate([
+            'status' => ['required', 'in:tersedia,matched,selesai,ditutup'],
+        ]);
+
+        $penawaran->update(['status' => $validated['status']]);
+
+        return redirect()->back()->with('status', 'Status penawaran berhasil diperbarui.');
+    }
+
     private function simpanRincianGrade(Penawaran $penawaran, array $validated): void
     {
         foreach ($validated['grade'] as $i => $grade) {
