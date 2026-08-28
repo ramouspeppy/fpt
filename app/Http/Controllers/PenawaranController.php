@@ -60,6 +60,11 @@ class PenawaranController extends Controller
             'harga.*' => ['required', 'numeric', 'min:0'],
             'kuantiti' => ['required', 'array', 'min:1'],
             'kuantiti.*' => ['required', 'numeric', 'min:0'],
+            // rincian biaya HPP - WAJIB minimal 1 baris
+            'biaya_label' => ['required', 'array', 'min:1'],
+            'biaya_label.*' => ['required', 'string', 'max:255'],
+            'biaya_jumlah' => ['required', 'array', 'min:1'],
+            'biaya_jumlah.*' => ['required', 'numeric', 'min:0'],
         ]);
 
         $penawaran = Penawaran::create([
@@ -73,6 +78,7 @@ class PenawaranController extends Controller
         ]);
 
         $this->simpanRincianGrade($penawaran, $validated);
+        $this->simpanBiayaHpp($penawaran, $validated);
 
         if ($penawaran->mengandungEkspor()) {
             PenawaranDetailEkspor::create([
@@ -91,7 +97,7 @@ class PenawaranController extends Controller
 
     public function show(Penawaran $penawaran)
     {
-        $penawaran->load(['user.cabang', 'detailEkspor', 'rincianGrade', 'komoditi']);
+        $penawaran->load(['user.cabang', 'detailEkspor', 'rincianGrade', 'komoditi', 'biayaHpp']);
 
         return view('penawaran.show', compact('penawaran'));
     }
@@ -100,7 +106,7 @@ class PenawaranController extends Controller
     {
         $this->authorizePemilikAtauAdmin($penawaran);
 
-        $penawaran->load(['detailEkspor', 'rincianGrade', 'komoditi']);
+        $penawaran->load(['detailEkspor', 'rincianGrade', 'komoditi', 'biayaHpp']);
         $komoditiList = Komoditi::disetujui()->orderBy('kategori')->orderBy('nama')->get()->groupBy('kategori');
 
         return view('penawaran.edit', compact('penawaran', 'komoditiList'));
@@ -126,6 +132,10 @@ class PenawaranController extends Controller
             'harga.*' => ['required', 'numeric', 'min:0'],
             'kuantiti' => ['required', 'array', 'min:1'],
             'kuantiti.*' => ['required', 'numeric', 'min:0'],
+            'biaya_label' => ['required', 'array', 'min:1'],
+            'biaya_label.*' => ['required', 'string', 'max:255'],
+            'biaya_jumlah' => ['required', 'array', 'min:1'],
+            'biaya_jumlah.*' => ['required', 'numeric', 'min:0'],
         ]);
 
         $penawaran->update([
@@ -137,9 +147,12 @@ class PenawaranController extends Controller
             'status' => $validated['status'],
         ]);
 
-        // ganti semua rincian grade lama dengan yang baru (paling sederhana untuk versi ini)
+        // ganti semua rincian grade & biaya HPP lama dengan yang baru (paling sederhana untuk versi ini)
         $penawaran->rincianGrade()->delete();
         $this->simpanRincianGrade($penawaran, $validated);
+
+        $penawaran->biayaHpp()->delete();
+        $this->simpanBiayaHpp($penawaran, $validated);
 
         if ($penawaran->mengandungEkspor()) {
             $penawaran->detailEkspor()->updateOrCreate(
@@ -188,6 +201,18 @@ class PenawaranController extends Controller
                 'ukuran_grade' => $grade,
                 'harga' => $validated['harga'][$i],
                 'kuantiti' => $validated['kuantiti'][$i],
+            ]);
+        }
+    }
+
+    // Biaya HPP (proses, packing, listrik, tenaga kerja, dll) - WAJIB minimal 1 baris,
+    // berlaku sama untuk semua grade dalam penawaran ini (bukan per grade).
+    private function simpanBiayaHpp(Penawaran $penawaran, array $validated): void
+    {
+        foreach ($validated['biaya_label'] as $i => $label) {
+            $penawaran->biayaHpp()->create([
+                'label' => $label,
+                'jumlah' => $validated['biaya_jumlah'][$i],
             ]);
         }
     }

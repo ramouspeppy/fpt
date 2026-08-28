@@ -101,6 +101,48 @@
                 </div>
             </div>
 
+            <!-- Rincian Biaya HPP - WAJIB diisi -->
+            <div class="card card-body bg-light mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0">Rincian Biaya HPP <span class="text-danger">*</span></h4>
+                    <button type="button" id="tambah-baris-biaya" class="btn btn-sm btn-outline-primary">
+                        <i class="ti ti-plus"></i> Tambah Biaya
+                    </button>
+                </div>
+                <div class="text-muted small mb-2">
+                    Biaya operasional per kg — berlaku sama untuk semua grade di atas, otomatis
+                    ditambahkan ke harga beli sebagai Harga Jual.
+                </div>
+
+                <div id="baris-biaya-container">
+                    @forelse ($penawaran->biayaHpp as $biaya)
+                        <div class="row baris-biaya mb-2">
+                            <div class="col-md-7">
+                                <input type="text" name="biaya_label[]" value="{{ $biaya->label }}" class="form-control" placeholder="mis. Biaya Proses" required>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="number" step="0.01" name="biaya_jumlah[]" value="{{ $biaya->jumlah }}" class="form-control" placeholder="Rp per kg" required>
+                            </div>
+                            <div class="col-md-1">
+                                <button type="button" class="btn btn-outline-danger hapus-baris-biaya"><i class="ti ti-trash"></i></button>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="row baris-biaya mb-2">
+                            <div class="col-md-7">
+                                <input type="text" name="biaya_label[]" class="form-control" placeholder="mis. Biaya Proses" required>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="number" step="0.01" name="biaya_jumlah[]" class="form-control" placeholder="Rp per kg" required>
+                            </div>
+                            <div class="col-md-1">
+                                <button type="button" class="btn btn-outline-danger hapus-baris-biaya" style="display:none;"><i class="ti ti-trash"></i></button>
+                            </div>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+
             <div id="field-ekspor" class="card card-body bg-light mb-3" style="display:none;">
                 <h4 class="mb-3">Detail Ekspor</h4>
                 <div class="row">
@@ -162,5 +204,29 @@
         });
     }
     perbaruiTombolHapus();
+
+    const containerBiaya = document.getElementById('baris-biaya-container');
+    document.getElementById('tambah-baris-biaya').addEventListener('click', function () {
+        const baris = containerBiaya.querySelector('.baris-biaya').cloneNode(true);
+        baris.querySelectorAll('input').forEach(input => input.value = '');
+        baris.querySelector('.hapus-baris-biaya').style.display = 'inline-block';
+        containerBiaya.appendChild(baris);
+        perbaruiTombolHapusBiaya();
+    });
+
+    containerBiaya.addEventListener('click', function (e) {
+        if (e.target.closest('.hapus-baris-biaya')) {
+            e.target.closest('.baris-biaya').remove();
+            perbaruiTombolHapusBiaya();
+        }
+    });
+
+    function perbaruiTombolHapusBiaya() {
+        const semuaBaris = containerBiaya.querySelectorAll('.baris-biaya');
+        semuaBaris.forEach((baris) => {
+            baris.querySelector('.hapus-baris-biaya').style.display = semuaBaris.length > 1 ? 'inline-block' : 'none';
+        });
+    }
+    perbaruiTombolHapusBiaya();
 </script>
 @endsection

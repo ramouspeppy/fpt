@@ -65,7 +65,7 @@
                 </div>
                 <div class="text-muted small mb-2">
                     Contoh: "1.000-Up", "500-1.000 A", "300-500 B", "200-300 C" — satu jenis ikan bisa
-                    punya beberapa grade dengan harga & kuantiti berbeda.
+                    punya beberapa grade dengan harga beli & kuantiti berbeda.
                 </div>
 
                 <div id="baris-grade-container">
@@ -74,7 +74,7 @@
                             <input type="text" name="grade[]" class="form-control" placeholder="Ukuran / Grade (mis. 1.000-Up)" required>
                         </div>
                         <div class="col-md-3">
-                            <input type="number" step="0.01" name="harga[]" class="form-control" placeholder="Harga per kg" required>
+                            <input type="number" step="0.01" name="harga[]" class="form-control" placeholder="Harga Beli / kg (bahan baku)" required>
                         </div>
                         <div class="col-md-3">
                             <input type="number" step="0.01" name="kuantiti[]" class="form-control" placeholder="Kuantiti (kg)" required>
@@ -83,6 +83,39 @@
                             <button type="button" class="btn btn-outline-danger hapus-baris" style="display:none;"><i class="ti ti-trash"></i></button>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Rincian Biaya HPP - WAJIB diisi, berlaku sama untuk semua grade di atas -->
+            <div class="card card-body bg-light mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0">Rincian Biaya HPP <span class="text-danger">*</span></h4>
+                    <button type="button" id="tambah-baris-biaya" class="btn btn-sm btn-outline-primary">
+                        <i class="ti ti-plus"></i> Tambah Biaya
+                    </button>
+                </div>
+                <div class="text-muted small mb-2">
+                    Biaya operasional per kg (proses, packing, listrik, tenaga kerja, pengiriman, asuransi,
+                    dll) — berlaku SAMA untuk semua grade di atas, dan otomatis ditambahkan ke harga beli
+                    saat dihitung sebagai Harga Jual. Wajib diisi minimal 1 baris.
+                </div>
+
+                <div id="baris-biaya-container">
+                    <div class="row baris-biaya mb-2">
+                        <div class="col-md-7">
+                            <input type="text" name="biaya_label[]" class="form-control" placeholder="mis. Biaya Proses" required>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="number" step="0.01" name="biaya_jumlah[]" class="form-control" placeholder="Rp per kg" required>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-outline-danger hapus-baris-biaya" style="display:none;"><i class="ti ti-trash"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-muted small mt-2">
+                    Contoh label: Biaya Proses, Biaya Packing, Biaya Listrik, Biaya Tenaga Kerja,
+                    Biaya Pengiriman, Asuransi, atau biaya lain sesuai komoditi Anda.
                 </div>
             </div>
 
@@ -148,6 +181,30 @@
         semuaBaris.forEach((baris, index) => {
             const tombolHapus = baris.querySelector('.hapus-baris');
             tombolHapus.style.display = semuaBaris.length > 1 ? 'inline-block' : 'none';
+        });
+    }
+
+    // tambah/hapus baris biaya HPP - pola sama dengan rincian grade
+    const containerBiaya = document.getElementById('baris-biaya-container');
+    document.getElementById('tambah-baris-biaya').addEventListener('click', function () {
+        const baris = containerBiaya.querySelector('.baris-biaya').cloneNode(true);
+        baris.querySelectorAll('input').forEach(input => input.value = '');
+        baris.querySelector('.hapus-baris-biaya').style.display = 'inline-block';
+        containerBiaya.appendChild(baris);
+        perbaruiTombolHapusBiaya();
+    });
+
+    containerBiaya.addEventListener('click', function (e) {
+        if (e.target.closest('.hapus-baris-biaya')) {
+            e.target.closest('.baris-biaya').remove();
+            perbaruiTombolHapusBiaya();
+        }
+    });
+
+    function perbaruiTombolHapusBiaya() {
+        const semuaBaris = containerBiaya.querySelectorAll('.baris-biaya');
+        semuaBaris.forEach((baris) => {
+            baris.querySelector('.hapus-baris-biaya').style.display = semuaBaris.length > 1 ? 'inline-block' : 'none';
         });
     }
 </script>

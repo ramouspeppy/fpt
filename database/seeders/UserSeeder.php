@@ -36,7 +36,7 @@ class UserSeeder extends Seeder
             ['email' => 'admin@fpt.test'],
             [
                 'name' => 'Admin Sistem',
-                'password' => bcrypt('password'),
+                'password' => bcrypt('perindo'),
                 'cabang_id' => null,
                 'no_whatsapp' => $this->nomorWhatsapp(),
             ]
@@ -55,7 +55,7 @@ class UserSeeder extends Seeder
                 ['email' => 'pusat' . ($i + 1) . '@fpt.test'],
                 [
                     'name' => $nama,
-                    'password' => bcrypt('password'),
+                    'password' => bcrypt('perindo'),
                     'cabang_id' => null,
                     'no_whatsapp' => $this->nomorWhatsapp(),
                 ]
@@ -81,7 +81,7 @@ class UserSeeder extends Seeder
                     ['email' => $email],
                     [
                         'name' => $nama,
-                        'password' => bcrypt('password'),
+                        'password' => bcrypt('perindo'),
                         'cabang_id' => $cabang->id,
                         'no_whatsapp' => $this->nomorWhatsapp(),
                     ]

@@ -36,8 +36,9 @@
                 <thead>
                     <tr>
                         <th>Ukuran / Grade</th>
-                        <th>Harga per kg</th>
+                        <th>Harga Beli / kg</th>
                         <th>Kuantiti</th>
+                        <th>Harga Jual / kg</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -46,14 +47,43 @@
                             <td>{{ $rincian->ukuran_grade }}</td>
                             <td>Rp {{ number_format($rincian->harga, 0) }}</td>
                             <td>{{ number_format($rincian->kuantiti, 0) }} kg</td>
+                            <td class="fw-bold">Rp {{ number_format($rincian->harga_jual, 0) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
                 <tfoot>
                     <tr class="fw-bold">
                         <td>Total</td>
-                        <td>{{ $penawaran->rentang_harga }}</td>
+                        <td>-</td>
                         <td>{{ number_format($penawaran->total_volume, 0) }} kg</td>
+                        <td>{{ $penawaran->rentang_harga }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <h4>Rincian Biaya HPP</h4>
+        <div class="text-muted small mb-2">Biaya operasional per kg, berlaku sama untuk semua grade di atas.</div>
+        <div class="table-responsive mb-3">
+            <table class="table table-vcenter card-table">
+                <thead>
+                    <tr>
+                        <th>Komponen Biaya</th>
+                        <th>Rp / kg</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($penawaran->biayaHpp as $biaya)
+                        <tr>
+                            <td>{{ $biaya->label }}</td>
+                            <td>Rp {{ number_format($biaya->jumlah, 0) }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+                <tfoot>
+                    <tr class="fw-bold">
+                        <td>Total Biaya Tambahan</td>
+                        <td>Rp {{ number_format($penawaran->total_biaya_tambahan, 0) }}</td>
                     </tr>
                 </tfoot>
             </table>

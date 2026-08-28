@@ -48,6 +48,11 @@ class Penawaran extends Model implements HasMedia
         return $this->hasMany(PenawaranRincianGrade::class);
     }
 
+    public function biayaHpp(): HasMany
+    {
+        return $this->hasMany(PenawaranBiayaHpp::class);
+    }
+
     public function matchSuggestions(): HasMany
     {
         return $this->hasMany(MatchSuggestion::class);
@@ -63,14 +68,27 @@ class Penawaran extends Model implements HasMedia
         return $this->rincianGrade->sum('kuantiti');
     }
 
+    // Total biaya tambahan (proses, packing, listrik, tenaga kerja, dll) per kg,
+    // SAMA untuk semua grade dalam penawaran ini (bukan per grade).
+    public function getTotalBiayaTambahanAttribute(): float
+    {
+        return $this->biayaHpp->sum('jumlah');
+    }
+
+    // Harga Jual = Harga Beli (per grade) + Total Biaya Tambahan (per penawaran).
+    // Rentang harga di kartu/daftar sekarang mencerminkan HARGA JUAL, bukan harga beli murni,
+    // supaya cabang lain langsung lihat harga yang sudah realistis untuk ditawar-tawarkan.
     public function getRentangHargaAttribute(): string
     {
         if ($this->rincianGrade->isEmpty()) {
             return '-';
         }
 
-        $min = $this->rincianGrade->min('harga');
-        $max = $this->rincianGrade->max('harga');
+        $totalBiaya = $this->total_biaya_tambahan;
+        $hargaJualList = $this->rincianGrade->map(fn ($r) => $r->harga + $totalBiaya);
+
+        $min = $hargaJualList->min();
+        $max = $hargaJualList->max();
 
         return $min == $max
             ? 'Rp ' . number_format($min, 0)
