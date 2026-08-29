@@ -23,6 +23,7 @@ class Penawaran extends Model implements HasMedia
         'komoditi_id',
         'judul',
         'tipe',
+        'jenis_penawaran',
         'kondisi_ikan',
         'keterangan',
         'status',
@@ -61,6 +62,11 @@ class Penawaran extends Model implements HasMedia
     public function mengandungEkspor(): bool
     {
         return in_array($this->tipe, ['Ekspor', 'Ekspor & Lokal']);
+    }
+
+    public function isTrading(): bool
+    {
+        return $this->jenis_penawaran === 'Trading';
     }
 
     public function getTotalVolumeAttribute(): float

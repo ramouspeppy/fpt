@@ -47,6 +47,7 @@ class PenawaranController extends Controller
         $validated = $request->validate([
             'judul' => ['required', 'string', 'max:255'],
             'tipe' => ['required', 'in:Ekspor,Lokal,Ekspor & Lokal'],
+            'jenis_penawaran' => ['required', 'in:Produksi Sendiri,Trading'],
             'komoditi_id' => ['required', 'exists:komoditi,id'],
             'kondisi_ikan' => ['nullable', 'string', 'max:255'],
             'keterangan' => ['nullable', 'string'],
@@ -60,7 +61,7 @@ class PenawaranController extends Controller
             'harga.*' => ['required', 'numeric', 'min:0'],
             'kuantiti' => ['required', 'array', 'min:1'],
             'kuantiti.*' => ['required', 'numeric', 'min:0'],
-            // rincian biaya HPP - WAJIB minimal 1 baris
+            // rincian biaya HPP / margin - WAJIB minimal 1 baris (label bebas, menyesuaikan jenis_penawaran)
             'biaya_label' => ['required', 'array', 'min:1'],
             'biaya_label.*' => ['required', 'string', 'max:255'],
             'biaya_jumlah' => ['required', 'array', 'min:1'],
@@ -71,6 +72,7 @@ class PenawaranController extends Controller
             'user_id' => Auth::id(),
             'judul' => $validated['judul'],
             'tipe' => $validated['tipe'],
+            'jenis_penawaran' => $validated['jenis_penawaran'],
             'komoditi_id' => $validated['komoditi_id'],
             'kondisi_ikan' => $validated['kondisi_ikan'] ?? null,
             'keterangan' => $validated['keterangan'] ?? null,
@@ -119,6 +121,7 @@ class PenawaranController extends Controller
         $validated = $request->validate([
             'judul' => ['required', 'string', 'max:255'],
             'tipe' => ['required', 'in:Ekspor,Lokal,Ekspor & Lokal'],
+            'jenis_penawaran' => ['required', 'in:Produksi Sendiri,Trading'],
             'komoditi_id' => ['required', 'exists:komoditi,id'],
             'kondisi_ikan' => ['nullable', 'string', 'max:255'],
             'keterangan' => ['nullable', 'string'],
@@ -141,6 +144,7 @@ class PenawaranController extends Controller
         $penawaran->update([
             'judul' => $validated['judul'],
             'tipe' => $validated['tipe'],
+            'jenis_penawaran' => $validated['jenis_penawaran'],
             'komoditi_id' => $validated['komoditi_id'],
             'kondisi_ikan' => $validated['kondisi_ikan'] ?? null,
             'keterangan' => $validated['keterangan'] ?? null,

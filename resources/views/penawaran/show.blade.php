@@ -9,6 +9,7 @@
             <div>
                 <h2>{{ $penawaran->judul }}</h2>
                 <span class="badge bg-azure-lt">{{ $penawaran->tipe }}</span>
+                <span class="badge bg-purple-lt">{{ $penawaran->jenis_penawaran }}</span>
                 <span class="badge bg-{{ $penawaran->status == 'tersedia' ? 'green' : ($penawaran->status == 'matched' ? 'blue' : 'secondary') }}-lt">
                     {{ ucfirst($penawaran->status) }}
                 </span>
@@ -62,8 +63,14 @@
             </table>
         </div>
 
-        <h4>Rincian Biaya HPP</h4>
-        <div class="text-muted small mb-2">Biaya operasional per kg, berlaku sama untuk semua grade di atas.</div>
+        <h4>{{ $penawaran->isTrading() ? 'Margin / Keuntungan' : 'Rincian Biaya HPP' }}</h4>
+        <div class="text-muted small mb-2">
+            @if ($penawaran->isTrading())
+                Barang sudah jadi dari mitra, biaya di bawah ini murni margin/keuntungan.
+            @else
+                Biaya operasional per kg, berlaku sama untuk semua grade di atas.
+            @endif
+        </div>
         <div class="table-responsive mb-3">
             <table class="table table-vcenter card-table">
                 <thead>

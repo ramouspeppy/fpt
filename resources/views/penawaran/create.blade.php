@@ -15,7 +15,7 @@
             </div>
 
             <div class="row">
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
                     <label class="form-label required">Tipe</label>
                     <select name="tipe" id="tipe" class="form-select @error('tipe') is-invalid @enderror">
                         <option value="">-- Pilih Tipe --</option>
@@ -25,7 +25,15 @@
                     </select>
                     @error('tipe') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label required">Jenis Penawaran</label>
+                    <select name="jenis_penawaran" id="jenis_penawaran" class="form-select @error('jenis_penawaran') is-invalid @enderror">
+                        <option value="Produksi Sendiri" @selected(old('jenis_penawaran')=='Produksi Sendiri')>Produksi Sendiri</option>
+                        <option value="Trading" @selected(old('jenis_penawaran')=='Trading')>Trading / Beli Jadi dari Mitra</option>
+                    </select>
+                    @error('jenis_penawaran') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-4 mb-3">
                     <label class="form-label required">Komoditi</label>
                     <select name="komoditi_id" class="form-select @error('komoditi_id') is-invalid @enderror">
                         <option value="">-- Pilih Komoditi --</option>
@@ -86,15 +94,15 @@
                 </div>
             </div>
 
-            <!-- Rincian Biaya HPP - WAJIB diisi, berlaku sama untuk semua grade di atas -->
+            <!-- Rincian Biaya HPP / Margin - WAJIB diisi, label berubah sesuai Jenis Penawaran -->
             <div class="card card-body bg-light mb-3">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="mb-0">Rincian Biaya HPP <span class="text-danger">*</span></h4>
+                    <h4 class="mb-0" id="judul-section-biaya">Rincian Biaya HPP <span class="text-danger">*</span></h4>
                     <button type="button" id="tambah-baris-biaya" class="btn btn-sm btn-outline-primary">
                         <i class="ti ti-plus"></i> Tambah Biaya
                     </button>
                 </div>
-                <div class="text-muted small mb-2">
+                <div class="text-muted small mb-2" id="hint-section-biaya">
                     Biaya operasional per kg (proses, packing, listrik, tenaga kerja, pengiriman, asuransi,
                     dll) — berlaku SAMA untuk semua grade di atas, dan otomatis ditambahkan ke harga beli
                     saat dihitung sebagai Harga Jual. Wajib diisi minimal 1 baris.
@@ -113,7 +121,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="text-muted small mt-2">
+                <div class="text-muted small mt-2" id="contoh-section-biaya">
                     Contoh label: Biaya Proses, Biaya Packing, Biaya Listrik, Biaya Tenaga Kerja,
                     Biaya Pengiriman, Asuransi, atau biaya lain sesuai komoditi Anda.
                 </div>
@@ -158,6 +166,26 @@
     }
     tipeSelect.addEventListener('change', toggleFieldEkspor);
     toggleFieldEkspor();
+
+    // toggle label section biaya berdasarkan Jenis Penawaran (Produksi Sendiri vs Trading)
+    const jenisPenawaranSelect = document.getElementById('jenis_penawaran');
+    const judulSectionBiaya = document.getElementById('judul-section-biaya');
+    const hintSectionBiaya = document.getElementById('hint-section-biaya');
+    const contohSectionBiaya = document.getElementById('contoh-section-biaya');
+
+    function toggleLabelBiaya() {
+        if (jenisPenawaranSelect.value === 'Trading') {
+            judulSectionBiaya.innerHTML = 'Margin / Keuntungan <span class="text-danger">*</span>';
+            hintSectionBiaya.textContent = 'Karena barang sudah jadi dari mitra (biaya proses/packing/dll sudah ditanggung mitra), cukup isi margin/keuntungan yang Anda inginkan per kg. Wajib diisi minimal 1 baris.';
+            contohSectionBiaya.textContent = 'Contoh label: Margin/Keuntungan, atau biaya tambahan lain jika ada (mis. Transport dari Mitra).';
+        } else {
+            judulSectionBiaya.innerHTML = 'Rincian Biaya HPP <span class="text-danger">*</span>';
+            hintSectionBiaya.textContent = 'Biaya operasional per kg (proses, packing, listrik, tenaga kerja, pengiriman, asuransi, dll) — berlaku SAMA untuk semua grade di atas, dan otomatis ditambahkan ke harga beli saat dihitung sebagai Harga Jual. Wajib diisi minimal 1 baris.';
+            contohSectionBiaya.textContent = 'Contoh label: Biaya Proses, Biaya Packing, Biaya Listrik, Biaya Tenaga Kerja, Biaya Pengiriman, Asuransi, atau biaya lain sesuai komoditi Anda.';
+        }
+    }
+    jenisPenawaranSelect.addEventListener('change', toggleLabelBiaya);
+    toggleLabelBiaya();
 
     // tambah/hapus baris rincian grade
     const container = document.getElementById('baris-grade-container');

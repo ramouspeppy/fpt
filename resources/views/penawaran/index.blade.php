@@ -30,7 +30,12 @@
                             {{ ucfirst($item->status) }}
                         </span>
                     </div>
-                    <div class="text-muted small mb-2">{{ $item->tipe }} &middot; {{ $item->komoditi->nama ?? '-' }}</div>
+                    <div class="text-muted small mb-2">
+                        {{ $item->tipe }} &middot; {{ $item->komoditi->nama ?? '-' }}
+                        @if ($item->jenis_penawaran === 'Trading')
+                            <span class="badge bg-purple-lt">Trading</span>
+                        @endif
+                    </div>
 
                     <div class="mb-2">
                         <span class="badge bg-azure-lt">{{ $item->rincianGrade->count() }} grade</span>

@@ -16,7 +16,7 @@
             </div>
 
             <div class="row">
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
                     <label class="form-label required">Tipe</label>
                     <select name="tipe" id="tipe" class="form-select @error('tipe') is-invalid @enderror">
                         <option value="Lokal" @selected(old('tipe', $penawaran->tipe)=='Lokal')>Lokal</option>
@@ -24,7 +24,14 @@
                         <option value="Ekspor & Lokal" @selected(old('tipe', $penawaran->tipe)=='Ekspor & Lokal')>Ekspor & Lokal</option>
                     </select>
                 </div>
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label required">Jenis Penawaran</label>
+                    <select name="jenis_penawaran" id="jenis_penawaran" class="form-select @error('jenis_penawaran') is-invalid @enderror">
+                        <option value="Produksi Sendiri" @selected(old('jenis_penawaran', $penawaran->jenis_penawaran)=='Produksi Sendiri')>Produksi Sendiri</option>
+                        <option value="Trading" @selected(old('jenis_penawaran', $penawaran->jenis_penawaran)=='Trading')>Trading / Beli Jadi dari Mitra</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
                     <label class="form-label required">Komoditi</label>
                     <select name="komoditi_id" class="form-select @error('komoditi_id') is-invalid @enderror">
                         @foreach ($komoditiList as $kategori => $daftar)
@@ -37,7 +44,7 @@
                     </select>
                     @error('komoditi_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
                     <label class="form-label required">Status</label>
                     <select name="status" class="form-select">
                         <option value="tersedia" @selected($penawaran->status=='tersedia')>Tersedia</option>
@@ -101,15 +108,15 @@
                 </div>
             </div>
 
-            <!-- Rincian Biaya HPP - WAJIB diisi -->
+            <!-- Rincian Biaya HPP / Margin - WAJIB diisi, label berubah sesuai Jenis Penawaran -->
             <div class="card card-body bg-light mb-3">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="mb-0">Rincian Biaya HPP <span class="text-danger">*</span></h4>
+                    <h4 class="mb-0" id="judul-section-biaya">Rincian Biaya HPP <span class="text-danger">*</span></h4>
                     <button type="button" id="tambah-baris-biaya" class="btn btn-sm btn-outline-primary">
                         <i class="ti ti-plus"></i> Tambah Biaya
                     </button>
                 </div>
-                <div class="text-muted small mb-2">
+                <div class="text-muted small mb-2" id="hint-section-biaya">
                     Biaya operasional per kg — berlaku sama untuk semua grade di atas, otomatis
                     ditambahkan ke harga beli sebagai Harga Jual.
                 </div>
@@ -180,6 +187,22 @@
     }
     tipeSelect.addEventListener('change', toggleFieldEkspor);
     toggleFieldEkspor();
+
+    const jenisPenawaranSelect = document.getElementById('jenis_penawaran');
+    const judulSectionBiaya = document.getElementById('judul-section-biaya');
+    const hintSectionBiaya = document.getElementById('hint-section-biaya');
+
+    function toggleLabelBiaya() {
+        if (jenisPenawaranSelect.value === 'Trading') {
+            judulSectionBiaya.innerHTML = 'Margin / Keuntungan <span class="text-danger">*</span>';
+            hintSectionBiaya.textContent = 'Karena barang sudah jadi dari mitra, cukup isi margin/keuntungan yang Anda inginkan per kg.';
+        } else {
+            judulSectionBiaya.innerHTML = 'Rincian Biaya HPP <span class="text-danger">*</span>';
+            hintSectionBiaya.textContent = 'Biaya operasional per kg — berlaku sama untuk semua grade di atas, otomatis ditambahkan ke harga beli sebagai Harga Jual.';
+        }
+    }
+    jenisPenawaranSelect.addEventListener('change', toggleLabelBiaya);
+    toggleLabelBiaya();
 
     const container = document.getElementById('baris-grade-container');
     document.getElementById('tambah-baris').addEventListener('click', function () {
