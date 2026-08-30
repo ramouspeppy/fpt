@@ -3,24 +3,27 @@
 @section('title', 'Detail Penawaran')
 
 @section('content')
+@php
+    $warnaStatus = ['tersedia' => 'success', 'matched' => 'primary', 'selesai' => 'dark', 'ditutup' => 'secondary'];
+@endphp
 <div class="card">
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-start mb-3">
             <div>
                 <h2>{{ $penawaran->judul }}</h2>
-                <span class="badge bg-azure-lt">{{ $penawaran->tipe }}</span>
-                <span class="badge bg-purple-lt">{{ $penawaran->jenis_penawaran }}</span>
-                <span class="badge bg-{{ $penawaran->status == 'tersedia' ? 'green' : ($penawaran->status == 'matched' ? 'blue' : 'secondary') }}-lt">
+                <span class="badge badge-info">{{ $penawaran->tipe }}</span>
+                <span class="badge badge-purple">{{ $penawaran->jenis_penawaran }}</span>
+                <span class="badge badge-{{ $warnaStatus[$penawaran->status] ?? 'secondary' }}">
                     {{ ucfirst($penawaran->status) }}
                 </span>
             </div>
             @if (auth()->id() === $penawaran->user_id || auth()->user()->hasRole('Admin'))
-                <a href="{{ route('penawaran.edit', $penawaran) }}" class="btn btn-outline-secondary">Edit</a>
+                <a href="{{ route('penawaran.edit', $penawaran) }}" class="btn btn-secondary">Edit</a>
             @endif
         </div>
 
         <dl class="row">
-            <dt class="col-3">Jenis Ikan</dt>
+            <dt class="col-3">Komoditi</dt>
             <dd class="col-9">{{ $penawaran->komoditi->nama ?? '-' }} <span class="text-muted small">({{ $penawaran->komoditi->kategori ?? '-' }})</span></dd>
 
             <dt class="col-3">Kondisi Ikan</dt>
@@ -33,7 +36,7 @@
         <hr>
         <h4>Rincian Grade / Size</h4>
         <div class="table-responsive mb-3">
-            <table class="table table-vcenter card-table">
+            <table class="table table-striped">
                 <thead>
                     <tr>
                         <th>Ukuran / Grade</th>
@@ -48,12 +51,12 @@
                             <td>{{ $rincian->ukuran_grade }}</td>
                             <td>Rp {{ number_format($rincian->harga, 0) }}</td>
                             <td>{{ number_format($rincian->kuantiti, 0) }} kg</td>
-                            <td class="fw-bold">Rp {{ number_format($rincian->harga_jual, 0) }}</td>
+                            <td class="font-weight-bold">Rp {{ number_format($rincian->harga_jual, 0) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
                 <tfoot>
-                    <tr class="fw-bold">
+                    <tr class="font-weight-bold">
                         <td>Total</td>
                         <td>-</td>
                         <td>{{ number_format($penawaran->total_volume, 0) }} kg</td>
@@ -72,7 +75,7 @@
             @endif
         </div>
         <div class="table-responsive mb-3">
-            <table class="table table-vcenter card-table">
+            <table class="table table-striped">
                 <thead>
                     <tr>
                         <th>Komponen Biaya</th>
@@ -88,7 +91,7 @@
                     @endforeach
                 </tbody>
                 <tfoot>
-                    <tr class="fw-bold">
+                    <tr class="font-weight-bold">
                         <td>Total Biaya Tambahan</td>
                         <td>Rp {{ number_format($penawaran->total_biaya_tambahan, 0) }}</td>
                     </tr>
@@ -109,7 +112,7 @@
                         @csrf
                         @method('PATCH')
                         <input type="hidden" name="status" value="{{ $nilai }}">
-                        <button type="submit" class="btn btn-sm {{ $penawaran->status === $nilai ? 'btn-primary' : 'btn-outline-secondary' }}">
+                        <button type="submit" class="btn btn-sm {{ $penawaran->status === $nilai ? 'btn-primary' : 'btn-secondary' }}">
                             {{ $label }}
                         </button>
                     </form>
@@ -145,7 +148,7 @@
             <dd class="col-9">
                 @if ($penawaran->user->whatsapp_link)
                     <a href="{{ $penawaran->user->whatsapp_link }}" target="_blank" class="btn btn-sm btn-success">
-                        <i class="ti ti-brand-whatsapp"></i> Hubungi via WhatsApp
+                        <i class="fab fa-whatsapp"></i> Hubungi via WhatsApp
                     </a>
                 @else
                     -

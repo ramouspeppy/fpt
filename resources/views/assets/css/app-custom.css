@@ -1,0 +1,15 @@
+/* Utility tambahan yang belum tersedia di Bootstrap 4 / Stisla */
+.gap-1 { gap: .25rem; }
+.gap-2 { gap: .5rem; }
+.gap-3 { gap: 1rem; }
+
+/* badge warna tambahan di luar palet default Bootstrap 4 */
+.badge-purple { color: #fff; background-color: #6f42c1; }
+
+/* indikator prioritas (pengganti card-status-top Tabler) */
+.card-priority-indicator {
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: 4px;
+}
+.card-priority-indicator + .card-body { padding-left: 1.5rem; }

@@ -8,35 +8,35 @@
         <form method="POST" action="{{ route('penawaran.store') }}">
             @csrf
 
-            <div class="mb-3">
-                <label class="form-label required">Judul</label>
+            <div class="form-group">
+                <label>Judul <span class="text-danger">*</span></label>
                 <input type="text" name="judul" value="{{ old('judul') }}" class="form-control @error('judul') is-invalid @enderror" placeholder="mis. Surplus Gurita Berbagai Grade - Cabang Medan">
                 @error('judul') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
 
             <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label class="form-label required">Tipe</label>
-                    <select name="tipe" id="tipe" class="form-select @error('tipe') is-invalid @enderror">
+                <div class="col-md-4 form-group">
+                    <label>Tipe <span class="text-danger">*</span></label>
+                    <select name="tipe" id="tipe" class="form-control selectric @error('tipe') is-invalid @enderror">
                         <option value="">-- Pilih Tipe --</option>
                         <option value="Lokal" @selected(old('tipe')=='Lokal')>Lokal</option>
                         <option value="Ekspor" @selected(old('tipe')=='Ekspor')>Ekspor</option>
                         <option value="Ekspor & Lokal" @selected(old('tipe')=='Ekspor & Lokal')>Ekspor & Lokal</option>
                     </select>
-                    @error('tipe') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    @error('tipe') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                 </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label required">Jenis Penawaran</label>
-                    <select name="jenis_penawaran" id="jenis_penawaran" class="form-select @error('jenis_penawaran') is-invalid @enderror">
+                <div class="col-md-4 form-group">
+                    <label>Jenis Penawaran <span class="text-danger">*</span></label>
+                    <select name="jenis_penawaran" id="jenis_penawaran" class="form-control selectric @error('jenis_penawaran') is-invalid @enderror">
                         <option value="Produksi Sendiri" @selected(old('jenis_penawaran')=='Produksi Sendiri')>Produksi Sendiri</option>
                         <option value="Trading" @selected(old('jenis_penawaran')=='Trading')>Trading / Beli Jadi dari Mitra</option>
                     </select>
-                    @error('jenis_penawaran') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    @error('jenis_penawaran') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                 </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label required">Komoditi</label>
-                    <select name="komoditi_id" class="form-select @error('komoditi_id') is-invalid @enderror">
-                        <option value="">-- Pilih Komoditi --</option>
+                <div class="col-md-4 form-group">
+                    <label>Komoditi <span class="text-danger">*</span></label>
+                    <select name="komoditi_id" class="form-control select2 @error('komoditi_id') is-invalid @enderror" data-placeholder="-- Pilih Komoditi --">
+                        <option value=""></option>
                         @foreach ($komoditiList as $kategori => $daftar)
                             <optgroup label="{{ $kategori ?? 'Lainnya' }}">
                                 @foreach ($daftar as $k)
@@ -45,21 +45,21 @@
                             </optgroup>
                         @endforeach
                     </select>
-                    @error('komoditi_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                    <div class="form-text">
+                    @error('komoditi_id') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+                    <small class="form-text text-muted">
                         Tidak menemukan komoditi yang dicari?
                         <a href="{{ route('komoditi.usulkan') }}" target="_blank">Usulkan komoditi baru</a>
-                    </div>
+                    </small>
                 </div>
             </div>
 
-            <div class="mb-3">
-                <label class="form-label">Kondisi Ikan</label>
+            <div class="form-group">
+                <label>Kondisi Ikan</label>
                 <input type="text" name="kondisi_ikan" value="{{ old('kondisi_ikan') }}" class="form-control" placeholder="Segar / Beku">
             </div>
 
-            <div class="mb-3">
-                <label class="form-label">Keterangan</label>
+            <div class="form-group">
+                <label>Keterangan</label>
                 <textarea name="keterangan" class="form-control" rows="2">{{ old('keterangan') }}</textarea>
             </div>
 
@@ -67,8 +67,8 @@
             <div class="card card-body bg-light mb-3">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h4 class="mb-0">Rincian Grade / Size</h4>
-                    <button type="button" id="tambah-baris" class="btn btn-sm btn-outline-primary">
-                        <i class="ti ti-plus"></i> Tambah Baris
+                    <button type="button" id="tambah-baris" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus"></i> Tambah Baris
                     </button>
                 </div>
                 <div class="text-muted small mb-2">
@@ -88,7 +88,7 @@
                             <input type="number" step="0.01" name="kuantiti[]" class="form-control" placeholder="Kuantiti (kg)" required>
                         </div>
                         <div class="col-md-1">
-                            <button type="button" class="btn btn-outline-danger hapus-baris" style="display:none;"><i class="ti ti-trash"></i></button>
+                            <button type="button" class="btn btn-danger hapus-baris" style="display:none;"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
                 </div>
@@ -98,8 +98,8 @@
             <div class="card card-body bg-light mb-3">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h4 class="mb-0" id="judul-section-biaya">Rincian Biaya HPP <span class="text-danger">*</span></h4>
-                    <button type="button" id="tambah-baris-biaya" class="btn btn-sm btn-outline-primary">
-                        <i class="ti ti-plus"></i> Tambah Biaya
+                    <button type="button" id="tambah-baris-biaya" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus"></i> Tambah Biaya
                     </button>
                 </div>
                 <div class="text-muted small mb-2" id="hint-section-biaya">
@@ -117,7 +117,7 @@
                             <input type="number" step="0.01" name="biaya_jumlah[]" class="form-control" placeholder="Rp per kg" required>
                         </div>
                         <div class="col-md-1">
-                            <button type="button" class="btn btn-outline-danger hapus-baris-biaya" style="display:none;"><i class="ti ti-trash"></i></button>
+                            <button type="button" class="btn btn-danger hapus-baris-biaya" style="display:none;"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
                 </div>
@@ -131,16 +131,16 @@
             <div id="field-ekspor" class="card card-body bg-light mb-3" style="display:none;">
                 <h4 class="mb-3">Detail Ekspor</h4>
                 <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Sertifikasi</label>
+                    <div class="col-md-4 form-group">
+                        <label>Sertifikasi</label>
                         <input type="text" name="sertifikasi" value="{{ old('sertifikasi') }}" class="form-control" placeholder="mis. HACCP">
                     </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Kontinuitas Suplai</label>
+                    <div class="col-md-4 form-group">
+                        <label>Kontinuitas Suplai</label>
                         <input type="text" name="kontinuitas_suplai" value="{{ old('kontinuitas_suplai') }}" class="form-control" placeholder="Self-declare, mis. 'Rutin tiap minggu'">
                     </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Negara Tujuan</label>
+                    <div class="col-md-4 form-group">
+                        <label>Negara Tujuan</label>
                         <input type="text" name="negara_tujuan" value="{{ old('negara_tujuan') }}" class="form-control">
                     </div>
                 </div>
@@ -157,83 +157,84 @@
 
 @section('scripts')
 <script>
-    // toggle field ekspor
-    const tipeSelect = document.getElementById('tipe');
-    const fieldEkspor = document.getElementById('field-ekspor');
-    function toggleFieldEkspor() {
-        const val = tipeSelect.value;
-        fieldEkspor.style.display = (val === 'Ekspor' || val === 'Ekspor & Lokal') ? 'block' : 'none';
-    }
-    tipeSelect.addEventListener('change', toggleFieldEkspor);
-    toggleFieldEkspor();
-
-    // toggle label section biaya berdasarkan Jenis Penawaran (Produksi Sendiri vs Trading)
-    const jenisPenawaranSelect = document.getElementById('jenis_penawaran');
-    const judulSectionBiaya = document.getElementById('judul-section-biaya');
-    const hintSectionBiaya = document.getElementById('hint-section-biaya');
-    const contohSectionBiaya = document.getElementById('contoh-section-biaya');
-
-    function toggleLabelBiaya() {
-        if (jenisPenawaranSelect.value === 'Trading') {
-            judulSectionBiaya.innerHTML = 'Margin / Keuntungan <span class="text-danger">*</span>';
-            hintSectionBiaya.textContent = 'Karena barang sudah jadi dari mitra (biaya proses/packing/dll sudah ditanggung mitra), cukup isi margin/keuntungan yang Anda inginkan per kg. Wajib diisi minimal 1 baris.';
-            contohSectionBiaya.textContent = 'Contoh label: Margin/Keuntungan, atau biaya tambahan lain jika ada (mis. Transport dari Mitra).';
-        } else {
-            judulSectionBiaya.innerHTML = 'Rincian Biaya HPP <span class="text-danger">*</span>';
-            hintSectionBiaya.textContent = 'Biaya operasional per kg (proses, packing, listrik, tenaga kerja, pengiriman, asuransi, dll) — berlaku SAMA untuk semua grade di atas, dan otomatis ditambahkan ke harga beli saat dihitung sebagai Harga Jual. Wajib diisi minimal 1 baris.';
-            contohSectionBiaya.textContent = 'Contoh label: Biaya Proses, Biaya Packing, Biaya Listrik, Biaya Tenaga Kerja, Biaya Pengiriman, Asuransi, atau biaya lain sesuai komoditi Anda.';
+    document.addEventListener('DOMContentLoaded', function () {
+        // toggle field ekspor
+        const tipeSelect = document.getElementById('tipe');
+        const fieldEkspor = document.getElementById('field-ekspor');
+        function toggleFieldEkspor() {
+            const val = tipeSelect.value;
+            fieldEkspor.style.display = (val === 'Ekspor' || val === 'Ekspor & Lokal') ? 'block' : 'none';
         }
-    }
-    jenisPenawaranSelect.addEventListener('change', toggleLabelBiaya);
-    toggleLabelBiaya();
+        tipeSelect.addEventListener('change', toggleFieldEkspor);
+        toggleFieldEkspor();
 
-    // tambah/hapus baris rincian grade
-    const container = document.getElementById('baris-grade-container');
-    document.getElementById('tambah-baris').addEventListener('click', function () {
-        const baris = container.querySelector('.baris-grade').cloneNode(true);
-        baris.querySelectorAll('input').forEach(input => input.value = '');
-        baris.querySelector('.hapus-baris').style.display = 'inline-block';
-        container.appendChild(baris);
-        perbaruiTombolHapus();
-    });
+        // toggle label section biaya berdasarkan Jenis Penawaran (Produksi Sendiri vs Trading)
+        const jenisPenawaranSelect = document.getElementById('jenis_penawaran');
+        const judulSectionBiaya = document.getElementById('judul-section-biaya');
+        const hintSectionBiaya = document.getElementById('hint-section-biaya');
+        const contohSectionBiaya = document.getElementById('contoh-section-biaya');
 
-    container.addEventListener('click', function (e) {
-        if (e.target.closest('.hapus-baris')) {
-            e.target.closest('.baris-grade').remove();
+        function toggleLabelBiaya() {
+            if (jenisPenawaranSelect.value === 'Trading') {
+                judulSectionBiaya.innerHTML = 'Margin / Keuntungan <span class="text-danger">*</span>';
+                hintSectionBiaya.textContent = 'Karena barang sudah jadi dari mitra (biaya proses/packing/dll sudah ditanggung mitra), cukup isi margin/keuntungan yang Anda inginkan per kg. Wajib diisi minimal 1 baris.';
+                contohSectionBiaya.textContent = 'Contoh label: Margin/Keuntungan, atau biaya tambahan lain jika ada (mis. Transport dari Mitra).';
+            } else {
+                judulSectionBiaya.innerHTML = 'Rincian Biaya HPP <span class="text-danger">*</span>';
+                hintSectionBiaya.textContent = 'Biaya operasional per kg (proses, packing, listrik, tenaga kerja, pengiriman, asuransi, dll) — berlaku SAMA untuk semua grade di atas, dan otomatis ditambahkan ke harga beli saat dihitung sebagai Harga Jual. Wajib diisi minimal 1 baris.';
+                contohSectionBiaya.textContent = 'Contoh label: Biaya Proses, Biaya Packing, Biaya Listrik, Biaya Tenaga Kerja, Biaya Pengiriman, Asuransi, atau biaya lain sesuai komoditi Anda.';
+            }
+        }
+        jenisPenawaranSelect.addEventListener('change', toggleLabelBiaya);
+        toggleLabelBiaya();
+
+        // tambah/hapus baris rincian grade
+        const container = document.getElementById('baris-grade-container');
+        document.getElementById('tambah-baris').addEventListener('click', function () {
+            const baris = container.querySelector('.baris-grade').cloneNode(true);
+            baris.querySelectorAll('input').forEach(input => input.value = '');
+            baris.querySelector('.hapus-baris').style.display = 'inline-block';
+            container.appendChild(baris);
             perbaruiTombolHapus();
-        }
-    });
-
-    function perbaruiTombolHapus() {
-        const semuaBaris = container.querySelectorAll('.baris-grade');
-        semuaBaris.forEach((baris, index) => {
-            const tombolHapus = baris.querySelector('.hapus-baris');
-            tombolHapus.style.display = semuaBaris.length > 1 ? 'inline-block' : 'none';
         });
-    }
 
-    // tambah/hapus baris biaya HPP - pola sama dengan rincian grade
-    const containerBiaya = document.getElementById('baris-biaya-container');
-    document.getElementById('tambah-baris-biaya').addEventListener('click', function () {
-        const baris = containerBiaya.querySelector('.baris-biaya').cloneNode(true);
-        baris.querySelectorAll('input').forEach(input => input.value = '');
-        baris.querySelector('.hapus-baris-biaya').style.display = 'inline-block';
-        containerBiaya.appendChild(baris);
-        perbaruiTombolHapusBiaya();
-    });
+        container.addEventListener('click', function (e) {
+            if (e.target.closest('.hapus-baris')) {
+                e.target.closest('.baris-grade').remove();
+                perbaruiTombolHapus();
+            }
+        });
 
-    containerBiaya.addEventListener('click', function (e) {
-        if (e.target.closest('.hapus-baris-biaya')) {
-            e.target.closest('.baris-biaya').remove();
+        function perbaruiTombolHapus() {
+            const semuaBaris = container.querySelectorAll('.baris-grade');
+            semuaBaris.forEach((baris) => {
+                baris.querySelector('.hapus-baris').style.display = semuaBaris.length > 1 ? 'inline-block' : 'none';
+            });
+        }
+
+        // tambah/hapus baris biaya HPP - pola sama dengan rincian grade
+        const containerBiaya = document.getElementById('baris-biaya-container');
+        document.getElementById('tambah-baris-biaya').addEventListener('click', function () {
+            const baris = containerBiaya.querySelector('.baris-biaya').cloneNode(true);
+            baris.querySelectorAll('input').forEach(input => input.value = '');
+            baris.querySelector('.hapus-baris-biaya').style.display = 'inline-block';
+            containerBiaya.appendChild(baris);
             perbaruiTombolHapusBiaya();
+        });
+
+        containerBiaya.addEventListener('click', function (e) {
+            if (e.target.closest('.hapus-baris-biaya')) {
+                e.target.closest('.baris-biaya').remove();
+                perbaruiTombolHapusBiaya();
+            }
+        });
+
+        function perbaruiTombolHapusBiaya() {
+            const semuaBaris = containerBiaya.querySelectorAll('.baris-biaya');
+            semuaBaris.forEach((baris) => {
+                baris.querySelector('.hapus-baris-biaya').style.display = semuaBaris.length > 1 ? 'inline-block' : 'none';
+            });
         }
     });
-
-    function perbaruiTombolHapusBiaya() {
-        const semuaBaris = containerBiaya.querySelectorAll('.baris-biaya');
-        semuaBaris.forEach((baris) => {
-            baris.querySelector('.hapus-baris-biaya').style.display = semuaBaris.length > 1 ? 'inline-block' : 'none';
-        });
-    }
 </script>
 @endsection

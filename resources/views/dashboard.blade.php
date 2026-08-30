@@ -3,83 +3,93 @@
 @section('title', 'Dashboard')
 
 @section('content')
-<div class="row row-cards mb-4">
-    <div class="col-sm-6 col-lg-4">
-        <div class="card card-sm">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-auto"><span class="bg-green text-white avatar"><i class="ti ti-fish"></i></span></div>
-                    <div class="col">
-                        <div class="font-weight-medium">{{ $totalPenawaranTersedia }}</div>
-                        <div class="text-muted">Penawaran Tersedia</div>
-                    </div>
+<div class="row">
+    <div class="col-lg-4 col-md-6 col-sm-6 col-12">
+        <div class="card card-statistic-1">
+            <div class="card-icon bg-success">
+                <i class="fas fa-fish"></i>
+            </div>
+            <div class="card-wrap">
+                <div class="card-header">
+                    <h4>Penawaran Tersedia</h4>
+                </div>
+                <div class="card-body">
+                    {{ $totalPenawaranTersedia }}
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-sm-6 col-lg-4">
-        <div class="card card-sm">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-auto"><span class="bg-blue text-white avatar"><i class="ti ti-clipboard-list"></i></span></div>
-                    <div class="col">
-                        <div class="font-weight-medium">{{ $totalPermintaanTersedia }}</div>
-                        <div class="text-muted">Permintaan Tersedia</div>
-                    </div>
+    <div class="col-lg-4 col-md-6 col-sm-6 col-12">
+        <div class="card card-statistic-1">
+            <div class="card-icon bg-primary">
+                <i class="fas fa-clipboard-list"></i>
+            </div>
+            <div class="card-wrap">
+                <div class="card-header">
+                    <h4>Permintaan Tersedia</h4>
+                </div>
+                <div class="card-body">
+                    {{ $totalPermintaanTersedia }}
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-sm-6 col-lg-4">
-        <div class="card card-sm">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-auto"><span class="bg-orange text-white avatar"><i class="ti ti-alert-triangle"></i></span></div>
-                    <div class="col">
-                        <div class="font-weight-medium">{{ $matchMenungguReview }}</div>
-                        <div class="text-muted">Match Ekspor Menunggu Review</div>
-                    </div>
+    <div class="col-lg-4 col-md-6 col-sm-6 col-12">
+        <div class="card card-statistic-1">
+            <div class="card-icon bg-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="card-wrap">
+                <div class="card-header">
+                    <h4>Match Ekspor Menunggu Review</h4>
+                </div>
+                <div class="card-body">
+                    {{ $matchMenungguReview }}
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row row-cards">
+<div class="row">
     <div class="col-md-6">
         <div class="card">
-            <div class="card-header"><h3 class="card-title">Penawaran Terbaru</h3></div>
-            <div class="list-group list-group-flush">
+            <div class="card-header">
+                <h4>Penawaran Terbaru</h4>
+            </div>
+            <ul class="list-group list-group-flush">
                 @forelse ($penawaranTerbaru as $item)
                     <a href="{{ route('penawaran.show', $item) }}" class="list-group-item list-group-item-action">
-                        <div class="d-flex justify-content-between">
+                        <div class="d-flex justify-content-between align-items-center">
                             <div>{{ $item->judul }}</div>
-                            <span class="badge bg-azure-lt">{{ $item->tipe }}</span>
+                            <span class="badge badge-info">{{ $item->tipe }}</span>
                         </div>
                         <div class="text-muted small">{{ $item->user->cabang->nama_cabang ?? '-' }}</div>
                     </a>
                 @empty
                     <div class="list-group-item text-muted">Belum ada penawaran.</div>
                 @endforelse
-            </div>
+            </ul>
         </div>
     </div>
     <div class="col-md-6">
         <div class="card">
-            <div class="card-header"><h3 class="card-title">Permintaan Terbaru</h3></div>
-            <div class="list-group list-group-flush">
+            <div class="card-header">
+                <h4>Permintaan Terbaru</h4>
+            </div>
+            <ul class="list-group list-group-flush">
                 @forelse ($permintaanTerbaru as $item)
                     <a href="{{ route('permintaan.show', $item) }}" class="list-group-item list-group-item-action">
-                        <div class="d-flex justify-content-between">
+                        <div class="d-flex justify-content-between align-items-center">
                             <div>{{ $item->judul }}</div>
-                            <span class="badge bg-azure-lt">{{ $item->tipe }}</span>
+                            <span class="badge badge-info">{{ $item->tipe }}</span>
                         </div>
                         <div class="text-muted small">{{ $item->user->cabang->nama_cabang ?? 'Pusat' }}</div>
                     </a>
                 @empty
                     <div class="list-group-item text-muted">Belum ada permintaan.</div>
                 @endforelse
-            </div>
+            </ul>
         </div>
     </div>
 </div>

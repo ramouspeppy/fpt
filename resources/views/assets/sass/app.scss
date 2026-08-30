@@ -1,0 +1,63 @@
+// Fonts
+// Bootstrap
+@import "bootstrap/scss/bootstrap";
+
+@import url("//fonts.googleapis.com/css?family=Nunito:400,600,700,800");
+// Variables
+@import "variables";
+
+@import "datatables.net-bs4/css/dataTables.bootstrap4.css";
+
+@import "datatables.net-select-bs4/css/select.bootstrap4.min.css";
+
+// put your lib here
+
+// Font Awesome 5.15.4
+// @import "~@fortawesome/fontawesome-free/css/fontawesome.min.css";
+// @import "~@fortawesome/fontawesome-free/css/solid.min.css";
+// @import "~@fortawesome/fontawesome-free/css/regular.min.css"; // jika perlu
+// @import "~@fortawesome/fontawesome-free/css/brands.min.css"; // jika perlu
+
+// dropzone
+// @import "../lib/dropzone/basic.min";
+// @import "../lib/dropzone/dropzone.min";
+
+// star
+// @import "~bootstrap-star-rating/css/star-rating";
+// @import "~bootstrap-star-rating/themes/krajee-fas/theme";
+
+// tempus dominus
+// @import "@eonasdan/tempus-dominus";
+
+// @import "~codemirror/lib/codemirror";
+// @import "~codemirror/addon/scroll/simplescrollbars.css";
+// @import "~codemirror/theme/material-darker";
+
+// select2
+@import "select2/dist/css/select2.min.css";
+
+// @import "~chocolat/dist/css/chocolat.css";
+
+// datatable checkbox
+@import "../lib/datatables-checkboxes/dataTables.checkboxes";
+
+// selectric
+@import "../lib/selectric/selectric";
+
+// jasny bootstrap
+// @import "../lib/jasny-bootstrap/css/jasny-bootstrap";
+
+// Glightbox
+@import "glightbox/dist/css/glightbox.min.css";
+
+// end lib
+
+@import "../css/components";
+
+@import "../css/style";
+
+@import "test";
+@import "backend";
+
+// utility tambahan (gap, badge-purple, dll) - lihat resources/views/assets/css/app-custom.css
+@import "../css/app-custom";

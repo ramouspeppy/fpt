@@ -3,23 +3,27 @@
 @section('title', 'Detail Permintaan')
 
 @section('content')
+@php
+    $warnaStatus = ['tersedia' => 'success', 'matched' => 'primary', 'selesai' => 'dark', 'ditutup' => 'secondary'];
+    $warnaPrioritas = ['merah' => 'danger', 'kuning' => 'warning', 'hijau' => 'success'];
+@endphp
 <div class="card">
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-start mb-3">
             <div>
                 <h2>{{ $permintaan->judul }}</h2>
-                <span class="badge bg-azure-lt">{{ $permintaan->tipe }}</span>
-                <span class="badge bg-{{ $permintaan->status == 'tersedia' ? 'green' : ($permintaan->status == 'matched' ? 'blue' : 'secondary') }}-lt">
+                <span class="badge badge-info">{{ $permintaan->tipe }}</span>
+                <span class="badge badge-{{ $warnaStatus[$permintaan->status] ?? 'secondary' }}">
                     {{ ucfirst($permintaan->status) }}
                 </span>
                 @if ($permintaan->prioritas_warna)
-                    <span class="badge bg-{{ $permintaan->prioritas_warna == 'merah' ? 'red' : ($permintaan->prioritas_warna == 'kuning' ? 'yellow' : 'green') }}-lt">
+                    <span class="badge badge-{{ $warnaPrioritas[$permintaan->prioritas_warna] ?? 'secondary' }}">
                         Prioritas: {{ ucfirst($permintaan->prioritas_warna) }}
                     </span>
                 @endif
             </div>
             @if (auth()->id() === $permintaan->user_id || auth()->user()->hasRole('Admin'))
-                <a href="{{ route('permintaan.edit', $permintaan) }}" class="btn btn-outline-secondary">Edit</a>
+                <a href="{{ route('permintaan.edit', $permintaan) }}" class="btn btn-secondary">Edit</a>
             @endif
         </div>
 
@@ -28,7 +32,7 @@
         @endif
 
         <dl class="row">
-            <dt class="col-3">Jenis Ikan</dt>
+            <dt class="col-3">Komoditi</dt>
             <dd class="col-9">{{ $permintaan->komoditi->nama ?? '-' }} <span class="text-muted small">({{ $permintaan->komoditi->kategori ?? '-' }})</span></dd>
 
             <dt class="col-3">Keterangan</dt>
@@ -38,7 +42,7 @@
         <hr>
         <h4>Rincian Grade / Size Dibutuhkan</h4>
         <div class="table-responsive mb-3">
-            <table class="table table-vcenter card-table">
+            <table class="table table-striped">
                 <thead>
                     <tr>
                         <th>Ukuran / Grade</th>
@@ -56,7 +60,7 @@
                     @endforeach
                 </tbody>
                 <tfoot>
-                    <tr class="fw-bold">
+                    <tr class="font-weight-bold">
                         <td>Total</td>
                         <td>{{ $permintaan->rentang_harga }}</td>
                         <td>{{ number_format($permintaan->total_volume, 0) }} kg</td>
@@ -78,7 +82,7 @@
                         @csrf
                         @method('PATCH')
                         <input type="hidden" name="status" value="{{ $nilai }}">
-                        <button type="submit" class="btn btn-sm {{ $permintaan->status === $nilai ? 'btn-primary' : 'btn-outline-secondary' }}">
+                        <button type="submit" class="btn btn-sm {{ $permintaan->status === $nilai ? 'btn-primary' : 'btn-secondary' }}">
                             {{ $label }}
                         </button>
                     </form>
@@ -114,7 +118,7 @@
             <dd class="col-9">
                 @if ($permintaan->user->whatsapp_link)
                     <a href="{{ $permintaan->user->whatsapp_link }}" target="_blank" class="btn btn-sm btn-success">
-                        <i class="ti ti-brand-whatsapp"></i> Hubungi via WhatsApp
+                        <i class="fab fa-whatsapp"></i> Hubungi via WhatsApp
                     </a>
                 @else
                     -
