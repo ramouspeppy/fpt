@@ -28,9 +28,9 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             KomoditiSeeder::class,
             KomoditiSizeSeeder::class,
-            // PenawaranSeeder::class,
-            // PermintaanSeeder::class,
-            // MatchingSeeder::class,
+            PenawaranSeeder::class,
+            PermintaanSeeder::class,
+            MatchingSeeder::class,
         ]);
     }
 }

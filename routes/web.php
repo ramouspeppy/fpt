@@ -13,7 +13,7 @@ use App\Http\Controllers\ProjectController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
 });
 
 // Route::get('/dashboard', function () {
@@ -39,6 +39,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/komoditi/{komoditi}/size/usulkan', [KomoditiSizeController::class, 'simpanUsulan'])->name('komoditi.size.simpanUsulan');
 
     Route::get('/match', [MatchSuggestionController::class, 'index'])->name('match.index');
+    Route::get('/match/{match}', [MatchSuggestionController::class, 'show'])->name('match.show');
     Route::post('/match/jalankan', [MatchSuggestionController::class, 'jalankan'])->name('match.jalankan');
     // v9: approve/tolak diganti "pilih" - Pusat/Admin memilih kandidat jadi Project.
     // Berlaku untuk SEMUA match (Lokal & Ekspor), tidak ada beda jalur lagi.

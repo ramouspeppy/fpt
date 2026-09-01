@@ -87,14 +87,13 @@
                     </span>
                     <span class="text-muted small ml-2">Skor: {{ $match->skor_matching }}</span>
                 </div>
-                @if ($match->status === 'terbuka' && auth()->user()->hasAnyRole(['Pusat', 'Admin']))
-                    <form method="POST" action="{{ route('match.pilih', $match) }}" onsubmit="return confirm('Pilih kandidat ini sebagai pemenang? Penawaran & Permintaan terkait akan langsung terkunci dan jadi Project.')">
-                        @csrf
-                        <button class="btn btn-sm btn-success"><i class="fas fa-check"></i> Pilih Jadi Project</button>
-                    </form>
-                @elseif ($match->status === 'dipilih' && $match->project)
+                @if ($match->status === 'dipilih' && $match->project)
                     <a href="{{ route('project.show', $match->project) }}" class="btn btn-sm btn-primary">
                         <i class="fas fa-folder-open"></i> Lihat Project
+                    </a>
+                @else
+                    <a href="{{ route('match.show', $match) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-eye"></i> Lihat Detail & Bandingkan
                     </a>
                 @endif
             </div>
