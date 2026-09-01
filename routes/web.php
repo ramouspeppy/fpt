@@ -7,6 +7,8 @@ use App\Http\Controllers\PenawaranController;
 use App\Http\Controllers\PermintaanController;
 use App\Http\Controllers\MatchSuggestionController;
 use App\Http\Controllers\KomoditiController;
+use App\Http\Controllers\KomoditiSizeController;
+use App\Http\Controllers\ProjectController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -32,10 +34,22 @@ Route::middleware('auth')->group(function () {
     Route::get('/komoditi/usulkan', [KomoditiController::class, 'usulkan'])->name('komoditi.usulkan');
     Route::post('/komoditi/usulkan', [KomoditiController::class, 'simpanUsulan'])->name('komoditi.simpanUsulan');
 
+    // Usulan size - bisa diakses semua role (termasuk Cabang), sama polanya dengan usulan komoditi
+    Route::get('/komoditi/{komoditi}/size/usulkan', [KomoditiSizeController::class, 'usulkan'])->name('komoditi.size.usulkan');
+    Route::post('/komoditi/{komoditi}/size/usulkan', [KomoditiSizeController::class, 'simpanUsulan'])->name('komoditi.size.simpanUsulan');
+
     Route::get('/match', [MatchSuggestionController::class, 'index'])->name('match.index');
     Route::post('/match/jalankan', [MatchSuggestionController::class, 'jalankan'])->name('match.jalankan');
-    Route::post('/match/{match}/approve', [MatchSuggestionController::class, 'approve'])->name('match.approve');
-    Route::post('/match/{match}/tolak', [MatchSuggestionController::class, 'tolak'])->name('match.tolak');
+    // v9: approve/tolak diganti "pilih" - Pusat/Admin memilih kandidat jadi Project.
+    // Berlaku untuk SEMUA match (Lokal & Ekspor), tidak ada beda jalur lagi.
+    Route::post('/match/{match}/pilih', [MatchSuggestionController::class, 'pilih'])
+        ->middleware('role:Pusat|Admin')->name('match.pilih');
+
+    // v9: menu Project - semua role bisa akses, tapi isinya difilter per role di controller
+    Route::get('/project', [ProjectController::class, 'index'])->name('project.index');
+    Route::get('/project/{project}', [ProjectController::class, 'show'])->name('project.show');
+    Route::patch('/project/{project}/status', [ProjectController::class, 'updateStatus'])->name('project.updateStatus');
+    Route::post('/project/{project}/catatan', [ProjectController::class, 'storeCatatan'])->name('project.storeCatatan');
 
     Route::middleware(['role:Admin'])->group(function () {
         Route::resource('cabang', CabangController::class);
@@ -47,6 +61,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/komoditi', [KomoditiController::class, 'store'])->name('komoditi.store');
         Route::patch('/komoditi/{komoditi}/approve', [KomoditiController::class, 'approve'])->name('komoditi.approve');
         Route::patch('/komoditi/{komoditi}/tolak', [KomoditiController::class, 'tolak'])->name('komoditi.tolak');
+
+        // v9: kelola daftar size per komoditi
+        Route::get('/komoditi/{komoditi}/size', [KomoditiSizeController::class, 'index'])->name('komoditi.size.index');
+        Route::post('/komoditi/{komoditi}/size', [KomoditiSizeController::class, 'store'])->name('komoditi.size.store');
+        Route::patch('/komoditi/{komoditi}/size/{size}/approve', [KomoditiSizeController::class, 'approve'])->name('komoditi.size.approve');
+        Route::patch('/komoditi/{komoditi}/size/{size}/tolak', [KomoditiSizeController::class, 'tolak'])->name('komoditi.size.tolak');
     });
 });
 

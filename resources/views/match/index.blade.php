@@ -8,10 +8,8 @@
         <form method="GET">
             <select name="status" class="form-control selectric" onchange="this.form.submit()">
                 <option value="">Semua Status</option>
-                <option value="menunggu_review" @selected(request('status')=='menunggu_review')>Menunggu Review (Ekspor)</option>
-                <option value="notifikasi_otomatis" @selected(request('status')=='notifikasi_otomatis')>Notifikasi Otomatis (Lokal)</option>
-                <option value="disetujui" @selected(request('status')=='disetujui')>Disetujui Pusat</option>
-                <option value="ditolak" @selected(request('status')=='ditolak')>Ditolak</option>
+                <option value="terbuka" @selected(request('status')=='terbuka')>Terbuka (belum dipilih)</option>
+                <option value="dipilih" @selected(request('status')=='dipilih')>Sudah Dipilih (Project)</option>
             </select>
         </form>
     </div>
@@ -27,19 +25,18 @@
     <div class="alert alert-info">Menampilkan kecocokan yang melibatkan penawaran/permintaan cabang Anda saja.</div>
 @endif
 
+@if (auth()->user()->hasAnyRole(['Pusat', 'Admin']))
+    <div class="alert alert-warning">
+        <i class="fas fa-info-circle"></i> Setiap kandidat kecocokan (Lokal maupun Ekspor) harus Anda
+        pilih secara manual untuk dijadikan Project. Kalau 1 Permintaan punya beberapa kandidat dari
+        cabang berbeda, pilih salah satu yang paling sesuai — kandidat lain akan otomatis tidak
+        relevan setelah Permintaan-nya terkunci.
+    </div>
+@endif
+
 @php
-    $labelStatus = [
-        'menunggu_review' => 'Menunggu Review',
-        'notifikasi_otomatis' => 'Notifikasi Otomatis',
-        'disetujui' => 'Disetujui Pusat',
-        'ditolak' => 'Ditolak',
-    ];
-    $warnaStatus = [
-        'menunggu_review' => 'warning',
-        'notifikasi_otomatis' => 'info',
-        'disetujui' => 'success',
-        'ditolak' => 'danger',
-    ];
+    $labelStatus = ['terbuka' => 'Terbuka', 'dipilih' => 'Sudah Dipilih'];
+    $warnaStatus = ['terbuka' => 'warning', 'dipilih' => 'success'];
 @endphp
 
 @forelse ($matches as $match)
@@ -54,9 +51,9 @@
                     </div>
                     @if ($match->penawaranRincian)
                         <div class="mt-1">
-                            <span class="badge badge-info">Grade: {{ $match->penawaranRincian->ukuran_grade }}</span>
+                            <span class="badge badge-info">Size: {{ $match->penawaranRincian->komoditiSize->nama_size ?? '-' }}</span>
                             <span class="text-muted small">
-                                Rp {{ number_format($match->penawaranRincian->harga, 0) }}/kg
+                                Rp {{ number_format($match->penawaranRincian->harga_jual, 0) }}/kg
                                 &middot; {{ number_format($match->penawaranRincian->kuantiti, 0) }} kg
                             </span>
                         </div>
@@ -73,7 +70,7 @@
                     </div>
                     @if ($match->permintaanRincian)
                         <div class="mt-1">
-                            <span class="badge badge-info">Grade: {{ $match->permintaanRincian->ukuran_grade }}</span>
+                            <span class="badge badge-info">Size: {{ $match->permintaanRincian->komoditiSize->nama_size ?? '-' }}</span>
                             <span class="text-muted small">
                                 Rp {{ number_format($match->permintaanRincian->harga, 0) }}/kg
                                 &middot; {{ number_format($match->permintaanRincian->kuantiti, 0) }} kg
@@ -90,17 +87,15 @@
                     </span>
                     <span class="text-muted small ml-2">Skor: {{ $match->skor_matching }}</span>
                 </div>
-                @if ($match->status === 'menunggu_review' && auth()->user()->hasAnyRole(['Pusat', 'Admin']))
-                    <div>
-                        <form method="POST" action="{{ route('match.approve', $match) }}" class="d-inline">
-                            @csrf
-                            <button class="btn btn-sm btn-success">Setujui</button>
-                        </form>
-                        <form method="POST" action="{{ route('match.tolak', $match) }}" class="d-inline" onsubmit="return confirm('Tolak match ini?')">
-                            @csrf
-                            <button class="btn btn-sm btn-danger">Tolak</button>
-                        </form>
-                    </div>
+                @if ($match->status === 'terbuka' && auth()->user()->hasAnyRole(['Pusat', 'Admin']))
+                    <form method="POST" action="{{ route('match.pilih', $match) }}" onsubmit="return confirm('Pilih kandidat ini sebagai pemenang? Penawaran & Permintaan terkait akan langsung terkunci dan jadi Project.')">
+                        @csrf
+                        <button class="btn btn-sm btn-success"><i class="fas fa-check"></i> Pilih Jadi Project</button>
+                    </form>
+                @elseif ($match->status === 'dipilih' && $match->project)
+                    <a href="{{ route('project.show', $match->project) }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-folder-open"></i> Lihat Project
+                    </a>
                 @endif
             </div>
         </div>

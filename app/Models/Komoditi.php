@@ -41,6 +41,13 @@ class Komoditi extends Model
         return $this->hasMany(Permintaan::class);
     }
 
+    // BARU di v9: setiap komoditi punya daftar size-nya sendiri (mis. gurita:
+    // 1000UP, 500-1000, 300-500, 200-300 - beda komoditi beda daftar size).
+    public function sizes(): HasMany
+    {
+        return $this->hasMany(KomoditiSize::class);
+    }
+
     public function scopeDisetujui($query)
     {
         return $query->where('status', 'disetujui');

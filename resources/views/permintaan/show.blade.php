@@ -4,7 +4,8 @@
 
 @section('content')
 @php
-    $warnaStatus = ['tersedia' => 'success', 'matched' => 'primary', 'selesai' => 'dark', 'ditutup' => 'secondary'];
+    $warnaStatus = ['tersedia' => 'success', 'sedang_diproses' => 'primary', 'selesai' => 'dark', 'tutup' => 'secondary'];
+    $labelStatus = ['tersedia' => 'Tersedia', 'sedang_diproses' => 'Sedang Diproses', 'selesai' => 'Selesai', 'tutup' => 'Tutup'];
     $warnaPrioritas = ['merah' => 'danger', 'kuning' => 'warning', 'hijau' => 'success'];
 @endphp
 <div class="card">
@@ -14,7 +15,7 @@
                 <h2>{{ $permintaan->judul }}</h2>
                 <span class="badge badge-info">{{ $permintaan->tipe }}</span>
                 <span class="badge badge-{{ $warnaStatus[$permintaan->status] ?? 'secondary' }}">
-                    {{ ucfirst($permintaan->status) }}
+                    {{ $labelStatus[$permintaan->status] ?? ucfirst($permintaan->status) }}
                 </span>
                 @if ($permintaan->prioritas_warna)
                     <span class="badge badge-{{ $warnaPrioritas[$permintaan->prioritas_warna] ?? 'secondary' }}">
@@ -22,10 +23,18 @@
                     </span>
                 @endif
             </div>
-            @if (auth()->id() === $permintaan->user_id || auth()->user()->hasRole('Admin'))
+            @if ((auth()->id() === $permintaan->user_id || auth()->user()->hasRole('Admin')) && !$permintaan->sudah_terkunci)
                 <a href="{{ route('permintaan.edit', $permintaan) }}" class="btn btn-secondary">Edit</a>
             @endif
         </div>
+
+        @if ($permintaan->project)
+            <div class="alert alert-primary">
+                <i class="fas fa-lock"></i> Permintaan ini sudah terkunci karena menjadi bagian dari
+                <a href="{{ route('project.show', $permintaan->project) }}"><strong>Project #{{ $permintaan->project->id }}</strong></a>
+                — tidak bisa diedit lagi.
+            </div>
+        @endif
 
         @if ($permintaan->prioritas_tag)
             <div class="alert alert-warning">{{ $permintaan->prioritas_tag }}</div>
@@ -40,20 +49,20 @@
         </dl>
 
         <hr>
-        <h4>Rincian Grade / Size Dibutuhkan</h4>
+        <h4>Rincian Size Dibutuhkan</h4>
         <div class="table-responsive mb-3">
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th>Ukuran / Grade</th>
+                        <th>Size</th>
                         <th>Harga per kg</th>
                         <th>Kuantiti Dibutuhkan</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($permintaan->rincianGrade as $rincian)
+                    @foreach ($permintaan->rincianSize as $rincian)
                         <tr>
-                            <td>{{ $rincian->ukuran_grade }}</td>
+                            <td>{{ $rincian->komoditiSize->nama_size ?? '-' }}</td>
                             <td>Rp {{ number_format($rincian->harga, 0) }}</td>
                             <td>{{ number_format($rincian->kuantiti, 0) }} kg</td>
                         </tr>
@@ -69,7 +78,7 @@
             </table>
         </div>
 
-        @if (auth()->id() === $permintaan->user_id || auth()->user()->hasRole('Admin'))
+        @if ((auth()->id() === $permintaan->user_id || auth()->user()->hasRole('Admin')) && !$permintaan->sudah_terkunci)
             <hr>
             <h4>Ubah Status</h4>
             <div class="text-muted small mb-2">
@@ -77,7 +86,7 @@
                 jadi silakan update sendiri sesuai perkembangan komunikasi dengan pihak yang match.
             </div>
             <div class="btn-group" role="group">
-                @foreach (['tersedia' => 'Tersedia', 'matched' => 'Sedang Diproses', 'selesai' => 'Selesai', 'ditutup' => 'Tutup'] as $nilai => $label)
+                @foreach (['tersedia' => 'Tersedia', 'selesai' => 'Selesai', 'tutup' => 'Tutup'] as $nilai => $label)
                     <form method="POST" action="{{ route('permintaan.updateStatus', $permintaan) }}" class="d-inline">
                         @csrf
                         @method('PATCH')

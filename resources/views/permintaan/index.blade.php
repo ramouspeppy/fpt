@@ -25,7 +25,8 @@
 <div class="row">
     @forelse ($permintaan as $item)
         @php
-            $warnaStatus = ['tersedia' => 'success', 'matched' => 'primary', 'selesai' => 'dark', 'ditutup' => 'secondary'];
+            $warnaStatus = ['tersedia' => 'success', 'sedang_diproses' => 'primary', 'selesai' => 'dark', 'tutup' => 'secondary'];
+            $labelStatus = ['tersedia' => 'Tersedia', 'sedang_diproses' => 'Sedang Diproses', 'selesai' => 'Selesai', 'tutup' => 'Tutup'];
             $warnaPrioritas = ['merah' => '#dc3545', 'kuning' => '#ffc107', 'hijau' => '#28a745'];
         @endphp
         <div class="col-md-6 col-lg-4">
@@ -37,13 +38,18 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <h5 class="card-title mb-1">{{ $item->judul }}</h5>
                         <span class="badge badge-{{ $warnaStatus[$item->status] ?? 'secondary' }}">
-                            {{ ucfirst($item->status) }}
+                            {{ $labelStatus[$item->status] ?? ucfirst($item->status) }}
                         </span>
                     </div>
-                    <div class="text-muted small mb-2">{{ $item->tipe }} &middot; {{ $item->komoditi->nama ?? '-' }}</div>
+                    <div class="text-muted small mb-2">
+                        {{ $item->tipe }} &middot; {{ $item->komoditi->nama ?? '-' }}
+                        @if ($item->sudah_terkunci)
+                            <span class="badge badge-dark"><i class="fas fa-lock"></i> Project</span>
+                        @endif
+                    </div>
 
                     <div class="mb-2">
-                        <span class="badge badge-info">{{ $item->rincianGrade->count() }} grade</span>
+                        <span class="badge badge-info">{{ $item->rincianSize->count() }} size</span>
                         Total dibutuhkan: <strong>{{ number_format($item->total_volume, 0) }} kg</strong>
                         <div class="text-muted small">{{ $item->rentang_harga }} / kg</div>
                     </div>
@@ -64,7 +70,7 @@
 
                     <div class="mt-3">
                         <a href="{{ route('permintaan.show', $item) }}" class="btn btn-sm btn-primary">Detail</a>
-                        @if (auth()->id() === $item->user_id || auth()->user()->hasRole('Admin'))
+                        @if ((auth()->id() === $item->user_id || auth()->user()->hasRole('Admin')) && !$item->sudah_terkunci)
                             <a href="{{ route('permintaan.edit', $item) }}" class="btn btn-sm btn-secondary">Edit</a>
                         @endif
                     </div>

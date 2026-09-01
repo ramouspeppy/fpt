@@ -42,14 +42,20 @@ class Permintaan extends Model
         return $this->hasOne(PermintaanDetailEkspor::class);
     }
 
-    public function rincianGrade(): HasMany
+    // CATATAN MIGRASI v9: dulu bernama rincianGrade() / model PermintaanRincianGrade.
+    public function rincianSize(): HasMany
     {
-        return $this->hasMany(PermintaanRincianGrade::class);
+        return $this->hasMany(PermintaanRincianSize::class);
     }
 
     public function matchSuggestions(): HasMany
     {
         return $this->hasMany(MatchSuggestion::class);
+    }
+
+    public function project(): HasOne
+    {
+        return $this->hasOne(Project::class);
     }
 
     public function isEkspor(): bool
@@ -59,21 +65,26 @@ class Permintaan extends Model
 
     public function getTotalVolumeAttribute(): float
     {
-        return $this->rincianGrade->sum('kuantiti');
+        return $this->rincianSize->sum('kuantiti');
     }
 
     public function getRentangHargaAttribute(): string
     {
-        if ($this->rincianGrade->isEmpty()) {
+        if ($this->rincianSize->isEmpty()) {
             return '-';
         }
 
-        $min = $this->rincianGrade->min('harga');
-        $max = $this->rincianGrade->max('harga');
+        $min = $this->rincianSize->min('harga');
+        $max = $this->rincianSize->max('harga');
 
         return $min == $max
             ? 'Rp ' . number_format($min, 0)
             : 'Rp ' . number_format($min, 0) . ' - Rp ' . number_format($max, 0);
+    }
+
+    public function getSudahTerkunciAttribute(): bool
+    {
+        return $this->status !== 'tersedia';
     }
 
     public function getActivitylogOptions(): LogOptions

@@ -4,7 +4,8 @@
 
 @section('content')
 @php
-    $warnaStatus = ['tersedia' => 'success', 'matched' => 'primary', 'selesai' => 'dark', 'ditutup' => 'secondary'];
+    $warnaStatus = ['tersedia' => 'success', 'sedang_diproses' => 'primary', 'selesai' => 'dark', 'tutup' => 'secondary'];
+    $labelStatus = ['tersedia' => 'Tersedia', 'sedang_diproses' => 'Sedang Diproses', 'selesai' => 'Selesai', 'tutup' => 'Tutup'];
 @endphp
 <div class="card">
     <div class="card-body">
@@ -14,13 +15,21 @@
                 <span class="badge badge-info">{{ $penawaran->tipe }}</span>
                 <span class="badge badge-purple">{{ $penawaran->jenis_penawaran }}</span>
                 <span class="badge badge-{{ $warnaStatus[$penawaran->status] ?? 'secondary' }}">
-                    {{ ucfirst($penawaran->status) }}
+                    {{ $labelStatus[$penawaran->status] ?? ucfirst($penawaran->status) }}
                 </span>
             </div>
-            @if (auth()->id() === $penawaran->user_id || auth()->user()->hasRole('Admin'))
+            @if ((auth()->id() === $penawaran->user_id || auth()->user()->hasRole('Admin')) && !$penawaran->sudah_terkunci)
                 <a href="{{ route('penawaran.edit', $penawaran) }}" class="btn btn-secondary">Edit</a>
             @endif
         </div>
+
+        @if ($penawaran->project)
+            <div class="alert alert-primary">
+                <i class="fas fa-lock"></i> Penawaran ini sudah terkunci karena menjadi bagian dari
+                <a href="{{ route('project.show', $penawaran->project) }}"><strong>Project #{{ $penawaran->project->id }}</strong></a>
+                — tidak bisa diedit lagi. Sisa size lain yang belum laku (jika ada) harus dibuat Penawaran baru.
+            </div>
+        @endif
 
         <dl class="row">
             <dt class="col-3">Komoditi</dt>
@@ -34,21 +43,21 @@
         </dl>
 
         <hr>
-        <h4>Rincian Grade / Size</h4>
+        <h4>Rincian Size</h4>
         <div class="table-responsive mb-3">
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th>Ukuran / Grade</th>
+                        <th>Size</th>
                         <th>Harga Beli / kg</th>
                         <th>Kuantiti</th>
                         <th>Harga Jual / kg</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($penawaran->rincianGrade as $rincian)
+                    @foreach ($penawaran->rincianSize as $rincian)
                         <tr>
-                            <td>{{ $rincian->ukuran_grade }}</td>
+                            <td>{{ $rincian->komoditiSize->nama_size ?? '-' }}</td>
                             <td>Rp {{ number_format($rincian->harga, 0) }}</td>
                             <td>{{ number_format($rincian->kuantiti, 0) }} kg</td>
                             <td class="font-weight-bold">Rp {{ number_format($rincian->harga_jual, 0) }}</td>
@@ -71,7 +80,7 @@
             @if ($penawaran->isTrading())
                 Barang sudah jadi dari mitra, biaya di bawah ini murni margin/keuntungan.
             @else
-                Biaya operasional per kg, berlaku sama untuk semua grade di atas.
+                Biaya operasional per kg, berlaku sama untuk semua size di atas.
             @endif
         </div>
         <div class="table-responsive mb-3">
@@ -99,7 +108,7 @@
             </table>
         </div>
 
-        @if (auth()->id() === $penawaran->user_id || auth()->user()->hasRole('Admin'))
+        @if ((auth()->id() === $penawaran->user_id || auth()->user()->hasRole('Admin')) && !$penawaran->sudah_terkunci)
             <hr>
             <h4>Ubah Status</h4>
             <div class="text-muted small mb-2">
@@ -107,7 +116,7 @@
                 jadi silakan update sendiri sesuai perkembangan komunikasi dengan pihak yang match.
             </div>
             <div class="btn-group" role="group">
-                @foreach (['tersedia' => 'Tersedia', 'matched' => 'Sedang Diproses', 'selesai' => 'Selesai', 'ditutup' => 'Tutup'] as $nilai => $label)
+                @foreach (['tersedia' => 'Tersedia', 'selesai' => 'Selesai', 'tutup' => 'Tutup'] as $nilai => $label)
                     <form method="POST" action="{{ route('penawaran.updateStatus', $penawaran) }}" class="d-inline">
                         @csrf
                         @method('PATCH')

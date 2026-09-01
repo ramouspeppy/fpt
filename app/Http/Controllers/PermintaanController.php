@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Komoditi;
+use App\Models\KomoditiSize;
 use App\Models\Permintaan;
 use App\Models\PermintaanDetailEkspor;
 use App\Services\MatchingService;
@@ -13,7 +14,7 @@ class PermintaanController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Permintaan::with(['user.cabang', 'rincianGrade', 'komoditi'])->latest();
+        $query = Permintaan::with(['user.cabang', 'rincianSize.komoditiSize', 'komoditi'])->latest();
 
         if ($request->filled('cari')) {
             $query->where(function ($q) use ($request) {
@@ -38,8 +39,9 @@ class PermintaanController extends Controller
     public function create()
     {
         $komoditiList = Komoditi::disetujui()->orderBy('kategori')->orderBy('nama')->get()->groupBy('kategori');
+        $sizesByKomoditi = $this->sizesByKomoditiJson();
 
-        return view('permintaan.create', compact('komoditiList'));
+        return view('permintaan.create', compact('komoditiList', 'sizesByKomoditi'));
     }
 
     public function store(Request $request, MatchingService $matchingService)
@@ -54,13 +56,15 @@ class PermintaanController extends Controller
             'sertifikasi' => ['nullable', 'string', 'max:255'],
             'kontinuitas_suplai' => ['nullable', 'string', 'max:255'],
             'negara_tujuan' => ['nullable', 'string', 'max:255'],
-            'grade' => ['required', 'array', 'min:1'],
-            'grade.*' => ['required', 'string', 'max:255'],
+            'komoditi_size_id' => ['required', 'array', 'min:1'],
+            'komoditi_size_id.*' => ['required', 'exists:komoditi_size,id'],
             'harga' => ['required', 'array', 'min:1'],
             'harga.*' => ['required', 'numeric', 'min:0'],
             'kuantiti' => ['required', 'array', 'min:1'],
             'kuantiti.*' => ['required', 'numeric', 'min:0'],
         ]);
+
+        $this->pastikanSizeMilikKomoditi($validated['komoditi_id'], $validated['komoditi_size_id']);
 
         $permintaan = Permintaan::create([
             'user_id' => Auth::id(),
@@ -73,7 +77,7 @@ class PermintaanController extends Controller
             'status' => 'tersedia',
         ]);
 
-        $this->simpanRincianGrade($permintaan, $validated);
+        $this->simpanRincianSize($permintaan, $validated);
 
         if ($permintaan->isEkspor()) {
             PermintaanDetailEkspor::create([
@@ -84,14 +88,14 @@ class PermintaanController extends Controller
             ]);
         }
 
-        $matchingService->generateForPermintaan($permintaan->fresh('rincianGrade'));
+        $matchingService->generateForPermintaan($permintaan->fresh('rincianSize'));
 
         return redirect()->route('permintaan.index')->with('status', 'Permintaan berhasil ditambahkan.');
     }
 
     public function show(Permintaan $permintaan)
     {
-        $permintaan->load(['user.cabang', 'detailEkspor', 'rincianGrade', 'komoditi']);
+        $permintaan->load(['user.cabang', 'detailEkspor', 'rincianSize.komoditiSize', 'komoditi', 'project']);
 
         return view('permintaan.show', compact('permintaan'));
     }
@@ -99,16 +103,19 @@ class PermintaanController extends Controller
     public function edit(Permintaan $permintaan)
     {
         $this->authorizePemilikAtauAdmin($permintaan);
+        $this->tolakJikaTerkunci($permintaan);
 
-        $permintaan->load(['detailEkspor', 'rincianGrade', 'komoditi']);
+        $permintaan->load(['detailEkspor', 'rincianSize.komoditiSize', 'komoditi']);
         $komoditiList = Komoditi::disetujui()->orderBy('kategori')->orderBy('nama')->get()->groupBy('kategori');
+        $sizesByKomoditi = $this->sizesByKomoditiJson();
 
-        return view('permintaan.edit', compact('permintaan', 'komoditiList'));
+        return view('permintaan.edit', compact('permintaan', 'komoditiList', 'sizesByKomoditi'));
     }
 
     public function update(Request $request, Permintaan $permintaan)
     {
         $this->authorizePemilikAtauAdmin($permintaan);
+        $this->tolakJikaTerkunci($permintaan);
 
         $validated = $request->validate([
             'judul' => ['required', 'string', 'max:255'],
@@ -117,17 +124,19 @@ class PermintaanController extends Controller
             'keterangan' => ['nullable', 'string'],
             'prioritas_warna' => ['nullable', 'in:merah,kuning,hijau'],
             'prioritas_tag' => ['nullable', 'string', 'max:255'],
-            'status' => ['required', 'in:tersedia,matched,selesai,ditutup'],
+            'status' => ['required', 'in:tersedia,selesai,tutup'],
             'sertifikasi' => ['nullable', 'string', 'max:255'],
             'kontinuitas_suplai' => ['nullable', 'string', 'max:255'],
             'negara_tujuan' => ['nullable', 'string', 'max:255'],
-            'grade' => ['required', 'array', 'min:1'],
-            'grade.*' => ['required', 'string', 'max:255'],
+            'komoditi_size_id' => ['required', 'array', 'min:1'],
+            'komoditi_size_id.*' => ['required', 'exists:komoditi_size,id'],
             'harga' => ['required', 'array', 'min:1'],
             'harga.*' => ['required', 'numeric', 'min:0'],
             'kuantiti' => ['required', 'array', 'min:1'],
             'kuantiti.*' => ['required', 'numeric', 'min:0'],
         ]);
+
+        $this->pastikanSizeMilikKomoditi($validated['komoditi_id'], $validated['komoditi_size_id']);
 
         $permintaan->update([
             'judul' => $validated['judul'],
@@ -139,8 +148,8 @@ class PermintaanController extends Controller
             'status' => $validated['status'],
         ]);
 
-        $permintaan->rincianGrade()->delete();
-        $this->simpanRincianGrade($permintaan, $validated);
+        $permintaan->rincianSize()->delete();
+        $this->simpanRincianSize($permintaan, $validated);
 
         if ($permintaan->isEkspor()) {
             $permintaan->detailEkspor()->updateOrCreate(
@@ -161,6 +170,7 @@ class PermintaanController extends Controller
     public function destroy(Permintaan $permintaan)
     {
         $this->authorizePemilikAtauAdmin($permintaan);
+        $this->tolakJikaTerkunci($permintaan);
 
         $permintaan->delete();
 
@@ -171,9 +181,10 @@ class PermintaanController extends Controller
     public function updateStatus(Request $request, Permintaan $permintaan)
     {
         $this->authorizePemilikAtauAdmin($permintaan);
+        $this->tolakJikaTerkunci($permintaan);
 
         $validated = $request->validate([
-            'status' => ['required', 'in:tersedia,matched,selesai,ditutup'],
+            'status' => ['required', 'in:tersedia,selesai,tutup'],
         ]);
 
         $permintaan->update(['status' => $validated['status']]);
@@ -181,15 +192,38 @@ class PermintaanController extends Controller
         return redirect()->back()->with('status', 'Status permintaan berhasil diperbarui.');
     }
 
-    private function simpanRincianGrade(Permintaan $permintaan, array $validated): void
+    private function simpanRincianSize(Permintaan $permintaan, array $validated): void
     {
-        foreach ($validated['grade'] as $i => $grade) {
-            $permintaan->rincianGrade()->create([
-                'ukuran_grade' => $grade,
+        foreach ($validated['komoditi_size_id'] as $i => $komoditiSizeId) {
+            $permintaan->rincianSize()->create([
+                'komoditi_size_id' => $komoditiSizeId,
                 'harga' => $validated['harga'][$i],
                 'kuantiti' => $validated['kuantiti'][$i],
             ]);
         }
+    }
+
+    private function pastikanSizeMilikKomoditi(int $komoditiId, array $komoditiSizeIds): void
+    {
+        $jumlahValid = KomoditiSize::where('komoditi_id', $komoditiId)
+            ->whereIn('id', $komoditiSizeIds)
+            ->count();
+
+        abort_unless($jumlahValid === count(array_unique($komoditiSizeIds)), 422, 'Ada size yang tidak sesuai dengan komoditi yang dipilih.');
+    }
+
+    private function sizesByKomoditiJson(): string
+    {
+        $map = KomoditiSize::disetujui()->urutTampil()->get()
+            ->groupBy('komoditi_id')
+            ->map(fn ($group) => $group->map(fn ($s) => ['id' => $s->id, 'nama_size' => $s->nama_size])->values());
+
+        return $map->toJson();
+    }
+
+    private function tolakJikaTerkunci(Permintaan $permintaan): void
+    {
+        abort_if($permintaan->sudah_terkunci, 403, 'Permintaan ini sudah terkunci karena menjadi bagian dari Project, tidak bisa diubah lagi.');
     }
 
     private function authorizePemilikAtauAdmin(Permintaan $permintaan): void

@@ -33,7 +33,7 @@
                 </div>
                 <div class="col-md-3 form-group">
                     <label>Komoditi <span class="text-danger">*</span></label>
-                    <select name="komoditi_id" class="form-control select2 @error('komoditi_id') is-invalid @enderror">
+                    <select name="komoditi_id" id="komoditi_id" class="form-control select2 @error('komoditi_id') is-invalid @enderror">
                         @foreach ($komoditiList as $kategori => $daftar)
                             <optgroup label="{{ $kategori ?? 'Lainnya' }}">
                                 @foreach ($daftar as $k)
@@ -48,9 +48,8 @@
                     <label>Status <span class="text-danger">*</span></label>
                     <select name="status" class="form-control selectric">
                         <option value="tersedia" @selected($penawaran->status=='tersedia')>Tersedia</option>
-                        <option value="matched" @selected($penawaran->status=='matched')>Matched</option>
                         <option value="selesai" @selected($penawaran->status=='selesai')>Selesai</option>
-                        <option value="ditutup" @selected($penawaran->status=='ditutup')>Ditutup</option>
+                        <option value="tutup" @selected($penawaran->status=='tutup')>Tutup</option>
                     </select>
                 </div>
             </div>
@@ -67,17 +66,21 @@
 
             <div class="card card-body bg-light mb-3">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="mb-0">Rincian Grade / Size</h4>
+                    <h4 class="mb-0">Rincian Size</h4>
                     <button type="button" id="tambah-baris" class="btn btn-sm btn-primary">
                         <i class="fas fa-plus"></i> Tambah Baris
                     </button>
                 </div>
+                <div class="text-muted small mb-2" id="hint-size">
+                    Tidak menemukan size yang dicari?
+                    <a href="{{ route('komoditi.size.usulkan', $penawaran->komoditi_id) }}" id="link-usulkan-size" target="_blank">Usulkan size baru</a>.
+                </div>
 
-                <div id="baris-grade-container">
-                    @forelse ($penawaran->rincianGrade as $rincian)
-                        <div class="row baris-grade mb-2">
+                <div id="baris-size-container">
+                    @foreach ($penawaran->rincianSize as $rincian)
+                        <div class="row baris-size mb-2">
                             <div class="col-md-5">
-                                <input type="text" name="grade[]" value="{{ $rincian->ukuran_grade }}" class="form-control" placeholder="Ukuran / Grade" required>
+                                <select name="komoditi_size_id[]" class="form-control komoditi-size-select" data-selected="{{ $rincian->komoditi_size_id }}" required></select>
                             </div>
                             <div class="col-md-3">
                                 <input type="number" step="0.01" name="harga[]" value="{{ $rincian->harga }}" class="form-control" placeholder="Harga per kg" required>
@@ -89,22 +92,7 @@
                                 <button type="button" class="btn btn-danger hapus-baris"><i class="fas fa-trash"></i></button>
                             </div>
                         </div>
-                    @empty
-                        <div class="row baris-grade mb-2">
-                            <div class="col-md-5">
-                                <input type="text" name="grade[]" class="form-control" placeholder="Ukuran / Grade" required>
-                            </div>
-                            <div class="col-md-3">
-                                <input type="number" step="0.01" name="harga[]" class="form-control" placeholder="Harga per kg" required>
-                            </div>
-                            <div class="col-md-3">
-                                <input type="number" step="0.01" name="kuantiti[]" class="form-control" placeholder="Kuantiti (kg)" required>
-                            </div>
-                            <div class="col-md-1">
-                                <button type="button" class="btn btn-danger hapus-baris" style="display:none;"><i class="fas fa-trash"></i></button>
-                            </div>
-                        </div>
-                    @endforelse
+                    @endforeach
                 </div>
             </div>
 
@@ -117,7 +105,7 @@
                     </button>
                 </div>
                 <div class="text-muted small mb-2" id="hint-section-biaya">
-                    Biaya operasional per kg — berlaku sama untuk semua grade di atas, otomatis
+                    Biaya operasional per kg — berlaku sama untuk semua size di atas, otomatis
                     ditambahkan ke harga beli sebagai Harga Jual.
                 </div>
 
@@ -179,6 +167,8 @@
 
 @section('scripts')
 <script>
+    const sizesByKomoditi = {!! $sizesByKomoditi !!};
+
     document.addEventListener('DOMContentLoaded', function () {
         const tipeSelect = document.getElementById('tipe');
         const fieldEkspor = document.getElementById('field-ekspor');
@@ -199,16 +189,52 @@
                 hintSectionBiaya.textContent = 'Karena barang sudah jadi dari mitra, cukup isi margin/keuntungan yang Anda inginkan per kg.';
             } else {
                 judulSectionBiaya.innerHTML = 'Rincian Biaya HPP <span class="text-danger">*</span>';
-                hintSectionBiaya.textContent = 'Biaya operasional per kg — berlaku sama untuk semua grade di atas, otomatis ditambahkan ke harga beli sebagai Harga Jual.';
+                hintSectionBiaya.textContent = 'Biaya operasional per kg — berlaku sama untuk semua size di atas, otomatis ditambahkan ke harga beli sebagai Harga Jual.';
             }
         }
         jenisPenawaranSelect.addEventListener('change', toggleLabelBiaya);
         toggleLabelBiaya();
 
-        const container = document.getElementById('baris-grade-container');
+        // ---- Dropdown size, cascading berdasarkan Komoditi yang dipilih ----
+        const komoditiSelect = document.getElementById('komoditi_id');
+        const hintSize = document.getElementById('hint-size');
+
+        function isiDropdownSize(selectEl, komoditiId, pertahankanNilaiLama) {
+            const nilaiTerpilih = pertahankanNilaiLama ? selectEl.dataset.selected : '';
+            const daftar = sizesByKomoditi[komoditiId] || [];
+            selectEl.innerHTML = '';
+
+            if (!komoditiId || daftar.length === 0) {
+                selectEl.innerHTML = '<option value="">-- Belum ada size untuk komoditi ini --</option>';
+                selectEl.disabled = true;
+                return;
+            }
+
+            selectEl.innerHTML = '<option value="">-- Pilih Size --</option>' +
+                daftar.map(s => `<option value="${s.id}" ${String(s.id) === String(nilaiTerpilih) ? 'selected' : ''}>${s.nama_size}</option>`).join('');
+            selectEl.disabled = false;
+        }
+
+        function perbaruiSemuaDropdownSize(pertahankanNilaiLama) {
+            const komoditiId = komoditiSelect.value;
+            document.querySelectorAll('.komoditi-size-select').forEach(el => isiDropdownSize(el, komoditiId, pertahankanNilaiLama));
+            hintSize.innerHTML = komoditiId
+                ? 'Tidak menemukan size yang dicari? <a href="/komoditi/' + komoditiId + '/size/usulkan" target="_blank">Usulkan size baru</a>.'
+                : 'Pilih Komoditi terlebih dahulu.';
+        }
+
+        // Saat load pertama: pertahankan size yang sudah tersimpan (data-selected)
+        perbaruiSemuaDropdownSize(true);
+
+        // Kalau Komoditi diganti manual: size direset (tidak ada relevansi ke size lama)
+        komoditiSelect.addEventListener('change', () => perbaruiSemuaDropdownSize(false));
+        $(komoditiSelect).on('select2:select select2:clear', () => perbaruiSemuaDropdownSize(false));
+
+        const container = document.getElementById('baris-size-container');
         document.getElementById('tambah-baris').addEventListener('click', function () {
-            const baris = container.querySelector('.baris-grade').cloneNode(true);
+            const baris = container.querySelector('.baris-size').cloneNode(true);
             baris.querySelectorAll('input').forEach(input => input.value = '');
+            isiDropdownSize(baris.querySelector('.komoditi-size-select'), komoditiSelect.value, false);
             baris.querySelector('.hapus-baris').style.display = 'inline-block';
             container.appendChild(baris);
             perbaruiTombolHapus();
@@ -216,13 +242,13 @@
 
         container.addEventListener('click', function (e) {
             if (e.target.closest('.hapus-baris')) {
-                e.target.closest('.baris-grade').remove();
+                e.target.closest('.baris-size').remove();
                 perbaruiTombolHapus();
             }
         });
 
         function perbaruiTombolHapus() {
-            const semuaBaris = container.querySelectorAll('.baris-grade');
+            const semuaBaris = container.querySelectorAll('.baris-size');
             semuaBaris.forEach((baris) => {
                 baris.querySelector('.hapus-baris').style.display = semuaBaris.length > 1 ? 'inline-block' : 'none';
             });

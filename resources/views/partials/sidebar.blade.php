@@ -25,12 +25,17 @@
                     <i class="fas fa-random"></i> <span>Kecocokan</span>
                 </a>
             </li>
+            <li class="{{ request()->routeIs('project.*') ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('project.index') }}">
+                    <i class="fas fa-folder-open"></i> <span>Project</span>
+                </a>
+            </li>
 
             @role('Pusat|Admin')
                 <li class="menu-header">Data Master</li>
-                <li class="{{ request()->routeIs('komoditi.index') ? 'active' : '' }}">
+                <li class="{{ request()->routeIs('komoditi.index') || request()->routeIs('komoditi.size.*') ? 'active' : '' }}">
                     <a class="nav-link" href="{{ route('komoditi.index') }}">
-                        <i class="fas fa-list"></i> <span>Master Komoditi</span>
+                        <i class="fas fa-list"></i> <span>Master Komoditi & Size</span>
                     </a>
                 </li>
             @endrole

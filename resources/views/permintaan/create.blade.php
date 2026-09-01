@@ -26,7 +26,7 @@
                 </div>
                 <div class="col-md-6 form-group">
                     <label>Komoditi <span class="text-danger">*</span></label>
-                    <select name="komoditi_id" class="form-control select2 @error('komoditi_id') is-invalid @enderror" data-placeholder="-- Pilih Komoditi --">
+                    <select name="komoditi_id" id="komoditi_id" class="form-control select2 @error('komoditi_id') is-invalid @enderror" data-placeholder="-- Pilih Komoditi --">
                         <option value=""></option>
                         @foreach ($komoditiList as $kategori => $daftar)
                             <optgroup label="{{ $kategori ?? 'Lainnya' }}">
@@ -49,22 +49,24 @@
                 <textarea name="keterangan" class="form-control" rows="2">{{ old('keterangan') }}</textarea>
             </div>
 
-            <!-- Rincian Grade -->
+            <!-- Rincian Size -->
             <div class="card card-body bg-light mb-3">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="mb-0">Rincian Grade / Size Dibutuhkan</h4>
-                    <button type="button" id="tambah-baris" class="btn btn-sm btn-primary">
+                    <h4 class="mb-0">Rincian Size Dibutuhkan</h4>
+                    <button type="button" id="tambah-baris" class="btn btn-sm btn-primary" disabled>
                         <i class="fas fa-plus"></i> Tambah Baris
                     </button>
                 </div>
-                <div class="text-muted small mb-2">
-                    Contoh: "1.000-Up = Rp105.000, 7.000kg", "500-1.000 A = Rp85.000, 5.000kg", dst.
+                <div class="text-muted small mb-2" id="hint-size">
+                    Pilih Komoditi terlebih dahulu supaya daftar size-nya muncul di sini.
                 </div>
 
-                <div id="baris-grade-container">
-                    <div class="row baris-grade mb-2">
+                <div id="baris-size-container">
+                    <div class="row baris-size mb-2">
                         <div class="col-md-5">
-                            <input type="text" name="grade[]" class="form-control" placeholder="Ukuran / Grade (mis. 1.000-Up)" required>
+                            <select name="komoditi_size_id[]" class="form-control komoditi-size-select" required disabled>
+                                <option value="">-- Pilih Komoditi dulu --</option>
+                            </select>
                         </div>
                         <div class="col-md-3">
                             <input type="number" step="0.01" name="harga[]" class="form-control" placeholder="Harga per kg" required>
@@ -129,6 +131,8 @@
 
 @section('scripts')
 <script>
+    const sizesByKomoditi = {!! $sizesByKomoditi !!};
+
     document.addEventListener('DOMContentLoaded', function () {
         const tipeSelect = document.getElementById('tipe');
         const fieldEkspor = document.getElementById('field-ekspor');
@@ -138,10 +142,55 @@
         tipeSelect.addEventListener('change', toggleFieldEkspor);
         toggleFieldEkspor();
 
-        const container = document.getElementById('baris-grade-container');
-        document.getElementById('tambah-baris').addEventListener('click', function () {
-            const baris = container.querySelector('.baris-grade').cloneNode(true);
+        const komoditiSelect = document.getElementById('komoditi_id');
+        const hintSize = document.getElementById('hint-size');
+        const tambahBarisBtn = document.getElementById('tambah-baris');
+
+        function isiDropdownSize(selectEl, komoditiId, nilaiTerpilih) {
+            const daftar = sizesByKomoditi[komoditiId] || [];
+            selectEl.innerHTML = '';
+
+            if (!komoditiId) {
+                selectEl.innerHTML = '<option value="">-- Pilih Komoditi dulu --</option>';
+                selectEl.disabled = true;
+                return;
+            }
+
+            if (daftar.length === 0) {
+                selectEl.innerHTML = '<option value="">-- Belum ada size untuk komoditi ini --</option>';
+                selectEl.disabled = true;
+                return;
+            }
+
+            selectEl.innerHTML = '<option value="">-- Pilih Size --</option>' +
+                daftar.map(s => `<option value="${s.id}" ${String(s.id) === String(nilaiTerpilih) ? 'selected' : ''}>${s.nama_size}</option>`).join('');
+            selectEl.disabled = false;
+        }
+
+        function perbaruiSemuaDropdownSize() {
+            const komoditiId = komoditiSelect.value;
+            document.querySelectorAll('.komoditi-size-select').forEach(el => isiDropdownSize(el, komoditiId));
+
+            if (komoditiId) {
+                hintSize.innerHTML = 'Tidak menemukan size yang dicari? <a href="/komoditi/' + komoditiId + '/size/usulkan" target="_blank">Usulkan size baru</a>.';
+                tambahBarisBtn.disabled = !(sizesByKomoditi[komoditiId] && sizesByKomoditi[komoditiId].length);
+            } else {
+                hintSize.textContent = 'Pilih Komoditi terlebih dahulu supaya daftar size-nya muncul di sini.';
+                tambahBarisBtn.disabled = true;
+            }
+        }
+
+        komoditiSelect.addEventListener('change', perbaruiSemuaDropdownSize);
+        $(komoditiSelect).on('select2:select select2:clear', perbaruiSemuaDropdownSize);
+        if (komoditiSelect.value) {
+            perbaruiSemuaDropdownSize();
+        }
+
+        const container = document.getElementById('baris-size-container');
+        tambahBarisBtn.addEventListener('click', function () {
+            const baris = container.querySelector('.baris-size').cloneNode(true);
             baris.querySelectorAll('input').forEach(input => input.value = '');
+            isiDropdownSize(baris.querySelector('.komoditi-size-select'), komoditiSelect.value);
             baris.querySelector('.hapus-baris').style.display = 'inline-block';
             container.appendChild(baris);
             perbaruiTombolHapus();
@@ -149,13 +198,13 @@
 
         container.addEventListener('click', function (e) {
             if (e.target.closest('.hapus-baris')) {
-                e.target.closest('.baris-grade').remove();
+                e.target.closest('.baris-size').remove();
                 perbaruiTombolHapus();
             }
         });
 
         function perbaruiTombolHapus() {
-            const semuaBaris = container.querySelectorAll('.baris-grade');
+            const semuaBaris = container.querySelectorAll('.baris-size');
             semuaBaris.forEach((baris) => {
                 baris.querySelector('.hapus-baris').style.display = semuaBaris.length > 1 ? 'inline-block' : 'none';
             });

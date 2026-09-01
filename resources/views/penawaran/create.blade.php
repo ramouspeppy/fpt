@@ -10,7 +10,7 @@
 
             <div class="form-group">
                 <label>Judul <span class="text-danger">*</span></label>
-                <input type="text" name="judul" value="{{ old('judul') }}" class="form-control @error('judul') is-invalid @enderror" placeholder="mis. Surplus Gurita Berbagai Grade - Cabang Medan">
+                <input type="text" name="judul" value="{{ old('judul') }}" class="form-control @error('judul') is-invalid @enderror" placeholder="mis. Surplus Gurita Berbagai Size - Cabang Medan">
                 @error('judul') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
 
@@ -35,7 +35,7 @@
                 </div>
                 <div class="col-md-4 form-group">
                     <label>Komoditi <span class="text-danger">*</span></label>
-                    <select name="komoditi_id" class="form-control select2 @error('komoditi_id') is-invalid @enderror" data-placeholder="-- Pilih Komoditi --">
+                    <select name="komoditi_id" id="komoditi_id" class="form-control select2 @error('komoditi_id') is-invalid @enderror" data-placeholder="-- Pilih Komoditi --">
                         <option value=""></option>
                         @foreach ($komoditiList as $kategori => $daftar)
                             <optgroup label="{{ $kategori ?? 'Lainnya' }}">
@@ -63,23 +63,25 @@
                 <textarea name="keterangan" class="form-control" rows="2">{{ old('keterangan') }}</textarea>
             </div>
 
-            <!-- Rincian Grade - baris bisa ditambah/hapus -->
+            <!-- Rincian Size - baris bisa ditambah/hapus -->
             <div class="card card-body bg-light mb-3">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="mb-0">Rincian Grade / Size</h4>
-                    <button type="button" id="tambah-baris" class="btn btn-sm btn-primary">
+                    <h4 class="mb-0">Rincian Size</h4>
+                    <button type="button" id="tambah-baris" class="btn btn-sm btn-primary" disabled>
                         <i class="fas fa-plus"></i> Tambah Baris
                     </button>
                 </div>
-                <div class="text-muted small mb-2">
-                    Contoh: "1.000-Up", "500-1.000 A", "300-500 B", "200-300 C" — satu jenis ikan bisa
-                    punya beberapa grade dengan harga beli & kuantiti berbeda.
+                <div class="text-muted small mb-2" id="hint-size">
+                    Pilih Komoditi terlebih dahulu supaya daftar size-nya muncul di sini.
+                    Tidak menemukan size yang dicari? <a href="#" id="link-usulkan-size" target="_blank">Usulkan size baru</a>.
                 </div>
 
-                <div id="baris-grade-container">
-                    <div class="row baris-grade mb-2">
+                <div id="baris-size-container">
+                    <div class="row baris-size mb-2">
                         <div class="col-md-5">
-                            <input type="text" name="grade[]" class="form-control" placeholder="Ukuran / Grade (mis. 1.000-Up)" required>
+                            <select name="komoditi_size_id[]" class="form-control komoditi-size-select" required disabled>
+                                <option value="">-- Pilih Komoditi dulu --</option>
+                            </select>
                         </div>
                         <div class="col-md-3">
                             <input type="number" step="0.01" name="harga[]" class="form-control" placeholder="Harga Beli / kg (bahan baku)" required>
@@ -104,7 +106,7 @@
                 </div>
                 <div class="text-muted small mb-2" id="hint-section-biaya">
                     Biaya operasional per kg (proses, packing, listrik, tenaga kerja, pengiriman, asuransi,
-                    dll) — berlaku SAMA untuk semua grade di atas, dan otomatis ditambahkan ke harga beli
+                    dll) — berlaku SAMA untuk semua size di atas, dan otomatis ditambahkan ke harga beli
                     saat dihitung sebagai Harga Jual. Wajib diisi minimal 1 baris.
                 </div>
 
@@ -157,6 +159,9 @@
 
 @section('scripts')
 <script>
+    // Peta komoditi_id => daftar size disetujui miliknya (dari server).
+    const sizesByKomoditi = {!! $sizesByKomoditi !!};
+
     document.addEventListener('DOMContentLoaded', function () {
         // toggle field ekspor
         const tipeSelect = document.getElementById('tipe');
@@ -181,18 +186,70 @@
                 contohSectionBiaya.textContent = 'Contoh label: Margin/Keuntungan, atau biaya tambahan lain jika ada (mis. Transport dari Mitra).';
             } else {
                 judulSectionBiaya.innerHTML = 'Rincian Biaya HPP <span class="text-danger">*</span>';
-                hintSectionBiaya.textContent = 'Biaya operasional per kg (proses, packing, listrik, tenaga kerja, pengiriman, asuransi, dll) — berlaku SAMA untuk semua grade di atas, dan otomatis ditambahkan ke harga beli saat dihitung sebagai Harga Jual. Wajib diisi minimal 1 baris.';
+                hintSectionBiaya.textContent = 'Biaya operasional per kg (proses, packing, listrik, tenaga kerja, pengiriman, asuransi, dll) — berlaku SAMA untuk semua size di atas, dan otomatis ditambahkan ke harga beli saat dihitung sebagai Harga Jual. Wajib diisi minimal 1 baris.';
                 contohSectionBiaya.textContent = 'Contoh label: Biaya Proses, Biaya Packing, Biaya Listrik, Biaya Tenaga Kerja, Biaya Pengiriman, Asuransi, atau biaya lain sesuai komoditi Anda.';
             }
         }
         jenisPenawaranSelect.addEventListener('change', toggleLabelBiaya);
         toggleLabelBiaya();
 
-        // tambah/hapus baris rincian grade
-        const container = document.getElementById('baris-grade-container');
-        document.getElementById('tambah-baris').addEventListener('click', function () {
-            const baris = container.querySelector('.baris-grade').cloneNode(true);
+        // ---- Dropdown size, cascading berdasarkan Komoditi yang dipilih ----
+        const komoditiSelect = document.getElementById('komoditi_id');
+        const hintSize = document.getElementById('hint-size');
+        const tambahBarisBtn = document.getElementById('tambah-baris');
+        const linkUsulkanSize = document.getElementById('link-usulkan-size');
+
+        function isiDropdownSize(selectEl, komoditiId, nilaiTerpilih) {
+            const daftar = sizesByKomoditi[komoditiId] || [];
+            selectEl.innerHTML = '';
+
+            if (!komoditiId) {
+                selectEl.innerHTML = '<option value="">-- Pilih Komoditi dulu --</option>';
+                selectEl.disabled = true;
+                return;
+            }
+
+            if (daftar.length === 0) {
+                selectEl.innerHTML = '<option value="">-- Belum ada size untuk komoditi ini --</option>';
+                selectEl.disabled = true;
+                return;
+            }
+
+            selectEl.innerHTML = '<option value="">-- Pilih Size --</option>' +
+                daftar.map(s => `<option value="${s.id}" ${String(s.id) === String(nilaiTerpilih) ? 'selected' : ''}>${s.nama_size}</option>`).join('');
+            selectEl.disabled = false;
+        }
+
+        function perbaruiSemuaDropdownSize() {
+            const komoditiId = komoditiSelect.value;
+            document.querySelectorAll('.komoditi-size-select').forEach(el => isiDropdownSize(el, komoditiId));
+
+            if (komoditiId) {
+                hintSize.innerHTML = 'Tidak menemukan size yang dicari? <a href="/komoditi/' + komoditiId + '/size/usulkan" id="link-usulkan-size" target="_blank">Usulkan size baru</a>.';
+                tambahBarisBtn.disabled = !(sizesByKomoditi[komoditiId] && sizesByKomoditi[komoditiId].length);
+            } else {
+                hintSize.textContent = 'Pilih Komoditi terlebih dahulu supaya daftar size-nya muncul di sini.';
+                tambahBarisBtn.disabled = true;
+            }
+        }
+
+        komoditiSelect.addEventListener('change', perbaruiSemuaDropdownSize);
+        // select2 mengganti event asli, jadi ikut dengarkan event bawaan select2 juga
+        $(komoditiSelect).on('select2:select select2:clear', perbaruiSemuaDropdownSize);
+
+        // Kalau form ini muncul lagi karena validasi gagal dan Komoditi sudah sempat
+        // dipilih, langsung isi dropdown size baris pertama (baris tambahan tidak
+        // otomatis dipulihkan - keterbatasan wajar untuk dropdown yang sifatnya dinamis).
+        if (komoditiSelect.value) {
+            perbaruiSemuaDropdownSize();
+        }
+
+        // tambah/hapus baris rincian size
+        const container = document.getElementById('baris-size-container');
+        tambahBarisBtn.addEventListener('click', function () {
+            const baris = container.querySelector('.baris-size').cloneNode(true);
             baris.querySelectorAll('input').forEach(input => input.value = '');
+            isiDropdownSize(baris.querySelector('.komoditi-size-select'), komoditiSelect.value);
             baris.querySelector('.hapus-baris').style.display = 'inline-block';
             container.appendChild(baris);
             perbaruiTombolHapus();
@@ -200,19 +257,19 @@
 
         container.addEventListener('click', function (e) {
             if (e.target.closest('.hapus-baris')) {
-                e.target.closest('.baris-grade').remove();
+                e.target.closest('.baris-size').remove();
                 perbaruiTombolHapus();
             }
         });
 
         function perbaruiTombolHapus() {
-            const semuaBaris = container.querySelectorAll('.baris-grade');
+            const semuaBaris = container.querySelectorAll('.baris-size');
             semuaBaris.forEach((baris) => {
                 baris.querySelector('.hapus-baris').style.display = semuaBaris.length > 1 ? 'inline-block' : 'none';
             });
         }
 
-        // tambah/hapus baris biaya HPP - pola sama dengan rincian grade
+        // tambah/hapus baris biaya HPP - pola sama dengan rincian size
         const containerBiaya = document.getElementById('baris-biaya-container');
         document.getElementById('tambah-baris-biaya').addEventListener('click', function () {
             const baris = containerBiaya.querySelector('.baris-biaya').cloneNode(true);

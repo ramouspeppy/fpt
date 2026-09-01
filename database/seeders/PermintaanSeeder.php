@@ -15,12 +15,10 @@ class PermintaanSeeder extends Seeder
 
     private int $jumlahData = 100;
 
-    private array $daftarGrade = ['1.000-Up', '500-1.000 A', '300-500 B', '200-300 C'];
-
     public function run(): void
     {
         $semuaUser = User::role(['Cabang', 'Pusat'])->with('cabang')->get();
-        $komoditiList = Komoditi::disetujui()->get();
+        $komoditiList = Komoditi::disetujui()->with('sizes')->get()->filter(fn ($k) => $k->sizes->where('status', 'disetujui')->isNotEmpty());
 
         if ($semuaUser->isEmpty()) {
             $this->command->warn('Belum ada user Cabang/Pusat. Jalankan UserSeeder terlebih dahulu.');
@@ -28,13 +26,14 @@ class PermintaanSeeder extends Seeder
         }
 
         if ($komoditiList->isEmpty()) {
-            $this->command->warn('Belum ada master data Komoditi. Jalankan KomoditiSeeder terlebih dahulu.');
+            $this->command->warn('Belum ada Komoditi dengan Size disetujui. Jalankan KomoditiSeeder & KomoditiSizeSeeder terlebih dahulu.');
             return;
         }
 
         for ($i = 1; $i <= $this->jumlahData; $i++) {
             $user = $semuaUser->random();
             $komoditi = $komoditiList->random();
+            $sizeMilikKomoditi = $komoditi->sizes->where('status', 'disetujui')->values();
             $tipe = rand(1, 100) <= 30 ? 'Ekspor' : 'Lokal';
             $dariPusat = $user->hasRole('Pusat');
 
@@ -53,13 +52,14 @@ class PermintaanSeeder extends Seeder
                 'status' => 'tersedia',
             ]);
 
-            $jumlahGrade = rand(1, 3);
-            $gradeTerpilih = collect($this->daftarGrade)->random($jumlahGrade);
+            // CATATAN: Collection::random($n) SELALU balikin Collection walau $n = 1 - jangan dibungkus collect() lagi.
+            $jumlahSize = min(rand(1, 3), $sizeMilikKomoditi->count());
+            $sizeTerpilih = $sizeMilikKomoditi->random($jumlahSize)->values();
             $hargaDasar = rand(65, 130) * 1000;
 
-            foreach ($gradeTerpilih as $index => $grade) {
-                $permintaan->rincianGrade()->create([
-                    'ukuran_grade' => $grade,
+            foreach ($sizeTerpilih as $index => $size) {
+                $permintaan->rincianSize()->create([
+                    'komoditi_size_id' => $size->id,
                     'harga' => max(20000, $hargaDasar - ($index * 20000)),
                     'kuantiti' => rand(50, 1500),
                 ]);
@@ -75,6 +75,6 @@ class PermintaanSeeder extends Seeder
             }
         }
 
-        $this->command->info("{$this->jumlahData} permintaan (dengan rincian grade) berhasil dibuat.");
+        $this->command->info("{$this->jumlahData} permintaan (dengan rincian size) berhasil dibuat.");
     }
 }

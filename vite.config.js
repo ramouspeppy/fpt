@@ -9,6 +9,8 @@ export default defineConfig({
             input: [
                 "resources/views/assets/sass/app.scss",
                 "resources/views/assets/js/app.js",
+                "resources/css/app.css",
+                "resources/js/app.js",
             ],
             refresh: true, // otomatis reload browser saat file blade berubah
         }),

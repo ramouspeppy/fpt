@@ -13,7 +13,7 @@ class PenawaranController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Penawaran::with(['user.cabang', 'rincianGrade', 'komoditi'])->latest();
+        $query = Penawaran::with(['user.cabang', 'rincianSize.komoditiSize', 'komoditi'])->latest();
 
         if ($request->filled('cari')) {
             $query->where(function ($q) use ($request) {
@@ -38,8 +38,9 @@ class PenawaranController extends Controller
     public function create()
     {
         $komoditiList = Komoditi::disetujui()->orderBy('kategori')->orderBy('nama')->get()->groupBy('kategori');
+        $sizesByKomoditi = $this->sizesByKomoditiJson();
 
-        return view('penawaran.create', compact('komoditiList'));
+        return view('penawaran.create', compact('komoditiList', 'sizesByKomoditi'));
     }
 
     public function store(Request $request, MatchingService $matchingService)
@@ -54,9 +55,9 @@ class PenawaranController extends Controller
             'sertifikasi' => ['nullable', 'string', 'max:255'],
             'kontinuitas_suplai' => ['nullable', 'string', 'max:255'],
             'negara_tujuan' => ['nullable', 'string', 'max:255'],
-            // rincian grade - minimal 1 baris
-            'grade' => ['required', 'array', 'min:1'],
-            'grade.*' => ['required', 'string', 'max:255'],
+            // rincian size - minimal 1 baris. komoditi_size_id WAJIB milik komoditi yang dipilih & sudah disetujui.
+            'komoditi_size_id' => ['required', 'array', 'min:1'],
+            'komoditi_size_id.*' => ['required', 'exists:komoditi_size,id'],
             'harga' => ['required', 'array', 'min:1'],
             'harga.*' => ['required', 'numeric', 'min:0'],
             'kuantiti' => ['required', 'array', 'min:1'],
@@ -67,6 +68,8 @@ class PenawaranController extends Controller
             'biaya_jumlah' => ['required', 'array', 'min:1'],
             'biaya_jumlah.*' => ['required', 'numeric', 'min:0'],
         ]);
+
+        $this->pastikanSizeMilikKomoditi($validated['komoditi_id'], $validated['komoditi_size_id']);
 
         $penawaran = Penawaran::create([
             'user_id' => Auth::id(),
@@ -79,7 +82,7 @@ class PenawaranController extends Controller
             'status' => 'tersedia',
         ]);
 
-        $this->simpanRincianGrade($penawaran, $validated);
+        $this->simpanRincianSize($penawaran, $validated);
         $this->simpanBiayaHpp($penawaran, $validated);
 
         if ($penawaran->mengandungEkspor()) {
@@ -92,14 +95,14 @@ class PenawaranController extends Controller
         }
 
         // langsung cari kecocokan begitu penawaran baru tersimpan
-        $matchingService->generateForPenawaran($penawaran->fresh('rincianGrade'));
+        $matchingService->generateForPenawaran($penawaran->fresh('rincianSize'));
 
         return redirect()->route('penawaran.index')->with('status', 'Penawaran berhasil ditambahkan.');
     }
 
     public function show(Penawaran $penawaran)
     {
-        $penawaran->load(['user.cabang', 'detailEkspor', 'rincianGrade', 'komoditi', 'biayaHpp']);
+        $penawaran->load(['user.cabang', 'detailEkspor', 'rincianSize.komoditiSize', 'komoditi', 'biayaHpp', 'project']);
 
         return view('penawaran.show', compact('penawaran'));
     }
@@ -107,16 +110,19 @@ class PenawaranController extends Controller
     public function edit(Penawaran $penawaran)
     {
         $this->authorizePemilikAtauAdmin($penawaran);
+        $this->tolakJikaTerkunci($penawaran);
 
-        $penawaran->load(['detailEkspor', 'rincianGrade', 'komoditi', 'biayaHpp']);
+        $penawaran->load(['detailEkspor', 'rincianSize.komoditiSize', 'komoditi', 'biayaHpp']);
         $komoditiList = Komoditi::disetujui()->orderBy('kategori')->orderBy('nama')->get()->groupBy('kategori');
+        $sizesByKomoditi = $this->sizesByKomoditiJson();
 
-        return view('penawaran.edit', compact('penawaran', 'komoditiList'));
+        return view('penawaran.edit', compact('penawaran', 'komoditiList', 'sizesByKomoditi'));
     }
 
     public function update(Request $request, Penawaran $penawaran)
     {
         $this->authorizePemilikAtauAdmin($penawaran);
+        $this->tolakJikaTerkunci($penawaran);
 
         $validated = $request->validate([
             'judul' => ['required', 'string', 'max:255'],
@@ -125,12 +131,12 @@ class PenawaranController extends Controller
             'komoditi_id' => ['required', 'exists:komoditi,id'],
             'kondisi_ikan' => ['nullable', 'string', 'max:255'],
             'keterangan' => ['nullable', 'string'],
-            'status' => ['required', 'in:tersedia,matched,selesai,ditutup'],
+            'status' => ['required', 'in:tersedia,selesai,tutup'],
             'sertifikasi' => ['nullable', 'string', 'max:255'],
             'kontinuitas_suplai' => ['nullable', 'string', 'max:255'],
             'negara_tujuan' => ['nullable', 'string', 'max:255'],
-            'grade' => ['required', 'array', 'min:1'],
-            'grade.*' => ['required', 'string', 'max:255'],
+            'komoditi_size_id' => ['required', 'array', 'min:1'],
+            'komoditi_size_id.*' => ['required', 'exists:komoditi_size,id'],
             'harga' => ['required', 'array', 'min:1'],
             'harga.*' => ['required', 'numeric', 'min:0'],
             'kuantiti' => ['required', 'array', 'min:1'],
@@ -140,6 +146,8 @@ class PenawaranController extends Controller
             'biaya_jumlah' => ['required', 'array', 'min:1'],
             'biaya_jumlah.*' => ['required', 'numeric', 'min:0'],
         ]);
+
+        $this->pastikanSizeMilikKomoditi($validated['komoditi_id'], $validated['komoditi_size_id']);
 
         $penawaran->update([
             'judul' => $validated['judul'],
@@ -151,9 +159,9 @@ class PenawaranController extends Controller
             'status' => $validated['status'],
         ]);
 
-        // ganti semua rincian grade & biaya HPP lama dengan yang baru (paling sederhana untuk versi ini)
-        $penawaran->rincianGrade()->delete();
-        $this->simpanRincianGrade($penawaran, $validated);
+        // ganti semua rincian size & biaya HPP lama dengan yang baru (paling sederhana untuk versi ini)
+        $penawaran->rincianSize()->delete();
+        $this->simpanRincianSize($penawaran, $validated);
 
         $penawaran->biayaHpp()->delete();
         $this->simpanBiayaHpp($penawaran, $validated);
@@ -177,20 +185,23 @@ class PenawaranController extends Controller
     public function destroy(Penawaran $penawaran)
     {
         $this->authorizePemilikAtauAdmin($penawaran);
+        $this->tolakJikaTerkunci($penawaran);
 
         $penawaran->delete();
 
         return redirect()->route('penawaran.index')->with('status', 'Penawaran berhasil dihapus.');
     }
 
-    // Tombol aksi cepat (mis. "Tandai Sedang Diproses", "Tandai Selesai") tanpa perlu buka form Edit penuh.
-    // Status posting sepenuhnya keputusan manual pemilik/Admin, tidak pernah diubah otomatis oleh sistem.
+    // Tombol aksi cepat (mis. "Tandai Selesai", "Tutup") tanpa perlu buka form Edit penuh.
+    // Status posting sepenuhnya keputusan manual pemilik/Admin - TAPI kalau sudah 'sedang_diproses'
+    // (sudah jadi Project), perubahan status di sini diblokir; harus lewat halaman Project.
     public function updateStatus(Request $request, Penawaran $penawaran)
     {
         $this->authorizePemilikAtauAdmin($penawaran);
+        $this->tolakJikaTerkunci($penawaran);
 
         $validated = $request->validate([
-            'status' => ['required', 'in:tersedia,matched,selesai,ditutup'],
+            'status' => ['required', 'in:tersedia,selesai,tutup'],
         ]);
 
         $penawaran->update(['status' => $validated['status']]);
@@ -198,11 +209,11 @@ class PenawaranController extends Controller
         return redirect()->back()->with('status', 'Status penawaran berhasil diperbarui.');
     }
 
-    private function simpanRincianGrade(Penawaran $penawaran, array $validated): void
+    private function simpanRincianSize(Penawaran $penawaran, array $validated): void
     {
-        foreach ($validated['grade'] as $i => $grade) {
-            $penawaran->rincianGrade()->create([
-                'ukuran_grade' => $grade,
+        foreach ($validated['komoditi_size_id'] as $i => $komoditiSizeId) {
+            $penawaran->rincianSize()->create([
+                'komoditi_size_id' => $komoditiSizeId,
                 'harga' => $validated['harga'][$i],
                 'kuantiti' => $validated['kuantiti'][$i],
             ]);
@@ -210,7 +221,7 @@ class PenawaranController extends Controller
     }
 
     // Biaya HPP (proses, packing, listrik, tenaga kerja, dll) - WAJIB minimal 1 baris,
-    // berlaku sama untuk semua grade dalam penawaran ini (bukan per grade).
+    // berlaku sama untuk semua size dalam penawaran ini (bukan per size).
     private function simpanBiayaHpp(Penawaran $penawaran, array $validated): void
     {
         foreach ($validated['biaya_label'] as $i => $label) {
@@ -219,6 +230,33 @@ class PenawaranController extends Controller
                 'jumlah' => $validated['biaya_jumlah'][$i],
             ]);
         }
+    }
+
+    // Cegah salah pilih size dari komoditi lain (dropdown size harusnya sudah difilter
+    // per komoditi via JS, ini validasi jaga-jaga di sisi server).
+    private function pastikanSizeMilikKomoditi(int $komoditiId, array $komoditiSizeIds): void
+    {
+        $jumlahValid = \App\Models\KomoditiSize::where('komoditi_id', $komoditiId)
+            ->whereIn('id', $komoditiSizeIds)
+            ->count();
+
+        abort_unless($jumlahValid === count(array_unique($komoditiSizeIds)), 422, 'Ada size yang tidak sesuai dengan komoditi yang dipilih.');
+    }
+
+    // Peta komoditi_id => daftar size disetujui miliknya, dipakai JS di form untuk
+    // mengisi dropdown size secara dinamis sesuai komoditi yang dipilih (cascading).
+    private function sizesByKomoditiJson(): string
+    {
+        $map = \App\Models\KomoditiSize::disetujui()->urutTampil()->get()
+            ->groupBy('komoditi_id')
+            ->map(fn ($group) => $group->map(fn ($s) => ['id' => $s->id, 'nama_size' => $s->nama_size])->values());
+
+        return $map->toJson();
+    }
+
+    private function tolakJikaTerkunci(Penawaran $penawaran): void
+    {
+        abort_if($penawaran->sudah_terkunci, 403, 'Penawaran ini sudah terkunci karena menjadi bagian dari Project, tidak bisa diubah lagi.');
     }
 
     private function authorizePemilikAtauAdmin(Penawaran $penawaran): void

@@ -7,12 +7,6 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard') - {{ config('app.name', 'Info Surplus Ikan') }}</title>
 
-    {{-- ============================================================
-         ASSET STISLA
-         Download template Stisla dari https://github.com/stisla/stisla
-         lalu extract folder "modules" nya ke public/assets/modules
-         (isi: bootstrap, jquery, popper, fontawesome, dsb - tidak lewat npm/vite)
-    ============================================================= --}}
     <link rel="stylesheet" href="{{ asset('assets/modules/fontawesome/css/all.min.css') }}">
     @vite(['resources/views/assets/sass/app.scss'])
 

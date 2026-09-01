@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\MatchSuggestion;
 use App\Services\MatchingService;
+use App\Services\ProjectService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class MatchSuggestionController extends Controller
 {
@@ -16,8 +18,8 @@ class MatchSuggestionController extends Controller
         $query = MatchSuggestion::with([
             'penawaran.user.cabang',
             'permintaan.user.cabang',
-            'penawaranRincian',
-            'permintaanRincian',
+            'penawaranRincian.komoditiSize',
+            'permintaanRincian.komoditiSize',
         ])->latest();
 
         if ($user->hasRole('Cabang')) {
@@ -41,40 +43,23 @@ class MatchSuggestionController extends Controller
         $jumlah = $service->runAll();
 
         return redirect()->route('match.index')
-            ->with('status', "Pencarian selesai. {$jumlah} kecocokan baru ditemukan.");
+            ->with('status', "Pencarian selesai. {$jumlah} kandidat kecocokan baru ditemukan.");
     }
 
-    public function approve(MatchSuggestion $match)
+    // Pusat/Admin memilih kandidat ini sebagai pemenang -> jadi Project.
+    // Berlaku untuk SEMUA match (Lokal maupun Ekspor), tidak ada beda jalur lagi.
+    public function pilih(MatchSuggestion $match, ProjectService $projectService)
     {
         $this->authorizePusatAtauAdmin();
 
-        abort_unless($match->status === 'menunggu_review', 400, 'Match ini tidak dalam status menunggu review.');
+        try {
+            $project = $projectService->pilihMatch($match, Auth::user());
+        } catch (ValidationException $e) {
+            return redirect()->route('match.index')->withErrors($e->errors());
+        }
 
-        $match->update([
-            'status' => 'disetujui',
-            'approved_by' => Auth::id(),
-        ]);
-
-        // CATATAN: status Penawaran/Permintaan SENGAJA TIDAK diubah otomatis di sini.
-        // Approval Pusat hanya berarti "match ini valid untuk diteruskan ke cabang",
-        // bukan berarti transaksi sudah pasti terjadi. Status posting (tersedia/matched/
-        // selesai/ditutup) sepenuhnya jadi keputusan manual pemilik posting atau Admin,
-        // lewat tombol aksi cepat di halaman detail Penawaran/Permintaan.
-
-        return redirect()->route('match.index')->with('status', 'Match disetujui, notifikasi diteruskan ke kedua cabang.');
-    }
-
-    public function tolak(Request $request, MatchSuggestion $match)
-    {
-        $this->authorizePusatAtauAdmin();
-
-        $match->update([
-            'status' => 'ditolak',
-            'approved_by' => Auth::id(),
-            'catatan' => $request->input('catatan'),
-        ]);
-
-        return redirect()->route('match.index')->with('status', 'Match ditolak.');
+        return redirect()->route('project.show', $project)
+            ->with('status', 'Match dipilih sebagai pemenang. Project baru dibuat, Penawaran & Permintaan terkait terkunci.');
     }
 
     private function authorizePusatAtauAdmin(): void

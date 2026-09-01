@@ -46,6 +46,11 @@
                                     </td>
                                     <td>{{ $item->pengusul->name ?? '-' }}</td>
                                     <td class="text-right">
+                                        @if ($item->status === 'disetujui')
+                                            <a href="{{ route('komoditi.size.index', $item) }}" class="btn btn-sm btn-info">
+                                                <i class="fas fa-ruler"></i> Kelola Size
+                                            </a>
+                                        @endif
                                         @if ($item->status === 'menunggu_approval')
                                             <form method="POST" action="{{ route('komoditi.approve', $item) }}" class="d-inline">
                                                 @csrf
@@ -89,6 +94,10 @@
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">Tambah & Setujui</button>
                 </form>
+                <div class="text-muted small mt-3">
+                    Setelah komoditi disetujui, klik <strong>Kelola Size</strong> di baris komoditi
+                    tersebut untuk menambahkan daftar size-nya (mis. 1000UP, 500-1000, dst).
+                </div>
             </div>
         </div>
     </div>
