@@ -4,16 +4,41 @@
 
 @section('content')
 <div class="row mb-2">
-    <div class="col-md-6">
-        <form method="GET">
-            <select name="status" class="form-control selectric" onchange="this.form.submit()">
-                <option value="">Semua Status</option>
-                <option value="terbuka" @selected(request('status')=='terbuka')>Terbuka (belum dipilih)</option>
-                <option value="dipilih" @selected(request('status')=='dipilih')>Sudah Dipilih (Project)</option>
-            </select>
+    <div class="col-md-9">
+        <form method="GET" id="form-filter-match">
+            <div class="form-row">
+                <div class="col-md-4 mb-2">
+                    <select name="penawaran_id" class="form-control select2" data-placeholder="Filter per Penawaran..." onchange="document.getElementById('form-filter-match').submit()">
+                        <option value=""></option>
+                        @foreach ($opsiPenawaran as $opsi)
+                            <option value="{{ $opsi->id }}" @selected(request('penawaran_id')==$opsi->id)>{{ $opsi->judul }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <select name="permintaan_id" class="form-control select2" data-placeholder="Filter per Permintaan..." onchange="document.getElementById('form-filter-match').submit()">
+                        <option value=""></option>
+                        @foreach ($opsiPermintaan as $opsi)
+                            <option value="{{ $opsi->id }}" @selected(request('permintaan_id')==$opsi->id)>{{ $opsi->judul }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <select name="status" class="form-control selectric" onchange="document.getElementById('form-filter-match').submit()">
+                        <option value="">Semua Status</option>
+                        <option value="terbuka" @selected(request('status')=='terbuka')>Terbuka (belum dipilih)</option>
+                        <option value="dipilih" @selected(request('status')=='dipilih')>Sudah Dipilih (Project)</option>
+                    </select>
+                </div>
+                <div class="col-md-1 mb-2">
+                    @if (request()->anyFilled(['penawaran_id', 'permintaan_id', 'status']))
+                        <a href="{{ route('match.index') }}" class="btn btn-secondary btn-block" title="Reset Filter"><i class="fas fa-times"></i></a>
+                    @endif
+                </div>
+            </div>
         </form>
     </div>
-    <div class="col-md-6 text-right">
+    <div class="col-md-3 text-right">
         <form method="POST" action="{{ route('match.jalankan') }}">
             @csrf
             <button class="btn btn-primary"><i class="fas fa-sync-alt"></i> Cari Kecocokan Ulang</button>
@@ -21,16 +46,28 @@
     </div>
 </div>
 
+@if (request()->filled('penawaran_id') || request()->filled('permintaan_id'))
+    <div class="alert alert-secondary">
+        Menampilkan <strong>{{ $matches->total() }}</strong> pasangan kandidat
+        @if (request()->filled('penawaran_id'))
+            untuk Penawaran: <strong>{{ optional($opsiPenawaran->firstWhere('id', request('penawaran_id')))->judul }}</strong>
+        @endif
+        @if (request()->filled('permintaan_id'))
+            {{ request()->filled('penawaran_id') ? '&' : 'untuk' }} Permintaan: <strong>{{ optional($opsiPermintaan->firstWhere('id', request('permintaan_id')))->judul }}</strong>
+        @endif
+    </div>
+@endif
+
 @if (auth()->user()->hasRole('Cabang'))
     <div class="alert alert-info">Menampilkan kecocokan yang melibatkan penawaran/permintaan cabang Anda saja.</div>
 @endif
 
 @if (auth()->user()->hasAnyRole(['Pusat', 'Admin']))
     <div class="alert alert-warning">
-        <i class="fas fa-info-circle"></i> Setiap kandidat kecocokan (Lokal maupun Ekspor) harus Anda
+        <i class="fas fa-info-circle"></i> Setiap pasangan kecocokan (Lokal maupun Ekspor) harus Anda
         pilih secara manual untuk dijadikan Project. Kalau 1 Permintaan punya beberapa kandidat dari
-        cabang berbeda, pilih salah satu yang paling sesuai — kandidat lain akan otomatis tidak
-        relevan setelah Permintaan-nya terkunci.
+        cabang berbeda, pilih salah satu yang paling sesuai — kandidat lain akan otomatis hilang dari
+        daftar ini setelah Permintaan/Penawaran terkait terkunci.
     </div>
 @endif
 
@@ -42,6 +79,11 @@
 @forelse ($matches as $match)
     <div class="card">
         <div class="card-body">
+            @if ($match->jumlah_size_cocok > 1)
+                <div class="mb-2">
+                    <span class="badge badge-secondary"><i class="fas fa-layer-group"></i> {{ $match->jumlah_size_cocok }} size cocok di pasangan ini</span>
+                </div>
+            @endif
             <div class="row align-items-center">
                 <div class="col-md-5">
                     <div class="text-muted small font-weight-bold">PENAWARAN</div>
@@ -49,15 +91,6 @@
                     <div class="small text-muted">
                         {{ $match->penawaran->komoditi->nama ?? '-' }} &middot; {{ $match->penawaran->user->cabang->nama_cabang ?? '-' }}
                     </div>
-                    @if ($match->penawaranRincian)
-                        <div class="mt-1">
-                            <span class="badge badge-info">Size: {{ $match->penawaranRincian->komoditiSize->nama_size ?? '-' }}</span>
-                            <span class="text-muted small">
-                                Rp {{ number_format($match->penawaranRincian->harga_jual, 0) }}/kg
-                                &middot; {{ number_format($match->penawaranRincian->kuantiti, 0) }} kg
-                            </span>
-                        </div>
-                    @endif
                 </div>
                 <div class="col-md-2 text-center d-none d-md-block">
                     <i class="fas fa-exchange-alt fa-2x text-muted"></i>
@@ -68,15 +101,6 @@
                     <div class="small text-muted">
                         {{ $match->permintaan->komoditi->nama ?? '-' }} &middot; {{ $match->permintaan->user->cabang->nama_cabang ?? 'Pusat' }}
                     </div>
-                    @if ($match->permintaanRincian)
-                        <div class="mt-1">
-                            <span class="badge badge-info">Size: {{ $match->permintaanRincian->komoditiSize->nama_size ?? '-' }}</span>
-                            <span class="text-muted small">
-                                Rp {{ number_format($match->permintaanRincian->harga, 0) }}/kg
-                                &middot; {{ number_format($match->permintaanRincian->kuantiti, 0) }} kg
-                            </span>
-                        </div>
-                    @endif
                 </div>
             </div>
             <hr>

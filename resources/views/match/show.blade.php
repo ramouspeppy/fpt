@@ -14,17 +14,60 @@
         <span class="badge badge-{{ $warnaStatus[$match->status] ?? 'secondary' }}">
             {{ $labelStatus[$match->status] ?? ucfirst($match->status) }}
         </span>
-        <span class="text-muted small ml-2">Skor: {{ $match->skor_matching }}</span>
+        <span class="text-muted small ml-2">{{ $semuaKandidat->count() }} size cocok di pasangan ini</span>
     </div>
     <a href="{{ route('match.index') }}" class="btn btn-link">&larr; Kembali ke daftar</a>
 </div>
 
 @if ($match->status === 'dipilih' && $match->project)
     <div class="alert alert-primary">
-        <i class="fas fa-check-circle"></i> Kandidat ini sudah dipilih dan menjadi
+        <i class="fas fa-check-circle"></i> Pasangan ini sudah dipilih dan menjadi
         <a href="{{ route('project.show', $match->project) }}"><strong>Project #{{ $match->project->id }}</strong></a>.
     </div>
 @endif
+
+<!-- Ringkasan semua size yang cocok di pasangan ini -->
+<div class="card mb-3">
+    <div class="card-header bg-light">
+        <h4 class="mb-0">Size yang Cocok di Pasangan Ini</h4>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th>Size</th>
+                        <th>Harga Jual Penawaran</th>
+                        <th>Kuantiti Penawaran</th>
+                        <th>Harga Permintaan</th>
+                        <th>Kuantiti Dibutuhkan</th>
+                        <th>Selisih Kuantiti</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($semuaKandidat as $kandidat)
+                        @php
+                            $kuantitiPenawaran = $kandidat->penawaranRincian->kuantiti ?? 0;
+                            $kuantitiPermintaan = $kandidat->permintaanRincian->kuantiti ?? 0;
+                            $selisih = $kuantitiPenawaran - $kuantitiPermintaan;
+                        @endphp
+                        <tr>
+                            <td><strong>{{ $kandidat->penawaranRincian->komoditiSize->nama_size ?? '-' }}</strong></td>
+                            <td>Rp {{ number_format($kandidat->penawaranRincian->harga_jual ?? 0, 0) }}</td>
+                            <td>{{ number_format($kuantitiPenawaran, 0) }} kg</td>
+                            <td>Rp {{ number_format($kandidat->permintaanRincian->harga ?? 0, 0) }}</td>
+                            <td>{{ number_format($kuantitiPermintaan, 0) }} kg</td>
+                            <td class="{{ $selisih >= 0 ? 'text-success' : 'text-danger' }}">
+                                {{ $selisih >= 0 ? '+' : '' }}{{ number_format($selisih, 0) }} kg
+                                <span class="small">({{ $selisih >= 0 ? 'stok cukup' : 'stok kurang' }})</span>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
 <div class="row">
     <!-- PENAWARAN -->
@@ -59,19 +102,11 @@
                 @endif
 
                 <hr>
-                <h6>Size yang Cocok di Kandidat Ini</h6>
-                @if ($match->penawaranRincian)
-                    <div class="alert alert-success py-2 px-3 mb-3">
-                        <strong>{{ $match->penawaranRincian->komoditiSize->nama_size ?? '-' }}</strong><br>
-                        Rp {{ number_format($match->penawaranRincian->harga_jual, 0) }}/kg
-                        &middot; {{ number_format($match->penawaranRincian->kuantiti, 0) }} kg tersedia
-                    </div>
-                @endif
-
                 <h6>Seluruh Rincian Size di Penawaran Ini</h6>
                 <div class="text-muted small mb-2">
-                    Ingat: kalau kandidat ini dipilih, SELURUH penawaran ini terkunci, termasuk size
-                    lain di bawah ini yang belum tentu ikut laku ke Permintaan ini.
+                    Baris yang disorot hijau = size yang cocok ke Permintaan ini (lihat tabel ringkasan
+                    di atas). Ingat: kalau pasangan ini dipilih, SELURUH penawaran ini terkunci,
+                    termasuk size lain di bawah ini yang belum tentu ikut laku.
                 </div>
                 <table class="table table-sm table-striped">
                     <thead>
@@ -79,7 +114,7 @@
                     </thead>
                     <tbody>
                         @foreach ($match->penawaran->rincianSize as $rincian)
-                            <tr class="{{ $rincian->id === $match->penawaran_rincian_id ? 'table-success' : '' }}">
+                            <tr class="{{ $penawaranRincianIdCocok->contains($rincian->id) ? 'table-success' : '' }}">
                                 <td>{{ $rincian->komoditiSize->nama_size ?? '-' }}</td>
                                 <td>Rp {{ number_format($rincian->harga_jual, 0) }}</td>
                                 <td>{{ number_format($rincian->kuantiti, 0) }} kg</td>
@@ -147,23 +182,17 @@
                 @endif
 
                 <hr>
-                <h6>Size yang Cocok di Kandidat Ini</h6>
-                @if ($match->permintaanRincian)
-                    <div class="alert alert-success py-2 px-3 mb-3">
-                        <strong>{{ $match->permintaanRincian->komoditiSize->nama_size ?? '-' }}</strong><br>
-                        Rp {{ number_format($match->permintaanRincian->harga, 0) }}/kg
-                        &middot; {{ number_format($match->permintaanRincian->kuantiti, 0) }} kg dibutuhkan
-                    </div>
-                @endif
-
                 <h6>Seluruh Rincian Size di Permintaan Ini</h6>
+                <div class="text-muted small mb-2">
+                    Baris yang disorot hijau = size yang cocok ke Penawaran ini.
+                </div>
                 <table class="table table-sm table-striped">
                     <thead>
                         <tr><th>Size</th><th>Harga/kg</th><th>Kuantiti</th></tr>
                     </thead>
                     <tbody>
                         @foreach ($match->permintaan->rincianSize as $rincian)
-                            <tr class="{{ $rincian->id === $match->permintaan_rincian_id ? 'table-success' : '' }}">
+                            <tr class="{{ $permintaanRincianIdCocok->contains($rincian->id) ? 'table-success' : '' }}">
                                 <td>{{ $rincian->komoditiSize->nama_size ?? '-' }}</td>
                                 <td>Rp {{ number_format($rincian->harga, 0) }}</td>
                                 <td>{{ number_format($rincian->kuantiti, 0) }} kg</td>
@@ -194,44 +223,15 @@
     </div>
 </div>
 
-<!-- Ringkasan perbandingan singkat -->
-<div class="card mt-3">
-    <div class="card-body">
-        <div class="row text-center">
-            <div class="col-md-4">
-                <div class="text-muted small">Harga Jual Penawaran</div>
-                <h4 class="mb-0">Rp {{ number_format($match->penawaranRincian->harga_jual ?? 0, 0) }}</h4>
-            </div>
-            <div class="col-md-4">
-                <div class="text-muted small">Harga Permintaan</div>
-                <h4 class="mb-0">Rp {{ number_format($match->permintaanRincian->harga ?? 0, 0) }}</h4>
-            </div>
-            <div class="col-md-4">
-                <div class="text-muted small">Selisih Kuantiti</div>
-                @php
-                    $kuantitiPenawaran = $match->penawaranRincian->kuantiti ?? 0;
-                    $kuantitiPermintaan = $match->permintaanRincian->kuantiti ?? 0;
-                    $selisih = $kuantitiPenawaran - $kuantitiPermintaan;
-                @endphp
-                <h4 class="mb-0 {{ $selisih >= 0 ? 'text-success' : 'text-danger' }}">
-                    {{ $selisih >= 0 ? '+' : '' }}{{ number_format($selisih, 0) }} kg
-                </h4>
-                <div class="text-muted small">
-                    {{ $selisih >= 0 ? 'Stok cukup/lebih' : 'Stok kurang dari kebutuhan' }}
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 @if ($match->status === 'terbuka' && auth()->user()->hasAnyRole(['Pusat', 'Admin']))
     <div class="card mt-3">
         <div class="card-body text-center">
             <p class="text-muted mb-3">
                 Setelah dipilih, Penawaran & Permintaan di atas akan langsung terkunci sepenuhnya
-                (termasuk size lain yang belum laku) dan sebuah Project baru akan dibuat.
+                (termasuk size lain yang belum laku) dan sebuah Project baru akan dibuat. Semua size
+                yang cocok di tabel ringkasan atas akan otomatis ikut ditandai final bersamaan.
             </p>
-            <form method="POST" action="{{ route('match.pilih', $match) }}" onsubmit="return confirm('Pilih kandidat ini sebagai pemenang? Penawaran & Permintaan terkait akan langsung terkunci dan jadi Project.')">
+            <form method="POST" action="{{ route('match.pilih', $match) }}" onsubmit="return confirm('Pilih pasangan ini sebagai pemenang? Penawaran & Permintaan terkait akan langsung terkunci dan jadi Project.')">
                 @csrf
                 <button class="btn btn-success btn-lg"><i class="fas fa-check"></i> Pilih Jadi Project</button>
             </form>

@@ -12,14 +12,18 @@ use Illuminate\Validation\ValidationException;
 class ProjectService
 {
     /**
-     * Pusat/Admin memilih 1 kandidat match sebagai pemenang.
+     * Pusat/Admin memilih 1 pasangan Penawaran-Permintaan sebagai pemenang (diwakili
+     * oleh salah satu kandidat match-nya).
      * Efeknya:
-     * - MatchSuggestion terkait -> status 'dipilih'
+     * - SEMUA kandidat match untuk pasangan Penawaran-Permintaan yang sama (bisa lebih
+     *   dari 1 kalau ada beberapa size yang sama-sama cocok) -> status 'dipilih'.
+     *   Bukan cuma yang diklik, karena penguncian tetap di level seluruh posting,
+     *   bukan per size - jadi semua kandidat size lain untuk pasangan ini ikut final.
      * - Project baru dibuat, status awal 'sedang_diproses'
      * - SELURUH Penawaran & Permintaan yang terlibat langsung terkunci (status
      *   'sedang_diproses'), termasuk size lain di Penawaran itu yang belum laku.
-     *   Kandidat match lain untuk Permintaan yang sama TIDAK diubah statusnya -
-     *   otomatis jadi tidak relevan karena Permintaan-nya sudah terkunci.
+     *   Kandidat match untuk Permintaan/Penawaran lain yang tidak terpilih TIDAK diubah
+     *   statusnya - otomatis tersaring dari list karena postingan terkaitnya sudah terkunci.
      */
     public function pilihMatch(MatchSuggestion $match, User $pemilih): Project
     {
@@ -30,7 +34,10 @@ class ProjectService
         }
 
         return DB::transaction(function () use ($match, $pemilih) {
-            $match->update(['status' => 'dipilih']);
+            MatchSuggestion::where('penawaran_id', $match->penawaran_id)
+                ->where('permintaan_id', $match->permintaan_id)
+                ->where('status', 'terbuka')
+                ->update(['status' => 'dipilih']);
 
             $project = Project::create([
                 'match_suggestion_id' => $match->id,
