@@ -3,46 +3,50 @@
 @section('title', 'Kecocokan Penawaran & Permintaan')
 
 @section('content')
-<div class="row mb-2">
-    <div class="col-md-9">
-        <form method="GET" id="form-filter-match">
-            <div class="form-row">
-                <div class="col-md-4 mb-2">
-                    <select name="penawaran_id" class="form-control select2" data-placeholder="Filter per Penawaran..." onchange="document.getElementById('form-filter-match').submit()">
-                        <option value=""></option>
-                        @foreach ($opsiPenawaran as $opsi)
-                            <option value="{{ $opsi->id }}" @selected(request('penawaran_id')==$opsi->id)>{{ $opsi->judul }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-4 mb-2">
-                    <select name="permintaan_id" class="form-control select2" data-placeholder="Filter per Permintaan..." onchange="document.getElementById('form-filter-match').submit()">
-                        <option value=""></option>
-                        @foreach ($opsiPermintaan as $opsi)
-                            <option value="{{ $opsi->id }}" @selected(request('permintaan_id')==$opsi->id)>{{ $opsi->judul }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-3 mb-2">
-                    <select name="status" class="form-control selectric" onchange="document.getElementById('form-filter-match').submit()">
-                        <option value="">Semua Status</option>
-                        <option value="terbuka" @selected(request('status')=='terbuka')>Terbuka (belum dipilih)</option>
-                        <option value="dipilih" @selected(request('status')=='dipilih')>Sudah Dipilih (Project)</option>
-                    </select>
-                </div>
-                <div class="col-md-1 mb-2">
-                    @if (request()->anyFilled(['penawaran_id', 'permintaan_id', 'status']))
-                        <a href="{{ route('match.index') }}" class="btn btn-secondary btn-block" title="Reset Filter"><i class="fas fa-times"></i></a>
-                    @endif
-                </div>
+<div class="card mb-3">
+    <div class="card-body py-3">
+        <div class="row align-items-center">
+            <div class="col-lg-9">
+                <form method="GET" id="form-filter-match">
+                    <div class="row align-items-center">
+                        <div class="col-md-4 mb-2 mb-lg-0">
+                            <select name="penawaran_id" class="form-control select2" data-placeholder="Filter per Penawaran..." onchange="document.getElementById('form-filter-match').submit()">
+                                <option value=""></option>
+                                @foreach ($opsiPenawaran as $opsi)
+                                    <option value="{{ $opsi->id }}" @selected(request('penawaran_id')==$opsi->id)>{{ $opsi->judul }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-2 mb-lg-0">
+                            <select name="permintaan_id" class="form-control select2" data-placeholder="Filter per Permintaan..." onchange="document.getElementById('form-filter-match').submit()">
+                                <option value=""></option>
+                                @foreach ($opsiPermintaan as $opsi)
+                                    <option value="{{ $opsi->id }}" @selected(request('permintaan_id')==$opsi->id)>{{ $opsi->judul }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-2 mb-lg-0">
+                            <select name="status" class="form-control selectric" onchange="document.getElementById('form-filter-match').submit()">
+                                <option value="">Semua Status</option>
+                                <option value="terbuka" @selected(request('status')=='terbuka')>Terbuka (belum dipilih)</option>
+                                <option value="dipilih" @selected(request('status')=='dipilih')>Sudah Dipilih (Project)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            @if (request()->anyFilled(['penawaran_id', 'permintaan_id', 'status']))
+                                <a href="{{ route('match.index') }}" class="btn btn-secondary btn-block" title="Reset Filter"><i class="fas fa-times"></i></a>
+                            @endif
+                        </div>
+                    </div>
+                </form>
             </div>
-        </form>
-    </div>
-    <div class="col-md-3 text-right">
-        <form method="POST" action="{{ route('match.jalankan') }}">
-            @csrf
-            <button class="btn btn-primary"><i class="fas fa-sync-alt"></i> Cari Kecocokan Ulang</button>
-        </form>
+            <div class="col-lg-3 mt-2 mt-lg-0">
+                <form method="POST" action="{{ route('match.jalankan') }}">
+                    @csrf
+                    <button class="btn btn-primary btn-block"><i class="fas fa-sync-alt"></i> Cari Kecocokan Ulang</button>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 

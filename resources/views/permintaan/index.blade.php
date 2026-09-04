@@ -3,23 +3,32 @@
 @section('title', 'Daftar Permintaan')
 
 @section('content')
-<div class="row mb-2">
-    <div class="col-md-8">
-        <form method="GET" class="form-inline">
-            <input type="text" name="cari" value="{{ request('cari') }}" class="form-control mr-2 mb-2" placeholder="Cari komoditi / judul...">
-            <select name="tipe" class="form-control selectric mr-2 mb-2">
-                <option value="">Semua Tipe</option>
-                <option value="Ekspor" @selected(request('tipe')=='Ekspor')>Ekspor</option>
-                <option value="Lokal" @selected(request('tipe')=='Lokal')>Lokal</option>
-            </select>
-            <button class="btn btn-secondary mb-2">Filter</button>
+<div class="card mb-3">
+    <div class="card-body py-3">
+        <form method="GET">
+            <div class="row align-items-center">
+                <div class="col-md-6 col-lg-7 mb-2 mb-md-0">
+                    <input type="text" name="cari" value="{{ request('cari') }}" class="form-control" placeholder="Cari komoditi / judul...">
+                </div>
+                <div class="col-md-3 mb-2 mb-md-0">
+                    <select name="tipe" class="form-control selectric">
+                        <option value="">Semua Tipe</option>
+                        <option value="Ekspor" @selected(request('tipe')=='Ekspor')>Ekspor</option>
+                        <option value="Lokal" @selected(request('tipe')=='Lokal')>Lokal</option>
+                    </select>
+                </div>
+                <div class="col-md-3 col-lg-2">
+                    <button class="btn btn-secondary btn-block">Filter</button>
+                </div>
+            </div>
         </form>
     </div>
-    <div class="col-md-4 text-right">
-        <a href="{{ route('permintaan.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Tambah Permintaan
-        </a>
-    </div>
+</div>
+
+<div class="d-flex justify-content-end mb-2">
+    <a href="{{ route('permintaan.create') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Tambah Permintaan
+    </a>
 </div>
 
 <div class="row">
