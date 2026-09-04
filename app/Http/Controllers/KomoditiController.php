@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\KategoriKomoditi;
 use App\Models\Komoditi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,15 +14,20 @@ class KomoditiController extends Controller
     {
         $this->authorizePusatAtauAdmin();
 
-        $query = Komoditi::with(['pengusul', 'approver'])->orderBy('kategori')->orderBy('nama');
+        $query = Komoditi::with(['pengusul', 'approver', 'kategoriKomoditi', 'tags'])
+            ->join('kategori_komoditi', 'komoditi.kategori_id', '=', 'kategori_komoditi.id')
+            ->orderBy('kategori_komoditi.nama')
+            ->orderBy('komoditi.nama')
+            ->select('komoditi.*');
 
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            $query->where('komoditi.status', $request->status);
         }
 
         $komoditi = $query->paginate(20)->withQueryString();
+        $kategoriList = KategoriKomoditi::orderBy('nama')->get();
 
-        return view('komoditi.index', compact('komoditi'));
+        return view('komoditi.index', compact('komoditi', 'kategoriList'));
     }
 
     // Admin/Pusat input langsung -> otomatis disetujui, tidak perlu approval siapa pun
@@ -31,12 +37,12 @@ class KomoditiController extends Controller
 
         $validated = $request->validate([
             'nama' => ['required', 'string', 'max:255', 'unique:komoditi,nama'],
-            'kategori' => ['nullable', 'string', 'max:255'],
+            'kategori_id' => ['nullable', 'exists:kategori_komoditi,id'],
         ]);
 
         Komoditi::create([
             'nama' => $validated['nama'],
-            'kategori' => $validated['kategori'] ?? null,
+            'kategori_id' => $validated['kategori_id'] ?? null,
             'status' => 'disetujui',
             'diusulkan_oleh' => Auth::id(),
             'approved_by' => Auth::id(),
@@ -48,20 +54,25 @@ class KomoditiController extends Controller
     // Form usulan - bisa diakses SEMUA role (termasuk Cabang)
     public function usulkan()
     {
-        return view('komoditi.usulkan');
+        $kategoriList = KategoriKomoditi::orderBy('nama')->get();
+
+        return view('komoditi.usulkan', compact('kategoriList'));
     }
 
-    // Usulan dari Cabang -> status menunggu_approval, baru bisa dipakai setelah di-approve
+    // Usulan dari Cabang -> status menunggu_approval, baru bisa dipakai setelah di-approve.
+    // Cabang cuma bisa PILIH kategori yang sudah ada (tidak bisa bikin kategori baru sendiri) -
+    // kalau tidak ada yang cocok, biarkan kosong dan jelaskan di nama/catatan, nanti
+    // Admin/Pusat yang menambahkan kategori barunya dulu sebelum approve.
     public function simpanUsulan(Request $request)
     {
         $validated = $request->validate([
             'nama' => ['required', 'string', 'max:255', 'unique:komoditi,nama'],
-            'kategori' => ['nullable', 'string', 'max:255'],
+            'kategori_id' => ['nullable', 'exists:kategori_komoditi,id'],
         ]);
 
         Komoditi::create([
             'nama' => $validated['nama'],
-            'kategori' => $validated['kategori'] ?? null,
+            'kategori_id' => $validated['kategori_id'] ?? null,
             'status' => 'menunggu_approval',
             'diusulkan_oleh' => Auth::id(),
             'approved_by' => null,

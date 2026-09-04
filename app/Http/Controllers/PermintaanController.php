@@ -19,7 +19,8 @@ class PermintaanController extends Controller
         if ($request->filled('cari')) {
             $query->where(function ($q) use ($request) {
                 $q->where('judul', 'like', '%' . $request->cari . '%')
-                  ->orWhereHas('komoditi', fn ($qq) => $qq->where('nama', 'like', '%' . $request->cari . '%'));
+                  ->orWhereHas('komoditi', fn ($qq) => $qq->where('nama', 'like', '%' . $request->cari . '%'))
+                  ->orWhereHas('komoditi.tags', fn ($qq) => $qq->where('nama_tag', 'like', '%' . $request->cari . '%'));
             });
         }
 
@@ -38,7 +39,7 @@ class PermintaanController extends Controller
 
     public function create()
     {
-        $komoditiList = Komoditi::disetujui()->orderBy('kategori')->orderBy('nama')->get()->groupBy('kategori');
+        $komoditiList = $this->komoditiListUntukForm();
         $sizesByKomoditi = $this->sizesByKomoditiJson();
 
         return view('permintaan.create', compact('komoditiList', 'sizesByKomoditi'));
@@ -106,7 +107,7 @@ class PermintaanController extends Controller
         $this->tolakJikaTerkunci($permintaan);
 
         $permintaan->load(['detailEkspor', 'rincianSize.komoditiSize', 'komoditi']);
-        $komoditiList = Komoditi::disetujui()->orderBy('kategori')->orderBy('nama')->get()->groupBy('kategori');
+        $komoditiList = $this->komoditiListUntukForm();
         $sizesByKomoditi = $this->sizesByKomoditiJson();
 
         return view('permintaan.edit', compact('permintaan', 'komoditiList', 'sizesByKomoditi'));
@@ -219,6 +220,21 @@ class PermintaanController extends Controller
             ->map(fn ($group) => $group->map(fn ($s) => ['id' => $s->id, 'nama_size' => $s->nama_size])->values());
 
         return $map->toJson();
+    }
+
+    // Daftar komoditi utk dropdown form - dikelompokkan per Kategori (via relasi, bukan
+    // teks bebas lagi), tiap komoditi disertai daftar tag/nama daerahnya supaya bisa
+    // ikut ke-search di select2 (tag ditampilkan di belakang nama resmi, dalam kurung).
+    private function komoditiListUntukForm()
+    {
+        return Komoditi::disetujui()
+            ->with(['kategoriKomoditi', 'tags'])
+            ->get()
+            ->sortBy([
+                fn ($k) => $k->kategoriKomoditi->nama ?? 'zzz',
+                fn ($k) => $k->nama,
+            ])
+            ->groupBy(fn ($k) => $k->kategoriKomoditi->nama ?? 'Lainnya');
     }
 
     private function tolakJikaTerkunci(Permintaan $permintaan): void

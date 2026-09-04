@@ -18,12 +18,21 @@
                     @csrf
                     <div class="form-group">
                         <label>Nama Komoditi <span class="text-danger">*</span></label>
-                        <input type="text" name="nama" value="{{ old('nama') }}" class="form-control @error('nama') is-invalid @enderror" placeholder="mis. Ikan Kuwe">
+                        <input type="text" name="nama" value="{{ old('nama') }}" class="form-control @error('nama') is-invalid @enderror" placeholder="mis. Giant Trevally (GT)">
                         @error('nama') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                     <div class="form-group">
                         <label>Kategori (opsional)</label>
-                        <input type="text" name="kategori" value="{{ old('kategori') }}" class="form-control" placeholder="mis. Ikan, Udang, Kepiting, Cumi & Gurita">
+                        <select name="kategori_id" class="form-control select2" data-placeholder="-- Pilih Kategori --">
+                            <option value=""></option>
+                            @foreach ($kategoriList as $kat)
+                                <option value="{{ $kat->id }}" @selected(old('kategori_id')==$kat->id)>{{ $kat->nama }}</option>
+                            @endforeach
+                        </select>
+                        <small class="form-text text-muted">
+                            Kategori yang kamu maksud belum ada di daftar? Kosongkan dulu bagian ini,
+                            nanti Admin/Pusat yang menambahkan kategorinya sebelum menyetujui usulan kamu.
+                        </small>
                     </div>
                     <button type="submit" class="btn btn-primary">Kirim Usulan</button>
                 </form>

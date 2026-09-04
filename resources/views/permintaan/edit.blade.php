@@ -29,12 +29,15 @@
                         @foreach ($komoditiList as $kategori => $daftar)
                             <optgroup label="{{ $kategori ?? 'Lainnya' }}">
                                 @foreach ($daftar as $k)
-                                    <option value="{{ $k->id }}" @selected(old('komoditi_id', $permintaan->komoditi_id)==$k->id)>{{ $k->nama }}</option>
+                                    <option value="{{ $k->id }}" @selected(old('komoditi_id', $permintaan->komoditi_id)==$k->id)>{{ $k->nama }}{{ $k->tags->isNotEmpty() ? ' (' . $k->tags->pluck('nama_tag')->implode(', ') . ')' : '' }}</option>
                                 @endforeach
                             </optgroup>
                         @endforeach
                     </select>
                     @error('komoditi_id') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+                    <small class="form-text text-muted">
+                        <a href="/komoditi/{{ $permintaan->komoditi_id }}/tag" id="link-nama-daerah" target="_blank">Kelola nama daerah komoditi ini</a>
+                    </small>
                 </div>
                 <div class="col-md-4 form-group">
                     <label>Status <span class="text-danger">*</span></label>
@@ -169,6 +172,11 @@
             hintSize.innerHTML = komoditiId
                 ? 'Tidak menemukan size yang dicari? <a href="/komoditi/' + komoditiId + '/size/usulkan" target="_blank">Usulkan size baru</a>.'
                 : 'Pilih Komoditi terlebih dahulu.';
+
+            const linkNamaDaerah = document.getElementById('link-nama-daerah');
+            if (linkNamaDaerah) {
+                linkNamaDaerah.href = komoditiId ? '/komoditi/' + komoditiId + '/tag' : '#';
+            }
         }
 
         perbaruiSemuaDropdownSize(true);

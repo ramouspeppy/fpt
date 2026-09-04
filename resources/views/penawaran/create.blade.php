@@ -40,7 +40,7 @@
                         @foreach ($komoditiList as $kategori => $daftar)
                             <optgroup label="{{ $kategori ?? 'Lainnya' }}">
                                 @foreach ($daftar as $k)
-                                    <option value="{{ $k->id }}" @selected(old('komoditi_id')==$k->id)>{{ $k->nama }}</option>
+                                    <option value="{{ $k->id }}" @selected(old('komoditi_id')==$k->id)>{{ $k->nama }}{{ $k->tags->isNotEmpty() ? ' (' . $k->tags->pluck('nama_tag')->implode(', ') . ')' : '' }}</option>
                                 @endforeach
                             </optgroup>
                         @endforeach
@@ -49,6 +49,8 @@
                     <small class="form-text text-muted">
                         Tidak menemukan komoditi yang dicari?
                         <a href="{{ route('komoditi.usulkan') }}" target="_blank">Usulkan komoditi baru</a>
+                        &middot; atau mungkin sudah ada dengan nama daerah lain -
+                        <a href="#" id="link-nama-daerah" target="_blank" class="disabled" style="pointer-events:none; opacity:.5;">pilih komoditi dulu</a>
                     </small>
                 </div>
             </div>
@@ -231,6 +233,28 @@
                 hintSize.textContent = 'Pilih Komoditi terlebih dahulu supaya daftar size-nya muncul di sini.';
                 tambahBarisBtn.disabled = true;
             }
+
+            perbaruiLinkNamaDaerah(komoditiId);
+        }
+
+        // Link "nama daerah" ikut menyesuaikan komoditi yang dipilih.
+        function perbaruiLinkNamaDaerah(komoditiId) {
+            const link = document.getElementById('link-nama-daerah');
+            if (!link) return;
+
+            if (komoditiId) {
+                link.href = '/komoditi/' + komoditiId + '/tag';
+                link.textContent = 'kelola nama daerah komoditi ini';
+                link.classList.remove('disabled');
+                link.style.pointerEvents = '';
+                link.style.opacity = '';
+            } else {
+                link.href = '#';
+                link.textContent = 'pilih komoditi dulu';
+                link.classList.add('disabled');
+                link.style.pointerEvents = 'none';
+                link.style.opacity = '.5';
+            }
         }
 
         komoditiSelect.addEventListener('change', perbaruiSemuaDropdownSize);
@@ -242,6 +266,8 @@
         // otomatis dipulihkan - keterbatasan wajar untuk dropdown yang sifatnya dinamis).
         if (komoditiSelect.value) {
             perbaruiSemuaDropdownSize();
+        } else {
+            perbaruiLinkNamaDaerah('');
         }
 
         // tambah/hapus baris rincian size

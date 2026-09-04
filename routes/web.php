@@ -8,12 +8,14 @@ use App\Http\Controllers\PermintaanController;
 use App\Http\Controllers\MatchSuggestionController;
 use App\Http\Controllers\KomoditiController;
 use App\Http\Controllers\KomoditiSizeController;
+use App\Http\Controllers\KomoditiTagController;
+use App\Http\Controllers\KategoriKomoditiController;
 use App\Http\Controllers\ProjectController;
 
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return redirect()->route('login');
+    return view('welcome');
 });
 
 // Route::get('/dashboard', function () {
@@ -37,6 +39,11 @@ Route::middleware('auth')->group(function () {
     // Usulan size - bisa diakses semua role (termasuk Cabang), sama polanya dengan usulan komoditi
     Route::get('/komoditi/{komoditi}/size/usulkan', [KomoditiSizeController::class, 'usulkan'])->name('komoditi.size.usulkan');
     Route::post('/komoditi/{komoditi}/size/usulkan', [KomoditiSizeController::class, 'simpanUsulan'])->name('komoditi.size.simpanUsulan');
+
+    // Nama daerah/alias komoditi - bisa diakses & diisi SEMUA role yang login, tanpa approval
+    Route::get('/komoditi/{komoditi}/tag', [KomoditiTagController::class, 'index'])->name('komoditi.tag.index');
+    Route::post('/komoditi/{komoditi}/tag', [KomoditiTagController::class, 'store'])->name('komoditi.tag.store');
+    Route::delete('/komoditi/{komoditi}/tag/{tag}', [KomoditiTagController::class, 'destroy'])->name('komoditi.tag.destroy');
 
     Route::get('/match', [MatchSuggestionController::class, 'index'])->name('match.index');
     Route::get('/match/{match}', [MatchSuggestionController::class, 'show'])->name('match.show');
@@ -68,6 +75,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/komoditi/{komoditi}/size', [KomoditiSizeController::class, 'store'])->name('komoditi.size.store');
         Route::patch('/komoditi/{komoditi}/size/{size}/approve', [KomoditiSizeController::class, 'approve'])->name('komoditi.size.approve');
         Route::patch('/komoditi/{komoditi}/size/{size}/tolak', [KomoditiSizeController::class, 'tolak'])->name('komoditi.size.tolak');
+
+        // Kelola kategori komoditi - taksonomi besar, cukup Admin/Pusat, tanpa approval
+        Route::get('/kategori-komoditi', [KategoriKomoditiController::class, 'index'])->name('kategoriKomoditi.index');
+        Route::post('/kategori-komoditi', [KategoriKomoditiController::class, 'store'])->name('kategoriKomoditi.store');
+        Route::delete('/kategori-komoditi/{kategoriKomoditi}', [KategoriKomoditiController::class, 'destroy'])->name('kategoriKomoditi.destroy');
     });
 });
 

@@ -15,11 +15,16 @@ class Komoditi extends Model
 
     protected $fillable = [
         'nama',
-        'kategori',
+        'kategori_id',
         'status',
         'diusulkan_oleh',
         'approved_by',
     ];
+
+    public function kategoriKomoditi(): BelongsTo
+    {
+        return $this->belongsTo(KategoriKomoditi::class, 'kategori_id');
+    }
 
     public function pengusul(): BelongsTo
     {
@@ -41,11 +46,17 @@ class Komoditi extends Model
         return $this->hasMany(Permintaan::class);
     }
 
-    // BARU di v9: setiap komoditi punya daftar size-nya sendiri (mis. gurita:
-    // 1000UP, 500-1000, 300-500, 200-300 - beda komoditi beda daftar size).
     public function sizes(): HasMany
     {
         return $this->hasMany(KomoditiSize::class);
+    }
+
+    // BARU: nama daerah/alias komoditi ini (mis. Giant Trevally (GT) juga dikenal
+    // sebagai "Ikan Gabui", "Ikan Kuwe" di daerah tertentu). Bisa ditambah siapa saja
+    // yang login, tanpa approval - membantu pencarian.
+    public function tags(): HasMany
+    {
+        return $this->hasMany(KomoditiTag::class);
     }
 
     public function scopeDisetujui($query)

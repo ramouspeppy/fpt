@@ -3,6 +3,12 @@
 @section('title', 'Master Data Komoditi')
 
 @section('content')
+<div class="d-flex justify-content-end mb-2">
+    <a href="{{ route('kategoriKomoditi.index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-tags"></i> Kelola Kategori
+    </a>
+</div>
+
 <div class="row">
     <div class="col-md-8">
         <div class="card">
@@ -26,6 +32,7 @@
                             <tr>
                                 <th>Nama</th>
                                 <th>Kategori</th>
+                                <th>Nama Daerah</th>
                                 <th>Status</th>
                                 <th>Diusulkan Oleh</th>
                                 <th class="text-right">Aksi</th>
@@ -38,7 +45,14 @@
                                 @endphp
                                 <tr>
                                     <td>{{ $item->nama }}</td>
-                                    <td>{{ $item->kategori ?? '-' }}</td>
+                                    <td>{{ $item->kategoriKomoditi->nama ?? '-' }}</td>
+                                    <td>
+                                        @forelse ($item->tags as $tag)
+                                            <span class="badge badge-light border">{{ $tag->nama_tag }}</span>
+                                        @empty
+                                            <span class="text-muted small">-</span>
+                                        @endforelse
+                                    </td>
                                     <td>
                                         <span class="badge badge-{{ $warnaStatus[$item->status] ?? 'secondary' }}">
                                             {{ str_replace('_', ' ', ucfirst($item->status)) }}
@@ -47,8 +61,11 @@
                                     <td>{{ $item->pengusul->name ?? '-' }}</td>
                                     <td class="text-right">
                                         @if ($item->status === 'disetujui')
-                                            <a href="{{ route('komoditi.size.index', $item) }}" class="btn btn-sm btn-info">
-                                                <i class="fas fa-ruler"></i> Kelola Size
+                                            <a href="{{ route('komoditi.size.index', $item) }}" class="btn btn-sm btn-info" title="Kelola Size">
+                                                <i class="fas fa-ruler"></i>
+                                            </a>
+                                            <a href="{{ route('komoditi.tag.index', $item) }}" class="btn btn-sm btn-secondary" title="Kelola Nama Daerah">
+                                                <i class="fas fa-tag"></i>
                                             </a>
                                         @endif
                                         @if ($item->status === 'menunggu_approval')
@@ -90,13 +107,21 @@
                     </div>
                     <div class="form-group">
                         <label>Kategori</label>
-                        <input type="text" name="kategori" value="{{ old('kategori') }}" class="form-control" placeholder="mis. Ikan, Udang, Kepiting, Cumi & Gurita">
+                        <select name="kategori_id" class="form-control select2" data-placeholder="-- Pilih Kategori --">
+                            <option value=""></option>
+                            @foreach ($kategoriList as $kat)
+                                <option value="{{ $kat->id }}" @selected(old('kategori_id')==$kat->id)>{{ $kat->nama }}</option>
+                            @endforeach
+                        </select>
+                        <small class="form-text text-muted">
+                            Kategori belum ada di daftar? <a href="{{ route('kategoriKomoditi.index') }}">Tambah dulu di sini</a>.
+                        </small>
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">Tambah & Setujui</button>
                 </form>
                 <div class="text-muted small mt-3">
-                    Setelah komoditi disetujui, klik <strong>Kelola Size</strong> di baris komoditi
-                    tersebut untuk menambahkan daftar size-nya (mis. 1000UP, 500-1000, dst).
+                    Setelah komoditi disetujui, klik ikon <i class="fas fa-ruler"></i> untuk kelola size,
+                    atau ikon <i class="fas fa-tag"></i> untuk kelola nama daerah/alias-nya.
                 </div>
             </div>
         </div>
