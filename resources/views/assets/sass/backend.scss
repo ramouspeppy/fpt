@@ -6,6 +6,14 @@ body {
     background-color: #f4f6f9;
 }
 
+/* Fix Stisla Modal berada di belakang backdrop */
+.modal {
+    z-index: 1055 !important;
+}
+
+.modal-backdrop {
+    z-index: 1050 !important;
+}
 // override datatable
 div.table-responsive > div.dataTables_wrapper > div.row {
     margin: 0;
