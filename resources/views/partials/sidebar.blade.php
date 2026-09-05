@@ -31,27 +31,17 @@
                 </a>
             </li>
 
-            @role('Pusat|Admin')
-                <li class="menu-header">Data Master</li>
-                <li class="{{ request()->routeIs('komoditi.index') || request()->routeIs('komoditi.size.*') ? 'active' : '' }}">
-                    <a class="nav-link" href="{{ route('komoditi.index') }}">
-                        <i class="fas fa-list"></i> <span>Master Komoditi & Size</span>
-                    </a>
-                </li>
-            @endrole
-
-            @role('Admin')
-                <li class="{{ request()->routeIs('cabang.*') ? 'active' : '' }}">
-                    <a class="nav-link" href="{{ route('cabang.index') }}">
-                        <i class="fas fa-store"></i> <span>Cabang</span>
-                    </a>
-                </li>
-            @endrole
-
-            <li class="menu-header">Lainnya</li>
-            <li class="{{ request()->routeIs('komoditi.usulkan') ? 'active' : '' }}">
-                <a class="nav-link" href="{{ route('komoditi.usulkan') }}">
-                    <i class="fas fa-plus-circle"></i> <span>Usulkan Komoditi</span>
+            <!-- v9.8: Master Komoditi & Cabang sekarang bisa dilihat SEMUA role yang login
+                 (visibility only) - aksi kelola tetap dibatasi lewat controller/route -->
+            <li class="menu-header">Data Master</li>
+            <li class="{{ request()->routeIs('komoditi.index') || request()->routeIs('komoditi.size.*') ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('komoditi.index') }}">
+                    <i class="fas fa-list"></i> <span>Master Komoditi & Size</span>
+                </a>
+            </li>
+            <li class="{{ request()->routeIs('cabang.*') ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('cabang.index') }}">
+                    <i class="fas fa-store"></i> <span>Cabang</span>
                 </a>
             </li>
         </ul>

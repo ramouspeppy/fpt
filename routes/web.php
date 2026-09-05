@@ -36,6 +36,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/komoditi/usulkan', [KomoditiController::class, 'usulkan'])->name('komoditi.usulkan');
     Route::post('/komoditi/usulkan', [KomoditiController::class, 'simpanUsulan'])->name('komoditi.simpanUsulan');
 
+    // v9.8: index Komoditi & Cabang sekarang bisa dilihat SEMUA role yang login (visibility),
+    // sedangkan aksi kelola (tambah/approve/tolak untuk Komoditi, CRUD untuk Cabang) tetap
+    // dibatasi lewat controller/middleware seperti sebelumnya - lihat blok role di bawah.
+    Route::get('/komoditi', [KomoditiController::class, 'index'])->name('komoditi.index');
+    Route::get('/cabang', [CabangController::class, 'index'])->name('cabang.index');
+
     // Usulan size - bisa diakses semua role (termasuk Cabang), sama polanya dengan usulan komoditi
     Route::get('/komoditi/{komoditi}/size/usulkan', [KomoditiSizeController::class, 'usulkan'])->name('komoditi.size.usulkan');
     Route::post('/komoditi/{komoditi}/size/usulkan', [KomoditiSizeController::class, 'simpanUsulan'])->name('komoditi.size.simpanUsulan');
@@ -60,12 +66,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/project/{project}/catatan', [ProjectController::class, 'storeCatatan'])->name('project.storeCatatan');
 
     Route::middleware(['role:Admin'])->group(function () {
-        Route::resource('cabang', CabangController::class);
+        Route::resource('cabang', CabangController::class)->except(['index']);
     });
 
-    // Khusus Pusat/Admin - kelola master data
+    // Khusus Pusat/Admin - kelola master data (index Komoditi sudah dipindah ke atas, terbuka utk semua)
     Route::middleware(['role:Pusat|Admin'])->group(function () {
-        Route::get('/komoditi', [KomoditiController::class, 'index'])->name('komoditi.index');
         Route::post('/komoditi', [KomoditiController::class, 'store'])->name('komoditi.store');
         Route::patch('/komoditi/{komoditi}/approve', [KomoditiController::class, 'approve'])->name('komoditi.approve');
         Route::patch('/komoditi/{komoditi}/tolak', [KomoditiController::class, 'tolak'])->name('komoditi.tolak');

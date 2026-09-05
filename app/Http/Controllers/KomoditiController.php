@@ -9,10 +9,12 @@ use Illuminate\Support\Facades\Auth;
 
 class KomoditiController extends Controller
 {
-    // Halaman kelola master data - khusus Admin/Pusat, bisa lihat semua status + approve/tolak usulan
+    // Halaman kelola master data - bisa dilihat SEMUA role yang login, tapi aksi kelola
+    // (tambah/approve/tolak) tetap dibatasi Admin/Pusat lewat method masing-masing di bawah.
     public function index(Request $request)
     {
-        $this->authorizePusatAtauAdmin();
+        $user = Auth::user();
+        $bolehKelola = $user->hasAnyRole(['Pusat', 'Admin']);
 
         $query = Komoditi::with(['pengusul', 'approver', 'kategoriKomoditi', 'tags'])
             ->join('kategori_komoditi', 'komoditi.kategori_id', '=', 'kategori_komoditi.id')
@@ -20,14 +22,20 @@ class KomoditiController extends Controller
             ->orderBy('komoditi.nama')
             ->select('komoditi.*');
 
-        if ($request->filled('status')) {
-            $query->where('komoditi.status', $request->status);
+        if ($bolehKelola) {
+            // Admin/Pusat boleh filter & lihat semua status (termasuk menunggu approval/ditolak)
+            if ($request->filled('status')) {
+                $query->where('komoditi.status', $request->status);
+            }
+        } else {
+            // Cabang/role lain cukup lihat data yang sudah valid dipakai
+            $query->where('komoditi.status', 'disetujui');
         }
 
         $komoditi = $query->paginate(20)->withQueryString();
-        $kategoriList = KategoriKomoditi::orderBy('nama')->get();
+        $kategoriList = $bolehKelola ? KategoriKomoditi::orderBy('nama')->get() : collect();
 
-        return view('komoditi.index', compact('komoditi', 'kategoriList'));
+        return view('komoditi.index', compact('komoditi', 'kategoriList', 'bolehKelola'));
     }
 
     // Admin/Pusat input langsung -> otomatis disetujui, tidak perlu approval siapa pun
@@ -51,12 +59,25 @@ class KomoditiController extends Controller
         return redirect()->route('komoditi.index')->with('status', 'Komoditi berhasil ditambahkan.');
     }
 
-    // Form usulan - bisa diakses SEMUA role (termasuk Cabang)
+    // Form usulan - bisa diakses SEMUA role (termasuk Cabang). Sekarang tampil 2 kolom:
+    // riwayat usulan milik user ini sendiri (supaya tidak lupa & tidak usul berulang-ulang),
+    // dan form usulan baru dengan bantuan select2 tags supaya nama yang mirip/sudah ada
+    // kelihatan duluan sebelum submit.
     public function usulkan()
     {
         $kategoriList = KategoriKomoditi::orderBy('nama')->get();
 
-        return view('komoditi.usulkan', compact('kategoriList'));
+        $riwayatSaya = Komoditi::where('diusulkan_oleh', Auth::id())
+            ->with('kategoriKomoditi')
+            ->latest()
+            ->get();
+
+        // Semua nama komoditi yang SUDAH ADA (apapun statusnya - disetujui, menunggu approval,
+        // maupun ditolak) - jadi suggestion di select2 tags, supaya user sadar sebelum submit
+        // kalau nama itu sudah pernah diusulkan/terdaftar oleh siapa saja.
+        $semuaNamaKomoditi = Komoditi::orderBy('nama')->get(['nama', 'status']);
+
+        return view('komoditi.usulkan', compact('kategoriList', 'riwayatSaya', 'semuaNamaKomoditi'));
     }
 
     // Usulan dari Cabang -> status menunggu_approval, baru bisa dipakai setelah di-approve.
@@ -68,6 +89,8 @@ class KomoditiController extends Controller
         $validated = $request->validate([
             'nama' => ['required', 'string', 'max:255', 'unique:komoditi,nama'],
             'kategori_id' => ['nullable', 'exists:kategori_komoditi,id'],
+        ], [
+            'nama.unique' => 'Nama ini sudah pernah diusulkan/terdaftar sebelumnya (lihat daftar di sebelah kiri) - coba nama yang lebih spesifik.',
         ]);
 
         Komoditi::create([

@@ -8,11 +8,13 @@
         <div class="card">
             <div class="card-header">
                 <h4>Daftar Cabang</h4>
-                <div class="card-header-action">
-                    <a href="{{ route('cabang.create') }}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Tambah Cabang
-                    </a>
-                </div>
+                @role('Admin')
+                    <div class="card-header-action">
+                        <a href="{{ route('cabang.create') }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Tambah Cabang
+                        </a>
+                    </div>
+                @endrole
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -23,7 +25,9 @@
                                 <th>Lokasi</th>
                                 <th>Region</th>
                                 <th>Jumlah User</th>
-                                <th class="text-right">Aksi</th>
+                                @role('Admin')
+                                    <th class="text-right">Aksi</th>
+                                @endrole
                             </tr>
                         </thead>
                         <tbody>
@@ -33,16 +37,18 @@
                                     <td>{{ $item->lokasi }}</td>
                                     <td>{{ $item->region ?? '-' }}</td>
                                     <td>{{ $item->users_count }}</td>
-                                    <td class="text-right">
-                                        <a href="{{ route('cabang.edit', $item) }}" class="btn btn-sm btn-secondary">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </a>
-                                        <form method="POST" action="{{ route('cabang.destroy', $item) }}" class="d-inline" onsubmit="return confirm('Yakin hapus cabang ini?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button class="btn btn-sm btn-danger"><i class="fas fa-trash"></i> Hapus</button>
-                                        </form>
-                                    </td>
+                                    @role('Admin')
+                                        <td class="text-right">
+                                            <a href="{{ route('cabang.edit', $item) }}" class="btn btn-sm btn-secondary">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
+                                            <form method="POST" action="{{ route('cabang.destroy', $item) }}" class="d-inline" onsubmit="return confirm('Yakin hapus cabang ini?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button class="btn btn-sm btn-danger"><i class="fas fa-trash"></i> Hapus</button>
+                                            </form>
+                                        </td>
+                                    @endrole
                                 </tr>
                             @endforeach
                         </tbody>

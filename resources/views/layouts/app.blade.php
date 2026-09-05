@@ -15,7 +15,7 @@
 
 <body>
     <div id="app">
-        <div class="main-wrapper">
+        <div class="main-wrapper main-wrapper-1">
             <div class="navbar-bg"></div>
             @include('partials.navbar')
             @include('partials.sidebar')
