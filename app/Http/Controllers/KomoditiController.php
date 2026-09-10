@@ -6,6 +6,7 @@ use App\Models\KategoriKomoditi;
 use App\Models\Komoditi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class KomoditiController extends Controller
 {
@@ -16,7 +17,7 @@ class KomoditiController extends Controller
         $user = Auth::user();
         $bolehKelola = $user->hasAnyRole(['Pusat', 'Admin']);
 
-        $query = Komoditi::with(['pengusul', 'approver', 'kategoriKomoditi', 'tags'])
+        $query = Komoditi::with(['pengusul', 'approver', 'kategoriKomoditi', 'tags', 'media'])
             ->join('kategori_komoditi', 'komoditi.kategori_id', '=', 'kategori_komoditi.id')
             ->orderBy('kategori_komoditi.nama')
             ->orderBy('komoditi.nama')
@@ -134,5 +135,61 @@ class KomoditiController extends Controller
     private function authorizePusatAtauAdmin(): void
     {
         abort_unless(Auth::user()->hasAnyRole(['Pusat', 'Admin']), 403);
+    }
+
+    // BARU: edit nama & kategori. Sengaja dibatasi cuma untuk 2 kondisi:
+    // - Admin/Pusat, untuk komoditi yang statusnya sudah disetujui (data master yang dipakai luas).
+    // - Cabang, tapi HANYA untuk usulan MILIK SENDIRI yang masih menunggu_approval (belum
+    //   dipakai siapa pun, jadi aman diubah sebelum di-review Admin/Pusat).
+    // Komoditi berstatus 'ditolak' sengaja tidak bisa diedit - alurnya usul ulang dengan nama baru.
+    private function authorizeEdit(Komoditi $komoditi): void
+    {
+        $user = Auth::user();
+
+        if ($komoditi->status === 'disetujui') {
+            abort_unless($user->hasAnyRole(['Pusat', 'Admin']), 403);
+            return;
+        }
+
+        if ($komoditi->status === 'menunggu_approval') {
+            abort_unless($komoditi->diusulkan_oleh === $user->id, 403);
+            return;
+        }
+
+        abort(403, 'Komoditi yang sudah ditolak tidak bisa diedit - silakan usulkan ulang dengan nama yang baru.');
+    }
+
+    public function edit(Komoditi $komoditi)
+    {
+        $this->authorizeEdit($komoditi);
+
+        $kategoriList = KategoriKomoditi::orderBy('nama')->get();
+
+        return view('komoditi.edit', compact('komoditi', 'kategoriList'));
+    }
+
+    public function update(Request $request, Komoditi $komoditi)
+    {
+        $this->authorizeEdit($komoditi);
+
+        // Cabang yang edit usulan sendiri tidak boleh bikin kategori baru sendiri,
+        // sama seperti waktu usul pertama kali - cukup pilih yang sudah ada / kosong.
+        $validated = $request->validate([
+            'nama' => ['required', 'string', 'max:255', Rule::unique('komoditi', 'nama')->ignore($komoditi->id)],
+            'kategori_id' => ['nullable', 'exists:kategori_komoditi,id'],
+        ]);
+
+        $komoditi->update([
+            'nama' => $validated['nama'],
+            'kategori_id' => $validated['kategori_id'] ?? null,
+        ]);
+
+        activity('komoditi')
+            ->performedOn($komoditi)
+            ->causedBy(Auth::user())
+            ->withProperties(['nama' => $komoditi->nama, 'kategori_id' => $komoditi->kategori_id])
+            ->log('mengubah data komoditi');
+
+        return redirect()->route('komoditi.index')->with('status', 'Komoditi berhasil diperbarui.');
     }
 }

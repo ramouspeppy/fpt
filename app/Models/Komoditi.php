@@ -6,10 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class Komoditi extends Model
+class Komoditi extends Model implements HasMedia
 {
-    use HasFactory;
+    use HasFactory, InteractsWithMedia;
 
     protected $table = 'komoditi';
 
@@ -62,5 +65,31 @@ class Komoditi extends Model
     public function scopeDisetujui($query)
     {
         return $query->where('status', 'disetujui');
+    }
+
+    // BARU: foto komoditi - satu foto saja per komoditi (bukan galeri). Upload pakai
+    // FilePond (single file), dikirim bareng form biasa. Disimpan di disk 'media'
+    // (folder langsung di dalam public_html, lihat config/filesystems.php) supaya tidak
+    // butuh `php artisan storage:link` yang bermasalah di struktur folder cPanel terpisah.
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('foto')
+            ->useDisk('media')
+            ->singleFile()
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp']);
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->addMediaConversion('thumb')
+            ->width(400)
+            ->height(400)
+            ->sharpen(10)
+            ->nonQueued();
+    }
+
+    public function fotoUtama(): ?Media
+    {
+        return $this->getFirstMedia('foto');
     }
 }

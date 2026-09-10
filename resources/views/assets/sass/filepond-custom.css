@@ -1,0 +1,115 @@
+/* Kustomisasi tampilan FilePond - di-load lewat dynamic import di my-filepond.js,
+   supaya cuma dimuat kalau ada elemen .filepond / .filepond-preview di halaman. */
+
+/* ============ Versi biasa (class "filepond", label ikon awan) ============ */
+.filepond--root .filepond--drop-label {
+    color: #6b7280;
+}
+
+.filepond--root .filepond--panel-root {
+    background-color: #f8fafc;
+    border: 2px dashed #d3dae6;
+    border-radius: 10px;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.filepond--root.filepond--hopper-hovered .filepond--panel-root,
+.filepond--root:hover .filepond--panel-root {
+    border-color: #3490dc;
+    background-color: #eef6fd;
+}
+
+.fp-aesthetic-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 0;
+}
+
+.fp-icon-float {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background-color: #eef6fd;
+    color: #3490dc;
+    transition: transform 0.2s ease;
+}
+
+.filepond--root:hover .fp-icon-float {
+    transform: translateY(-2px);
+}
+
+.fp-text-area .fp-title {
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+.fp-text-area .fp-title .filepond--label-action {
+    color: #3490dc;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.fp-text-area .fp-title .filepond--label-action:hover {
+    text-decoration: underline;
+}
+
+/* ============ Versi lingkaran (class "filepond-preview", foto profil/komoditi) ============ */
+
+/* Pembungkus lebar-tetap yang dibuat otomatis di my-filepond.js (initFilePondPreview) */
+.fp-circle-wrapper {
+    position: relative;
+}
+
+.fp-circle-wrapper .filepond--root {
+    margin-bottom: 0;
+}
+
+/* Bingkai lingkaran - dibuat lebih hidup: border rapi + bayangan lembut + transisi halus */
+.fp-circle-wrapper .filepond--panel-root {
+    background-color: #f1f3f9;
+    border: 3px solid #ffffff;
+    box-shadow: 0 0 0 2px #d9deea, 0 6px 16px rgba(15, 23, 42, 0.12);
+    transition: box-shadow 0.25s ease, background-color 0.25s ease;
+}
+
+.fp-circle-wrapper:hover .filepond--panel-root {
+    box-shadow: 0 0 0 2px #3490dc, 0 8px 20px rgba(52, 144, 220, 0.25);
+    background-color: #eef6fd;
+}
+
+/* Ikon/teks "Drag & Drop" bawaan supaya proporsional di dalam lingkaran kecil */
+.fp-circle-wrapper .filepond--drop-label {
+    font-size: 0.75rem;
+    padding: 0 14px;
+    color: #8a94a6;
+}
+
+.fp-circle-wrapper .filepond--drop-label .filepond--label-action {
+    color: #3490dc;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.fp-circle-wrapper .filepond--drop-label .filepond--label-action:hover {
+    text-decoration: underline;
+}
+
+/* Saat sudah ada foto: crop preview-nya dikasih ring tipis biar terasa "framed" */
+.fp-circle-wrapper .filepond--item-panel {
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.6);
+}
+
+/* Tombol hapus (x) sedikit dipertegas supaya gampang ditemukan di atas foto */
+.fp-circle-wrapper .filepond--file-action-button {
+    background-color: rgba(17, 24, 39, 0.65);
+}
+
+.fp-circle-wrapper .filepond--file-action-button:hover {
+    background-color: #e3342f;
+}

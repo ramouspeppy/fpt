@@ -113,4 +113,17 @@ export function autoInit() {
             });
         });
     }
+
+    // --- FilePond (versi preview + crop, pakai class .filepond-preview) ---
+    const filepondPreviewEls = document.querySelectorAll(".filepond-preview");
+
+    if (filepondPreviewEls.length) {
+        import("./my-filepond").then(({ initFilePondPreview }) => {
+            filepondPreviewEls.forEach((el) => {
+                initFilePondPreview(el, {
+                    allowMultiple: el.hasAttribute("multiple"),
+                });
+            });
+        });
+    }
 }

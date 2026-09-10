@@ -30,6 +30,10 @@
     "dependencies": {
         "axios": "^1.19.0",
         "filepond": "^4.32.12",
+        "filepond-plugin-file-validate-type": "^1.2.9",
+        "filepond-plugin-image-exif-orientation": "^1.0.11",
+        "filepond-plugin-image-preview": "^4.6.12",
+        "filepond-plugin-image-crop": "^2.0.6",
         "glightbox": "^3.3.1",
         "lodash": "^4.18.1"
     }

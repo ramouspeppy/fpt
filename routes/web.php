@@ -9,6 +9,7 @@ use App\Http\Controllers\MatchSuggestionController;
 use App\Http\Controllers\KomoditiController;
 use App\Http\Controllers\KomoditiSizeController;
 use App\Http\Controllers\KomoditiTagController;
+use App\Http\Controllers\KomoditiFotoController;
 use App\Http\Controllers\KategoriKomoditiController;
 use App\Http\Controllers\ProjectController;
 
@@ -41,6 +42,13 @@ Route::middleware('auth')->group(function () {
     // dibatasi lewat controller/middleware seperti sebelumnya - lihat blok role di bawah.
     Route::get('/komoditi', [KomoditiController::class, 'index'])->name('komoditi.index');
     Route::get('/cabang', [CabangController::class, 'index'])->name('cabang.index');
+
+    // BARU: edit nama & kategori - bisa diakses Admin/Pusat (utk yang disetujui) ATAU
+    // Cabang pengusul sendiri (utk usulan yang masih menunggu_approval). Otorisasi detail
+    // dicek di dalam controller (authorizeEdit), bukan lewat middleware, karena aturannya
+    // beda-beda tergantung status & pemilik data, bukan cuma role.
+    Route::get('/komoditi/{komoditi}/edit', [KomoditiController::class, 'edit'])->name('komoditi.edit');
+    Route::patch('/komoditi/{komoditi}', [KomoditiController::class, 'update'])->name('komoditi.update');
 
     // Usulan size - bisa diakses semua role (termasuk Cabang), sama polanya dengan usulan komoditi
     Route::get('/komoditi/{komoditi}/size/usulkan', [KomoditiSizeController::class, 'usulkan'])->name('komoditi.size.usulkan');
@@ -80,6 +88,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/komoditi/{komoditi}/size', [KomoditiSizeController::class, 'store'])->name('komoditi.size.store');
         Route::patch('/komoditi/{komoditi}/size/{size}/approve', [KomoditiSizeController::class, 'approve'])->name('komoditi.size.approve');
         Route::patch('/komoditi/{komoditi}/size/{size}/tolak', [KomoditiSizeController::class, 'tolak'])->name('komoditi.size.tolak');
+
+        // BARU: kelola foto komoditi (satu foto per komoditi, upload pakai FilePond)
+        Route::get('/komoditi/{komoditi}/foto', [KomoditiFotoController::class, 'index'])->name('komoditi.foto.index');
+        Route::post('/komoditi/{komoditi}/foto', [KomoditiFotoController::class, 'store'])->name('komoditi.foto.store');
+        Route::delete('/komoditi/{komoditi}/foto', [KomoditiFotoController::class, 'destroy'])->name('komoditi.foto.destroy');
 
         // Kelola kategori komoditi - taksonomi besar, cukup Admin/Pusat, tanpa approval
         Route::get('/kategori-komoditi', [KategoriKomoditiController::class, 'index'])->name('kategoriKomoditi.index');

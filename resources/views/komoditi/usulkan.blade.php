@@ -32,9 +32,16 @@
                                         <div class="font-weight-bold">{{ $item->nama }}</div>
                                         <div class="text-muted small">{{ $item->kategoriKomoditi->nama ?? 'Tanpa kategori' }} &middot; {{ $item->created_at->translatedFormat('d M Y') }}</div>
                                     </div>
-                                    <span class="badge badge-{{ $warnaStatus[$item->status] ?? 'secondary' }}">
-                                        {{ $labelStatus[$item->status] ?? ucfirst($item->status) }}
-                                    </span>
+                                    <div class="text-right">
+                                        <span class="badge badge-{{ $warnaStatus[$item->status] ?? 'secondary' }}">
+                                            {{ $labelStatus[$item->status] ?? ucfirst($item->status) }}
+                                        </span>
+                                        @if ($item->status === 'menunggu_approval')
+                                            <div class="mt-1">
+                                                <a href="{{ route('komoditi.edit', $item) }}" class="small">Edit</a>
+                                            </div>
+                                        @endif
+                                    </div>
                                 </div>
                             @endforeach
                         </div>

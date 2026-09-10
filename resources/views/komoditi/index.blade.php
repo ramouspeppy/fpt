@@ -50,17 +50,26 @@
                 <table class="table table-striped mb-0">
                     <thead>
                         <tr>
-                            <th class="pl-4" style="width: 24%">Nama Komoditi</th>
-                            <th style="width: 14%">Kategori</th>
-                            <th style="width: 26%">Juga Dikenal Sebagai</th>
+                            <th style="width: 6%"></th>
+                            <th class="pl-4" style="width: 20%">Nama Komoditi</th>
+                            <th style="width: 12%">Kategori</th>
+                            <th style="width: 24%">Juga Dikenal Sebagai</th>
                             <th style="width: 12%">Status</th>
                             <th style="width: 12%">Diusulkan Oleh</th>
-                            <th class="text-right pr-4" style="width: 12%">Aksi</th>
+                            <th class="text-right pr-4" style="width: 14%">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($komoditi as $item)
                             <tr>
+                                <td class="text-center">
+                                    @if ($item->fotoUtama())
+                                        <img src="{{ $item->fotoUtama()->getUrl('thumb') }}" alt="{{ $item->nama }}"
+                                            class="rounded border" style="width: 36px; height: 36px; object-fit: cover;">
+                                    @else
+                                        <span class="text-muted"><i class="fas fa-image"></i></span>
+                                    @endif
+                                </td>
                                 <td class="pl-4">
                                     <div class="font-weight-bold">{{ $item->nama }}</div>
                                 </td>
@@ -89,6 +98,12 @@
                                 <td class="text-right pr-4">
                                     @if ($item->status === 'disetujui')
                                         @if ($bolehKelola)
+                                            <a href="{{ route('komoditi.edit', $item) }}" class="btn btn-sm btn-icon icon-left btn-warning" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{{ route('komoditi.foto.index', $item) }}" class="btn btn-sm btn-icon icon-left btn-purple" title="Kelola Foto">
+                                                <i class="fas fa-image"></i>
+                                            </a>
                                             <a href="{{ route('komoditi.size.index', $item) }}" class="btn btn-sm btn-icon icon-left btn-info" title="Kelola Size">
                                                 <i class="fas fa-ruler"></i>
                                             </a>
@@ -113,7 +128,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center text-muted py-4">Belum ada komoditi.</td>
+                                <td colspan="7" class="text-center text-muted py-4">Belum ada komoditi.</td>
                             </tr>
                         @endforelse
                     </tbody>

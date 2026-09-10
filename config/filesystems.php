@@ -47,6 +47,24 @@ return [
             'report' => false,
         ],
 
+        // BARU: disk khusus untuk file media (foto komoditi, dst) via Spatie MediaLibrary.
+        // Defaultnya folder public/media bawaan Laravel (lokal/dev). Di cPanel (struktur
+        // ~/app + ~/public_html terpisah), isi MEDIA_DISK_ROOT & MEDIA_DISK_URL di .env
+        // supaya file langsung tersimpan di public_html - TANPA symlink storage:link
+        // (lebih aman daripada override public_path() di bootstrap/app.php, karena env()
+        // di bootstrap/app.php belum bisa baca file .env pada tahap itu).
+        // Sengaja pakai `?:` (bukan argumen default di env()) - kalau MEDIA_DISK_ROOT ada
+        // di .env tapi dikosongkan (""), env() TETAP mengembalikan string kosong itu (bukan
+        // otomatis jatuh ke default), jadi harus dicek manual supaya tidak salah nulis ke ".".
+        'media' => [
+            'driver' => 'local',
+            'root' => env('MEDIA_DISK_ROOT') ?: public_path('media'),
+            'url' => rtrim(env('MEDIA_DISK_URL') ?: rtrim(env('APP_URL', 'http://localhost'), '/').'/media', '/'),
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

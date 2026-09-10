@@ -1,0 +1,184 @@
+/* Kustomisasi tampilan FilePond - di-load lewat dynamic import di my-filepond.js,
+   supaya cuma dimuat kalau ada elemen .filepond / .filepond-preview di halaman. */
+
+/* ============ Versi biasa (class "filepond", label ikon awan) ============
+   Semua rule di sini SENGAJA discope di bawah .fp-plain-root (ditambahkan
+   otomatis oleh initFilePond di my-filepond.js), supaya kalau dalam 1 form
+   ada juga widget "filepond-preview" (lingkaran), stylenya tidak saling
+   tabrak - masing-masing kena rule sendiri-sendiri. */
+.fp-plain-root .filepond--drop-label {
+    color: #6b7280;
+}
+
+.fp-plain-root .filepond--panel-root {
+    background-color: #f8fafc;
+    border: 2px dashed #d3dae6;
+    border-radius: 10px;
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.fp-plain-root.filepond--hopper-hovered .filepond--panel-root,
+.fp-plain-root:hover .filepond--panel-root {
+    border-color: #3490dc;
+    background-color: #eef6fd;
+}
+
+.fp-aesthetic-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 0;
+}
+
+.fp-icon-float {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background-color: #eef6fd;
+    color: #3490dc;
+    transition: transform 0.2s ease;
+}
+
+.fp-plain-root:hover .fp-icon-float {
+    transform: translateY(-2px);
+}
+
+.fp-text-area .fp-title {
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+.fp-text-area .fp-title .filepond--label-action {
+    color: #3490dc;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.fp-text-area .fp-title .filepond--label-action:hover {
+    text-decoration: underline;
+}
+
+/* ============ Versi lingkaran (class "filepond-preview", foto profil/komoditi) ============
+   Struktur dibuat 2 lapis div bersarang oleh my-filepond.js (initFilePondPreview):
+   - fp-circle-wrapper (luar): border + box-shadow + animasi hover saja. TIDAK overflow:hidden.
+   - fp-circle-clip (dalam): overflow:hidden + border-radius, TIDAK dianimasikan sama sekali.
+   Dipisah supaya browser tidak menggabungkan animasi box-shadow dengan clipping
+   border-radius di elemen yang sama - kombinasi itu yang bikin muncul celah/gap
+   sekilas pas hover (glitch rendering, terutama di Chrome). */
+
+.fp-circle-wrapper {
+    position: relative;
+    border-radius: 50%;
+    border: 3px solid #3490dc;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+    transition:
+        box-shadow 0.25s ease,
+        border-color 0.25s ease;
+}
+
+.fp-circle-wrapper:hover {
+    border-color: #2779bd;
+    box-shadow: 0 8px 20px rgba(52, 144, 220, 0.25);
+}
+
+.fp-circle-clip {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.fp-circle-clip .filepond--root {
+    margin-bottom: 0;
+    height: 100%;
+}
+
+.fp-circle-clip .filepond--panel-root {
+    background-color: #f1f3f9;
+}
+
+.fp-circle-wrapper:hover .fp-circle-clip .filepond--panel-root {
+    background-color: #eef6fd;
+}
+
+/* Matikan animasi/transform internal FilePond (transisi bentuk track saat hover) -
+   biar tidak ada lagi elemen yang bergerak sendiri di dalam area yang di-clip. */
+.fp-circle-clip .filepond--panel-root,
+.fp-circle-clip .filepond--panel,
+.fp-circle-clip .filepond--drop-label,
+.fp-circle-clip .filepond--item-panel,
+.fp-circle-clip .filepond--image-preview-wrapper,
+.fp-circle-clip .filepond--image-preview-wrapper img,
+.fp-circle-clip .filepond--item {
+    transform: none !important;
+    transition: none !important;
+}
+
+/* Saat foto sudah ada: paksa semua lapisan (panel-root, panel, item-panel, wrapper preview
+   gambar, img-nya sendiri) benar-benar 100% penuh mengisi area clip - supaya tidak ada
+   celah di pinggir yang menampakkan background terang di belakangnya. object-fit:cover
+   supaya gambar tetap proporsional, tidak gepeng. */
+.fp-circle-clip .filepond--panel-root,
+.fp-circle-clip .filepond--panel,
+.fp-circle-clip .filepond--item-panel,
+.fp-circle-clip .filepond--image-preview-wrapper {
+    width: 100% !important;
+    height: 100% !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+}
+
+.fp-circle-clip .filepond--image-preview-wrapper img,
+.fp-circle-clip .filepond--image-preview img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+}
+
+/* Lapisan pembungkus daftar file bawaan FilePond - kadang punya padding/margin sendiri
+   yang bisa menyisakan celah tipis antara isi dan border pembungkus kita. */
+.fp-circle-clip .filepond--list,
+.fp-circle-clip .filepond--list-scroller,
+.fp-circle-clip .filepond--item {
+    height: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Ikon/teks "Drag & Drop" bawaan supaya proporsional di dalam lingkaran kecil */
+.fp-circle-clip .filepond--drop-label {
+    font-size: 0.75rem;
+    padding: 0 14px;
+    color: #8a94a6;
+}
+
+.fp-circle-clip .filepond--drop-label .filepond--label-action {
+    color: #3490dc;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.fp-circle-clip .filepond--drop-label .filepond--label-action:hover {
+    text-decoration: underline;
+}
+
+/* Tombol hapus (x) sedikit dipertegas supaya gampang ditemukan di atas foto */
+.fp-circle-clip .filepond--file-action-button {
+    background-color: rgba(17, 24, 39, 0.65);
+}
+
+.fp-circle-clip .filepond--file-action-button:hover {
+    background-color: #e3342f;
+}
