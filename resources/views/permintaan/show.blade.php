@@ -24,7 +24,7 @@
                 @endif
             </div>
             @if ((auth()->id() === $permintaan->user_id || auth()->user()->hasRole('Admin')) && !$permintaan->sudah_terkunci)
-                <a href="{{ route('permintaan.edit', $permintaan) }}" class="btn btn-secondary">Edit</a>
+                <a href="{{ route('permintaan.edit', $permintaan) }}" class="btn btn-warning"><i class="fas fa-edit"></i> Edit</a>
             @endif
         </div>
 
@@ -114,6 +114,12 @@
             </dl>
         @endif
 
+        <x-galeri-viewer
+            :foto-galeri="$permintaan->getMedia('foto')"
+            :video-galeri="$permintaan->getMedia('video')"
+            :group-key="'permintaan-' . $permintaan->id"
+        />
+
         <hr>
         <h4>Dibuat Oleh</h4>
         <dl class="row">
@@ -135,7 +141,7 @@
             </dd>
         </dl>
 
-        <a href="{{ route('permintaan.index') }}" class="btn btn-link">&larr; Kembali</a>
+        <a href="{{ route('permintaan.index') }}" class="btn btn-light"><i class="fas fa-arrow-left"></i> Kembali</a>
     </div>
 </div>
 @endsection

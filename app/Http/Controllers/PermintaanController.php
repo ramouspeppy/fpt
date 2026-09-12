@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\CommitsTempMedia;
 use App\Models\Komoditi;
 use App\Models\KomoditiSize;
 use App\Models\Permintaan;
@@ -9,9 +10,12 @@ use App\Models\PermintaanDetailEkspor;
 use App\Services\MatchingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class PermintaanController extends Controller
 {
+    use CommitsTempMedia;
+
     public function index(Request $request)
     {
         $query = Permintaan::with(['user.cabang', 'rincianSize.komoditiSize', 'komoditi'])->latest();
@@ -63,7 +67,13 @@ class PermintaanController extends Controller
             'harga.*' => ['required', 'numeric', 'min:0'],
             'kuantiti' => ['required', 'array', 'min:1'],
             'kuantiti.*' => ['required', 'numeric', 'min:0'],
+            'foto_gallery' => ['nullable', 'array'],
+            'foto_gallery.*' => ['string'],
+            'video' => ['nullable', 'array'],
+            'video.*' => ['file', 'mimetypes:video/mp4,video/quicktime,video/webm', 'max:51200'],
         ]);
+
+        $this->validasiBatasVideo(0, $request->file('video', []));
 
         $this->pastikanSizeMilikKomoditi($validated['komoditi_id'], $validated['komoditi_size_id']);
 
@@ -79,6 +89,10 @@ class PermintaanController extends Controller
         ]);
 
         $this->simpanRincianSize($permintaan, $validated);
+        $this->commitTempMedia($permintaan, 'foto', 'foto', $validated['foto_gallery'] ?? []);
+        foreach ($request->file('video', []) as $videoFile) {
+            $permintaan->addMedia($videoFile)->toMediaCollection('video');
+        }
 
         if ($permintaan->isEkspor()) {
             PermintaanDetailEkspor::create([
@@ -96,7 +110,7 @@ class PermintaanController extends Controller
 
     public function show(Permintaan $permintaan)
     {
-        $permintaan->load(['user.cabang', 'detailEkspor', 'rincianSize.komoditiSize', 'komoditi', 'project']);
+        $permintaan->load(['user.cabang', 'detailEkspor', 'rincianSize.komoditiSize', 'komoditi', 'project', 'media']);
 
         return view('permintaan.show', compact('permintaan'));
     }
@@ -106,7 +120,7 @@ class PermintaanController extends Controller
         $this->authorizePemilikAtauAdmin($permintaan);
         $this->tolakJikaTerkunci($permintaan);
 
-        $permintaan->load(['detailEkspor', 'rincianSize.komoditiSize', 'komoditi']);
+        $permintaan->load(['detailEkspor', 'rincianSize.komoditiSize', 'komoditi', 'media']);
         $komoditiList = $this->komoditiListUntukForm();
         $sizesByKomoditi = $this->sizesByKomoditiJson();
 
@@ -135,7 +149,13 @@ class PermintaanController extends Controller
             'harga.*' => ['required', 'numeric', 'min:0'],
             'kuantiti' => ['required', 'array', 'min:1'],
             'kuantiti.*' => ['required', 'numeric', 'min:0'],
+            'foto_gallery' => ['nullable', 'array'],
+            'foto_gallery.*' => ['string'],
+            'video' => ['nullable', 'array'],
+            'video.*' => ['file', 'mimetypes:video/mp4,video/quicktime,video/webm', 'max:51200'],
         ]);
+
+        $this->validasiBatasVideo($permintaan->getMedia('video')->count(), $request->file('video', []));
 
         $this->pastikanSizeMilikKomoditi($validated['komoditi_id'], $validated['komoditi_size_id']);
 
@@ -151,6 +171,10 @@ class PermintaanController extends Controller
 
         $permintaan->rincianSize()->delete();
         $this->simpanRincianSize($permintaan, $validated);
+        $this->commitTempMedia($permintaan, 'foto', 'foto', $validated['foto_gallery'] ?? []);
+        foreach ($request->file('video', []) as $videoFile) {
+            $permintaan->addMedia($videoFile)->toMediaCollection('video');
+        }
 
         if ($permintaan->isEkspor()) {
             $permintaan->detailEkspor()->updateOrCreate(
@@ -176,6 +200,20 @@ class PermintaanController extends Controller
         $permintaan->delete();
 
         return redirect()->route('permintaan.index')->with('status', 'Permintaan berhasil dihapus.');
+    }
+
+    // Hapus satu foto/video yang SUDAH tersimpan - dipanggil AJAX langsung dari
+    // halaman Edit, sama pola-nya dengan PenawaranController@destroyMedia.
+    public function destroyMedia(Permintaan $permintaan, Media $media)
+    {
+        $this->authorizePemilikAtauAdmin($permintaan);
+        $this->tolakJikaTerkunci($permintaan);
+
+        abort_unless($media->model_type === Permintaan::class && $media->model_id === $permintaan->id, 404);
+
+        $media->delete();
+
+        return response()->noContent();
     }
 
     // Tombol aksi cepat, sama pola-nya dengan PenawaranController@updateStatus.

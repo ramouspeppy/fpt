@@ -126,4 +126,13 @@ export function autoInit() {
             });
         });
     }
+
+    // --- Dropzone galeri (foto tak terbatas / video maks N), pakai class .dropzone-gallery ---
+    const dropzoneGalleryEls = document.querySelectorAll(".dropzone-gallery");
+
+    if (dropzoneGalleryEls.length) {
+        import("./my-dropzone").then(({ initDropzoneGallery }) => {
+            dropzoneGalleryEls.forEach((el) => initDropzoneGallery(el));
+        });
+    }
 }

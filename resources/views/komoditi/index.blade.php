@@ -5,7 +5,7 @@
 @section('content')
     @php
         $warnaStatus = ['disetujui' => 'success', 'menunggu_approval' => 'warning', 'ditolak' => 'danger'];
-        $paletKategori = ['primary', 'success', 'warning', 'info', 'purple', 'navy', 'maroon', 'lime', 'indigo', 'danger'];
+
     @endphp
 
     <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
@@ -18,11 +18,11 @@
                 <a href="{{ route('kategoriKomoditi.index') }}" class="btn btn-outline-secondary">
                     <i class="fas fa-tags"></i> Kelola Kategori
                 </a>
-                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalTambahKomoditi">
+                <a href="{{ route('komoditi.create') }}" class="btn btn-info">
                     <i class="fas fa-plus"></i> Tambah Komoditi
-                </button>
+                </a>
             @else
-                <a href="{{ route('komoditi.usulkan') }}" class="btn btn-primary">
+                <a href="{{ route('komoditi.usulkan') }}" class="btn btn-info">
                     <i class="fas fa-plus"></i> Usulkan Komoditi
                 </a>
             @endif
@@ -64,8 +64,7 @@
                             <tr>
                                 <td class="text-center">
                                     @if ($item->fotoUtama())
-                                        <img src="{{ $item->fotoUtama()->getUrl('thumb') }}" alt="{{ $item->nama }}"
-                                            class="rounded border" style="width: 36px; height: 36px; object-fit: cover;">
+                                        <img src="{{ $item->fotoUtama()->getUrl('thumb') }}" alt="{{ $item->nama }}" class="rounded border" style="width: 36px; height: 36px; object-fit: cover;">
                                     @else
                                         <span class="text-muted"><i class="fas fa-image"></i></span>
                                     @endif
@@ -75,7 +74,7 @@
                                 </td>
                                 <td>
                                     @if ($item->kategoriKomoditi)
-                                        <span class="badge badge-{{ $paletKategori[$item->kategori_id % count($paletKategori)] }}">
+                                        <span>
                                             {{ $item->kategoriKomoditi->nama }}
                                         </span>
                                     @else
@@ -84,7 +83,7 @@
                                 </td>
                                 <td>
                                     @forelse ($item->tags as $tag)
-                                        <span class="badge badge-light border mr-1 mb-1">{{ $tag->nama_tag }}</span>
+                                        <span class="badge badge-light text-muted border mr-1 mb-1">{{ $tag->nama_tag }}</span>
                                     @empty
                                         <span class="text-muted">-</span>
                                     @endforelse
@@ -100,9 +99,6 @@
                                         @if ($bolehKelola)
                                             <a href="{{ route('komoditi.edit', $item) }}" class="btn btn-sm btn-icon icon-left btn-warning" title="Edit">
                                                 <i class="fas fa-edit"></i>
-                                            </a>
-                                            <a href="{{ route('komoditi.foto.index', $item) }}" class="btn btn-sm btn-icon icon-left btn-purple" title="Kelola Foto">
-                                                <i class="fas fa-image"></i>
                                             </a>
                                             <a href="{{ route('komoditi.size.index', $item) }}" class="btn btn-sm btn-icon icon-left btn-info" title="Kelola Size">
                                                 <i class="fas fa-ruler"></i>
@@ -141,57 +137,3 @@
     </div>
 
 @endsection
-
-@push('scripts')
-    @if ($bolehKelola)
-        <!-- Modal Tambah Komoditi -->
-        <div class="modal fade" id="modalTambahKomoditi" tabindex="-1" role="dialog">
-            <div class="modal-dialog" role="document">
-                <form method="POST" action="{{ route('komoditi.store') }}">
-                    @csrf
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Tambah Komoditi Baru</h5>
-                            <button type="button" class="close" data-dismiss="modal">&times;</button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="text-muted small mb-3">Input langsung oleh Admin/Pusat otomatis disetujui, tidak perlu approval.</div>
-                            <div class="form-group">
-                                <label>Nama Komoditi <span class="text-danger">*</span></label>
-                                <input type="text" name="nama" value="{{ old('nama') }}" class="form-control @error('nama') is-invalid @enderror">
-                                @error('nama')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="form-group mb-0">
-                                <label>Kategori</label>
-                                <select name="kategori_id" class="form-control select2" data-placeholder="-- Pilih Kategori --">
-                                    <option value=""></option>
-                                    @foreach ($kategoriList as $kat)
-                                        <option value="{{ $kat->id }}" @selected(old('kategori_id') == $kat->id)>{{ $kat->nama }}</option>
-                                    @endforeach
-                                </select>
-                                <small class="form-text text-muted">
-                                    Kategori belum ada di daftar? <a href="{{ route('kategoriKomoditi.index') }}">Tambah dulu di sini</a>.
-                                </small>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
-                            <button type="submit" class="btn btn-primary">Tambah & Setujui</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        @if ($errors->any() && old('nama'))
-            <script>
-                // Kalau validasi gagal saat submit dari modal, buka lagi modalnya otomatis
-                document.addEventListener('DOMContentLoaded', function() {
-                    $('#modalTambahKomoditi').modal('show');
-                });
-            </script>
-        @endif
-    @endif
-@endpush

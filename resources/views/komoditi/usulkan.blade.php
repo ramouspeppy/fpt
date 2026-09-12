@@ -38,7 +38,9 @@
                                         </span>
                                         @if ($item->status === 'menunggu_approval')
                                             <div class="mt-1">
-                                                <a href="{{ route('komoditi.edit', $item) }}" class="small">Edit</a>
+                                                <a href="{{ route('komoditi.edit', $item) }}" class="btn btn-sm btn-icon icon-left btn-warning" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
                                             </div>
                                         @endif
                                     </div>
@@ -101,7 +103,8 @@
                                 nanti Admin/Pusat yang menambahkan kategorinya sebelum menyetujui usulan kamu.
                             </small>
                         </div>
-                        <button type="submit" class="btn btn-primary">Kirim Usulan</button>
+                        <button type="submit" class="btn btn-info"><i class="fas fa-plus"></i> Kirim Usulan</button>
+                        <a href="{{ route('komoditi.index') }}" class="btn btn-light"><i class="fas fa-arrow-left"></i> Kembali</a>
                     </form>
                 </div>
             </div>

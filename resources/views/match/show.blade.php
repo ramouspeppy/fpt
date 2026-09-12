@@ -16,7 +16,7 @@
         </span>
         <span class="text-muted small ml-2">{{ $semuaKandidat->count() }} size cocok di pasangan ini</span>
     </div>
-    <a href="{{ route('match.index') }}" class="btn btn-link">&larr; Kembali ke daftar</a>
+    <a href="{{ route('match.index') }}" class="btn btn-light"><i class="fas fa-arrow-left"></i> Kembali ke daftar</a>
 </div>
 
 @if ($match->status === 'dipilih' && $match->project)

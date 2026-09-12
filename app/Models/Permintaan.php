@@ -9,10 +9,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class Permintaan extends Model
+class Permintaan extends Model implements HasMedia
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, LogsActivity, InteractsWithMedia;
 
     protected $table = 'permintaan';
 
@@ -93,5 +96,28 @@ class Permintaan extends Model
             ->logOnly(['judul', 'tipe', 'komoditi_id', 'status', 'prioritas_warna', 'prioritas_tag'])
             ->logOnlyDirty()
             ->useLogName('permintaan');
+    }
+
+    // BARU: galeri foto (bebas jumlahnya) & video (maks 2, dibatasi di controller
+    // saat commit, bukan lewat MediaLibrary) untuk dokumentasi visual permintaan.
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('foto')
+            ->useDisk('media')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp']);
+
+        $this->addMediaCollection('video')
+            ->useDisk('media')
+            ->acceptsMimeTypes(['video/mp4', 'video/quicktime', 'video/webm']);
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->addMediaConversion('thumb')
+            ->width(400)
+            ->height(400)
+            ->sharpen(10)
+            ->nonQueued()
+            ->performOnCollections('foto');
     }
 }

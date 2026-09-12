@@ -1,0 +1,34 @@
+/* Kustomisasi tampilan Dropzone - di-load lewat dynamic import di my-dropzone.js,
+   supaya cuma dimuat kalau ada elemen .dropzone-gallery di halaman. */
+
+.dropzone-gallery.dropzone {
+    border: 2px dashed #d3dae6;
+    border-radius: 10px;
+    background-color: #f8fafc;
+    min-height: 140px;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.dropzone-gallery.dropzone:hover,
+.dropzone-gallery.dropzone.dz-drag-hover {
+    border-color: #3490dc;
+    background-color: #eef6fd;
+}
+
+.dropzone-gallery.dropzone .dz-message {
+    margin: 2em 0;
+    color: #6b7280;
+}
+
+.dropzone-gallery.dropzone .dz-preview .dz-image {
+    border-radius: 8px;
+}
+
+.dropzone-gallery.dropzone .dz-preview.dz-error .dz-error-message {
+    background-color: #e3342f;
+}
+
+.dropzone-gallery.dropzone .dz-preview .dz-remove {
+    color: #e3342f;
+    font-weight: 600;
+}

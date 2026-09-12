@@ -235,7 +235,7 @@
             </div>
         @endif
 
-        <a href="{{ route('project.index') }}" class="btn btn-link">&larr; Kembali ke daftar Project</a>
+        <a href="{{ route('project.index') }}" class="btn btn-light"><i class="fas fa-arrow-left"></i> Kembali ke daftar Project</a>
     </div>
 
     <!-- Catatan / Progress - form tambah berdampingan dengan riwayatnya -->
@@ -261,7 +261,7 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
-                            <button type="submit" class="btn btn-primary btn-block">Tambah Catatan</button>
+                            <button type="submit" class="btn btn-info btn-block"><i class="fas fa-plus"></i> Tambah Catatan</button>
                         </form>
                     </div>
                 </div>

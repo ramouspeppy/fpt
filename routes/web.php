@@ -12,6 +12,7 @@ use App\Http\Controllers\KomoditiTagController;
 use App\Http\Controllers\KomoditiFotoController;
 use App\Http\Controllers\KategoriKomoditiController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\MediaTempController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -33,6 +34,13 @@ Route::middleware('auth')->group(function () {
     Route::resource('permintaan', PermintaanController::class);
     Route::patch('/penawaran/{penawaran}/status', [PenawaranController::class, 'updateStatus'])->name('penawaran.updateStatus');
     Route::patch('/permintaan/{permintaan}/status', [PermintaanController::class, 'updateStatus'])->name('permintaan.updateStatus');
+
+    // BARU: galeri foto/video Penawaran & Permintaan (Dropzone, upload ke temp dulu)
+    Route::post('/media-temp/upload', [MediaTempController::class, 'upload'])->name('mediaTemp.upload');
+    Route::post('/media-temp/delete', [MediaTempController::class, 'delete'])->name('mediaTemp.delete');
+    Route::get('/media-temp/preview/{context}/{name}', [MediaTempController::class, 'preview'])->name('mediaTemp.preview');
+    Route::delete('/penawaran/{penawaran}/media/{media}', [PenawaranController::class, 'destroyMedia'])->name('penawaran.media.destroy');
+    Route::delete('/permintaan/{permintaan}/media/{media}', [PermintaanController::class, 'destroyMedia'])->name('permintaan.media.destroy');
 
     Route::get('/komoditi/usulkan', [KomoditiController::class, 'usulkan'])->name('komoditi.usulkan');
     Route::post('/komoditi/usulkan', [KomoditiController::class, 'simpanUsulan'])->name('komoditi.simpanUsulan');
@@ -79,6 +87,7 @@ Route::middleware('auth')->group(function () {
 
     // Khusus Pusat/Admin - kelola master data (index Komoditi sudah dipindah ke atas, terbuka utk semua)
     Route::middleware(['role:Pusat|Admin'])->group(function () {
+        Route::get('/komoditi/create', [KomoditiController::class, 'create'])->name('komoditi.create');
         Route::post('/komoditi', [KomoditiController::class, 'store'])->name('komoditi.store');
         Route::patch('/komoditi/{komoditi}/approve', [KomoditiController::class, 'approve'])->name('komoditi.approve');
         Route::patch('/komoditi/{komoditi}/tolak', [KomoditiController::class, 'tolak'])->name('komoditi.tolak');

@@ -39,6 +39,17 @@ class KomoditiController extends Controller
         return view('komoditi.index', compact('komoditi', 'kategoriList', 'bolehKelola'));
     }
 
+    // BARU: form Tambah Komoditi sekarang halaman sendiri (bukan modal lagi) - supaya
+    // konsisten dengan form Edit, dan foto bisa langsung digabung di form yang sama.
+    public function create()
+    {
+        $this->authorizePusatAtauAdmin();
+
+        $kategoriList = KategoriKomoditi::orderBy('nama')->get();
+
+        return view('komoditi.create', compact('kategoriList'));
+    }
+
     // Admin/Pusat input langsung -> otomatis disetujui, tidak perlu approval siapa pun
     public function store(Request $request)
     {
@@ -47,15 +58,21 @@ class KomoditiController extends Controller
         $validated = $request->validate([
             'nama' => ['required', 'string', 'max:255', 'unique:komoditi,nama'],
             'kategori_id' => ['nullable', 'exists:kategori_komoditi,id'],
+            // Foto opsional saat tambah baru - boleh menyusul lewat halaman Edit kalau belum ada.
+            'foto' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
         ]);
 
-        Komoditi::create([
+        $komoditi = Komoditi::create([
             'nama' => $validated['nama'],
             'kategori_id' => $validated['kategori_id'] ?? null,
             'status' => 'disetujui',
             'diusulkan_oleh' => Auth::id(),
             'approved_by' => Auth::id(),
         ]);
+
+        if ($request->hasFile('foto')) {
+            $komoditi->addMediaFromRequest('foto')->toMediaCollection('foto');
+        }
 
         return redirect()->route('komoditi.index')->with('status', 'Komoditi berhasil ditambahkan.');
     }
@@ -177,12 +194,18 @@ class KomoditiController extends Controller
         $validated = $request->validate([
             'nama' => ['required', 'string', 'max:255', Rule::unique('komoditi', 'nama')->ignore($komoditi->id)],
             'kategori_id' => ['nullable', 'exists:kategori_komoditi,id'],
+            // Opsional - kalau tidak diganti, foto lama tetap dipakai.
+            'foto' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
         ]);
 
         $komoditi->update([
             'nama' => $validated['nama'],
             'kategori_id' => $validated['kategori_id'] ?? null,
         ]);
+
+        if ($request->hasFile('foto')) {
+            $komoditi->addMediaFromRequest('foto')->toMediaCollection('foto');
+        }
 
         activity('komoditi')
             ->performedOn($komoditi)

@@ -9,10 +9,10 @@
             <div class="text-muted">Taksonomi besar untuk mengelompokkan komoditi, mis. Ikan, Udang, Kepiting</div>
         </div>
         <div class="mb-2">
-            <a href="{{ route('komoditi.index') }}" class="btn btn-outline-secondary">
+            <a href="{{ route('komoditi.index') }}" class="btn btn-light">
                 <i class="fas fa-arrow-left"></i> Kembali ke Komoditi
             </a>
-            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalTambahKategori">
+            <button type="button" class="btn btn-info" data-toggle="modal" data-target="#modalTambahKategori">
                 <i class="fas fa-plus"></i> Tambah Kategori
             </button>
         </div>
@@ -85,7 +85,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary">Tambah Kategori</button>
+                        <button type="submit" class="btn btn-info"><i class="fas fa-plus"></i> Tambah Kategori</button>
                     </div>
                 </div>
             </form>

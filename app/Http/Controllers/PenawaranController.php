@@ -2,15 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\CommitsTempMedia;
 use App\Models\Komoditi;
 use App\Models\Penawaran;
 use App\Models\PenawaranDetailEkspor;
 use App\Services\MatchingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class PenawaranController extends Controller
 {
+    use CommitsTempMedia;
+
     public function index(Request $request)
     {
         $query = Penawaran::with(['user.cabang', 'rincianSize.komoditiSize', 'komoditi'])->latest();
@@ -68,7 +72,16 @@ class PenawaranController extends Controller
             'biaya_label.*' => ['required', 'string', 'max:255'],
             'biaya_jumlah' => ['required', 'array', 'min:1'],
             'biaya_jumlah.*' => ['required', 'numeric', 'min:0'],
+            // galeri foto - dikirim sebagai nama file temp (hasil upload Dropzone sebelum
+            // form ini disubmit, lihat commitTempMedia). Video TIDAK lewat temp - dikirim
+            // langsung sebagai file mentah bareng form ini (FilePond biasa, storeAsFile).
+            'foto_gallery' => ['nullable', 'array'],
+            'foto_gallery.*' => ['string'],
+            'video' => ['nullable', 'array'],
+            'video.*' => ['file', 'mimetypes:video/mp4,video/quicktime,video/webm', 'max:51200'],
         ]);
+
+        $this->validasiBatasVideo(0, $request->file('video', []));
 
         $this->pastikanSizeMilikKomoditi($validated['komoditi_id'], $validated['komoditi_size_id']);
 
@@ -85,6 +98,10 @@ class PenawaranController extends Controller
 
         $this->simpanRincianSize($penawaran, $validated);
         $this->simpanBiayaHpp($penawaran, $validated);
+        $this->commitTempMedia($penawaran, 'foto', 'foto', $validated['foto_gallery'] ?? []);
+        foreach ($request->file('video', []) as $videoFile) {
+            $penawaran->addMedia($videoFile)->toMediaCollection('video');
+        }
 
         if ($penawaran->mengandungEkspor()) {
             PenawaranDetailEkspor::create([
@@ -103,7 +120,7 @@ class PenawaranController extends Controller
 
     public function show(Penawaran $penawaran)
     {
-        $penawaran->load(['user.cabang', 'detailEkspor', 'rincianSize.komoditiSize', 'komoditi', 'biayaHpp', 'project']);
+        $penawaran->load(['user.cabang', 'detailEkspor', 'rincianSize.komoditiSize', 'komoditi', 'biayaHpp', 'project', 'media']);
 
         return view('penawaran.show', compact('penawaran'));
     }
@@ -113,7 +130,7 @@ class PenawaranController extends Controller
         $this->authorizePemilikAtauAdmin($penawaran);
         $this->tolakJikaTerkunci($penawaran);
 
-        $penawaran->load(['detailEkspor', 'rincianSize.komoditiSize', 'komoditi', 'biayaHpp']);
+        $penawaran->load(['detailEkspor', 'rincianSize.komoditiSize', 'komoditi', 'biayaHpp', 'media']);
         $komoditiList = $this->komoditiListUntukForm();
         $sizesByKomoditi = $this->sizesByKomoditiJson();
 
@@ -146,7 +163,13 @@ class PenawaranController extends Controller
             'biaya_label.*' => ['required', 'string', 'max:255'],
             'biaya_jumlah' => ['required', 'array', 'min:1'],
             'biaya_jumlah.*' => ['required', 'numeric', 'min:0'],
+            'foto_gallery' => ['nullable', 'array'],
+            'foto_gallery.*' => ['string'],
+            'video' => ['nullable', 'array'],
+            'video.*' => ['file', 'mimetypes:video/mp4,video/quicktime,video/webm', 'max:51200'],
         ]);
+
+        $this->validasiBatasVideo($penawaran->getMedia('video')->count(), $request->file('video', []));
 
         $this->pastikanSizeMilikKomoditi($validated['komoditi_id'], $validated['komoditi_size_id']);
 
@@ -166,6 +189,10 @@ class PenawaranController extends Controller
 
         $penawaran->biayaHpp()->delete();
         $this->simpanBiayaHpp($penawaran, $validated);
+        $this->commitTempMedia($penawaran, 'foto', 'foto', $validated['foto_gallery'] ?? []);
+        foreach ($request->file('video', []) as $videoFile) {
+            $penawaran->addMedia($videoFile)->toMediaCollection('video');
+        }
 
         if ($penawaran->mengandungEkspor()) {
             $penawaran->detailEkspor()->updateOrCreate(
@@ -191,6 +218,21 @@ class PenawaranController extends Controller
         $penawaran->delete();
 
         return redirect()->route('penawaran.index')->with('status', 'Penawaran berhasil dihapus.');
+    }
+
+    // Hapus satu foto/video yang SUDAH tersimpan (bukan file temp) - dipanggil AJAX
+    // langsung dari halaman Edit begitu user klik (x) di item yang sudah ter-upload,
+    // tanpa perlu submit form utama dulu.
+    public function destroyMedia(Penawaran $penawaran, Media $media)
+    {
+        $this->authorizePemilikAtauAdmin($penawaran);
+        $this->tolakJikaTerkunci($penawaran);
+
+        abort_unless($media->model_type === Penawaran::class && $media->model_id === $penawaran->id, 404);
+
+        $media->delete();
+
+        return response()->noContent();
     }
 
     // Tombol aksi cepat (mis. "Tandai Selesai", "Tutup") tanpa perlu buka form Edit penuh.

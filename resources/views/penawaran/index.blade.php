@@ -27,7 +27,7 @@
     </div>
 
     <div class="d-flex justify-content-end mb-2">
-        <a href="{{ route('penawaran.create') }}" class="btn btn-primary">
+        <a href="{{ route('penawaran.create') }}" class="btn btn-info">
             <i class="fas fa-plus"></i> Tambah Penawaran
         </a>
     </div>
@@ -76,7 +76,7 @@
                         <div class="mt-3">
                             <a href="{{ route('penawaran.show', $item) }}" class="btn btn-sm btn-primary">Detail</a>
                             @if ((auth()->id() === $item->user_id || auth()->user()->hasRole('Admin')) && !$item->sudah_terkunci)
-                                <a href="{{ route('penawaran.edit', $item) }}" class="btn btn-sm btn-secondary">Edit</a>
+                                <a href="{{ route('penawaran.edit', $item) }}" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i> Edit</a>
                             @endif
                         </div>
                     </div>

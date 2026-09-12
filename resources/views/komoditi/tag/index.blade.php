@@ -68,10 +68,12 @@
                         <input type="text" name="nama_tag" value="{{ old('nama_tag') }}" class="form-control @error('nama_tag') is-invalid @enderror" placeholder="mis. Ikan Gabui">
                         @error('nama_tag') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
-                    <button type="submit" class="btn btn-primary btn-block">Tambah</button>
+                    <button type="submit" class="btn btn-info btn-block"><i class="fas fa-plus"></i> Tambah</button>
                 </form>
             </div>
         </div>
+
+        <a href="{{ route('komoditi.index') }}" class="btn btn-light btn-block"><i class="fas fa-arrow-left"></i> Kembali</a>
     </div>
 </div>
 @endsection

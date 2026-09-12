@@ -84,10 +84,12 @@
                         <label>Urutan (opsional)</label>
                         <input type="number" name="urutan" value="{{ old('urutan') }}" class="form-control" placeholder="mis. 10">
                     </div>
-                    <button type="submit" class="btn btn-primary btn-block">Tambah & Setujui</button>
+                    <button type="submit" class="btn btn-info btn-block"><i class="fas fa-plus"></i> Tambah & Setujui</button>
                 </form>
             </div>
         </div>
+
+        <a href="{{ route('komoditi.index') }}" class="btn btn-light btn-block"><i class="fas fa-arrow-left"></i> Kembali</a>
     </div>
 </div>
 @endsection

@@ -39,7 +39,7 @@ async function loadPreviewPlugins() {
                 fileValidateTypeModule.default,
                 imageExifOrientationModule.default,
                 imagePreviewModule.default,
-                imageCropModule.default,
+                imageCropModule.default
             );
             previewPluginsRegistered = true;
         }
@@ -65,9 +65,28 @@ const defaultLabel = `
     </div>
 `;
 
-// Upload biasa, satu file, tanpa preview gambar/crop - dipakai lewat class "filepond".
+// Upload biasa, tanpa preview gambar/crop - dipakai lewat class "filepond".
+// Mendukung single ATAU multi-file (tambahkan atribut `multiple` di <input> + `data-max-files`).
+// Untuk mode Edit yang sudah punya file tersimpan, isi:
+//   data-existing-files='[{"id":1,"url":"...","name":"video.mp4"}, ...]'
+//   data-delete-existing-url-base="/penawaran/12/media"   (id di-append otomatis lewat JS)
+// File yang sudah tersimpan dihapus LANGSUNG (AJAX) begitu diklik (x) - bukan ditunda
+// sampai submit, sama seperti pola galeri foto (Dropzone).
 export async function initFilePond(el, options = {}) {
     await loadCore();
+
+    const existingFiles = el.dataset.existingFiles ? JSON.parse(el.dataset.existingFiles) : [];
+    const deleteExistingUrlBase = el.dataset.deleteExistingUrlBase || null;
+    const maxFiles = el.dataset.maxFiles ? parseInt(el.dataset.maxFiles, 10) : null;
+
+    const files = existingFiles.map((item) => ({
+        source: item.url,
+        options: {
+            type: 'local',
+            file: { name: item.name, size: item.size || 0 },
+            metadata: { existingId: item.id },
+        },
+    }));
 
     const pond = FilePond.create(el, {
         labelIdle: defaultLabel,
@@ -79,12 +98,41 @@ export async function initFilePond(el, options = {}) {
         // tapi tanpa storeAsFile, input aslinya tidak otomatis terisi file-nya.
         storeAsFile: true,
         credits: false,
+        files: files.length ? files : undefined,
+        maxFiles: maxFiles || null,
+        // server.load dipakai FilePond utk menampilkan file existing (source berupa URL)
+        // sebagai preview - TIDAK terkait allowProcess/storeAsFile (itu ngatur upload KELUAR).
+        server: files.length ? {
+            load: (source, load, error, progress, abort) => {
+                fetch(source)
+                    .then((res) => {
+                        if (!res.ok) throw new Error('Gagal memuat file yang sudah ada');
+                        return res.blob();
+                    })
+                    .then(load)
+                    .catch(error);
+                return { abort: () => abort() };
+            },
+        } : undefined,
+        onremovefile: (error, file) => {
+            if (error) return;
+            const existingId = file.getMetadata('existingId');
+            if (existingId && deleteExistingUrlBase) {
+                fetch(deleteExistingUrlBase + '/' + existingId, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        Accept: 'application/json',
+                    },
+                });
+            }
+        },
         ...options,
     });
 
     // Penanda khusus versi biasa, supaya CSS-nya (fp-plain-root) tidak pernah
     // nyasar ke versi lingkaran (fp-circle-wrapper) walau dipakai bareng di 1 form.
-    pond.element.classList.add("fp-plain-root");
+    pond.element.classList.add('fp-plain-root');
 
     return pond;
 }
@@ -96,16 +144,12 @@ export async function initFilePond(el, options = {}) {
 export async function initFilePondPreview(el, options = {}) {
     await loadPreviewPlugins();
 
-    const acceptedFileTypes = el.getAttribute("accept")
-        ? el
-              .getAttribute("accept")
-              .split(",")
-              .map((t) => t.trim())
-              .filter(Boolean)
-        : ["image/jpeg", "image/png", "image/webp"];
+    const acceptedFileTypes = el.getAttribute('accept')
+        ? el.getAttribute('accept').split(',').map((t) => t.trim()).filter(Boolean)
+        : ['image/jpeg', 'image/png', 'image/webp'];
 
     const imagePreviewHeight = Number(el.dataset.previewHeight) || 170;
-    const stylePanelLayout = el.dataset.panelLayout || "compact circle";
+    const stylePanelLayout = el.dataset.panelLayout || 'compact circle';
 
     // PENTING: layout "compact circle" diameternya ngikutin LEBAR PARENT elemen
     // (root FilePond punya CSS bawaan width:100%), BUKAN ngikutin imagePreviewHeight.
@@ -121,40 +165,58 @@ export async function initFilePondPreview(el, options = {}) {
     // box-shadow-nya dianimasikan bareng overflow:hidden+border-radius - kelihatan
     // seperti ada celah/gap yang muncul-hilang pas hover. Dipisah gini lebih stabil.
     let wrapper = null;
-    if (stylePanelLayout.includes("circle") && options.skipAutoWidth !== true) {
-        wrapper = document.createElement("div");
-        wrapper.className = "fp-circle-wrapper";
+    if (stylePanelLayout.includes('circle') && options.skipAutoWidth !== true) {
+        wrapper = document.createElement('div');
+        wrapper.className = 'fp-circle-wrapper';
         wrapper.style.width = `${imagePreviewHeight}px`;
         wrapper.style.height = `${imagePreviewHeight}px`;
-        wrapper.style.maxWidth = "100%";
-        wrapper.style.margin = "0 auto";
+        wrapper.style.maxWidth = '100%';
+        wrapper.style.margin = '0 auto';
 
-        const clip = document.createElement("div");
-        clip.className = "fp-circle-clip";
+        const clip = document.createElement('div');
+        clip.className = 'fp-circle-clip';
 
         el.parentNode.insertBefore(wrapper, el);
         wrapper.appendChild(clip);
         clip.appendChild(el);
     }
 
+    // BARU: preload foto yang sudah ada (dipakai di halaman Edit) lewat atribut
+    // data-existing-url. FilePond butuh fungsi server.load kecil untuk bisa menampilkan
+    // file yang sumbernya URL (bukan File object baru) sebagai preview - ini TIDAK
+    // terkait dengan allowProcess/storeAsFile (itu buat upload keluar), jadi aman
+    // dipakai bareng tanpa mengaktifkan AJAX upload otomatis.
+    const existingUrl = el.dataset.existingUrl || null;
+
     const pond = FilePond.create(el, {
         acceptedFileTypes,
-        labelFileTypeNotAllowed: "Format file tidak didukung",
-        fileValidateTypeLabelExpectedTypes: "Harus jpg, png atau webp",
-        labelIdle:
-            'Drag & Drop foto kamu atau <span class="filepond--label-action">Pilih File</span>',
+        labelFileTypeNotAllowed: 'Format file tidak didukung',
+        fileValidateTypeLabelExpectedTypes: 'Harus jpg, png atau webp',
+        labelIdle: 'Drag & Drop foto kamu atau <span class="filepond--label-action">Pilih File</span>',
         imagePreviewHeight,
-        imageCropAspectRatio: el.dataset.aspectRatio || "1:1",
+        imageCropAspectRatio: el.dataset.aspectRatio || '1:1',
         stylePanelLayout,
-        styleLoadIndicatorPosition: "center bottom",
-        styleProgressIndicatorPosition: "right bottom",
-        styleButtonRemoveItemPosition: "center bottom",
-        styleButtonProcessItemPosition: "right bottom",
+        styleLoadIndicatorPosition: 'center bottom',
+        styleProgressIndicatorPosition: 'right bottom',
+        styleButtonRemoveItemPosition: 'center bottom',
+        styleButtonProcessItemPosition: 'right bottom',
         allowProcess: false,
         storeAsFile: true,
         credits: false,
+        files: existingUrl ? [{ source: existingUrl, options: { type: 'local' } }] : [],
+        server: existingUrl ? {
+            load: (source, load, error, progress, abort) => {
+                fetch(source)
+                    .then((res) => {
+                        if (!res.ok) throw new Error('Gagal memuat foto yang sudah ada');
+                        return res.blob();
+                    })
+                    .then(load)
+                    .catch(error);
+                return { abort: () => abort() };
+            },
+        } : null,
         ...options,
     });
-
     return pond;
 }

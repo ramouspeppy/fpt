@@ -22,7 +22,8 @@
                         <input type="text" name="nama_size" value="{{ old('nama_size') }}" class="form-control @error('nama_size') is-invalid @enderror" placeholder="mis. 2000UP">
                         @error('nama_size') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
-                    <button type="submit" class="btn btn-primary">Kirim Usulan</button>
+                    <button type="submit" class="btn btn-info"><i class="fas fa-plus"></i> Kirim Usulan</button>
+                    <a href="{{ url()->previous() }}" class="btn btn-light"><i class="fas fa-arrow-left"></i> Kembali</a>
                 </form>
             </div>
         </div>

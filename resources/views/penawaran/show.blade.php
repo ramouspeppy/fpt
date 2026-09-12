@@ -19,7 +19,7 @@
                 </span>
             </div>
             @if ((auth()->id() === $penawaran->user_id || auth()->user()->hasRole('Admin')) && !$penawaran->sudah_terkunci)
-                <a href="{{ route('penawaran.edit', $penawaran) }}" class="btn btn-secondary">Edit</a>
+                <a href="{{ route('penawaran.edit', $penawaran) }}" class="btn btn-warning"><i class="fas fa-edit"></i> Edit</a>
             @endif
         </div>
 
@@ -144,6 +144,12 @@
             </dl>
         @endif
 
+        <x-galeri-viewer
+            :foto-galeri="$penawaran->getMedia('foto')"
+            :video-galeri="$penawaran->getMedia('video')"
+            :group-key="'penawaran-' . $penawaran->id"
+        />
+
         <hr>
         <h4>Dibuat Oleh</h4>
         <dl class="row">
@@ -165,7 +171,7 @@
             </dd>
         </dl>
 
-        <a href="{{ route('penawaran.index') }}" class="btn btn-link">&larr; Kembali</a>
+        <a href="{{ route('penawaran.index') }}" class="btn btn-light"><i class="fas fa-arrow-left"></i> Kembali</a>
     </div>
 </div>
 @endsection

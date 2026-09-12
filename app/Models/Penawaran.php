@@ -122,4 +122,28 @@ class Penawaran extends Model implements HasMedia
             ->logOnlyDirty()
             ->useLogName('penawaran');
     }
+
+    // BARU: galeri foto (bebas jumlahnya) & video (maks 2, dibatasi di controller
+    // saat commit, bukan lewat MediaLibrary) untuk dokumentasi visual penawaran.
+    // Disk 'media' sama seperti foto Komoditi - langsung ke public_html, tanpa symlink.
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('foto')
+            ->useDisk('media')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp']);
+
+        $this->addMediaCollection('video')
+            ->useDisk('media')
+            ->acceptsMimeTypes(['video/mp4', 'video/quicktime', 'video/webm']);
+    }
+
+    public function registerMediaConversions(?\Spatie\MediaLibrary\MediaCollections\Models\Media $media = null): void
+    {
+        $this->addMediaConversion('thumb')
+            ->width(400)
+            ->height(400)
+            ->sharpen(10)
+            ->nonQueued()
+            ->performOnCollections('foto');
+    }
 }

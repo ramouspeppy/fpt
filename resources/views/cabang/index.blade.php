@@ -10,7 +10,7 @@
                 <h4>Daftar Cabang</h4>
                 @role('Admin')
                     <div class="card-header-action">
-                        <a href="{{ route('cabang.create') }}" class="btn btn-primary">
+                        <a href="{{ route('cabang.create') }}" class="btn btn-info">
                             <i class="fas fa-plus"></i> Tambah Cabang
                         </a>
                     </div>
@@ -39,7 +39,7 @@
                                     <td>{{ $item->users_count }}</td>
                                     @role('Admin')
                                         <td class="text-right">
-                                            <a href="{{ route('cabang.edit', $item) }}" class="btn btn-sm btn-secondary">
+                                            <a href="{{ route('cabang.edit', $item) }}" class="btn btn-sm btn-warning">
                                                 <i class="fas fa-edit"></i> Edit
                                             </a>
                                             <form method="POST" action="{{ route('cabang.destroy', $item) }}" class="d-inline" onsubmit="return confirm('Yakin hapus cabang ini?')">
