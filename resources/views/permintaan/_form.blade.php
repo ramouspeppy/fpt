@@ -210,13 +210,29 @@
     const sizesByKomoditi = {!! $sizesByKomoditi !!};
 
     document.addEventListener('DOMContentLoaded', function () {
-        const tipeSelect = document.getElementById('tipe');
-        const fieldEkspor = document.getElementById('field-ekspor');
-        function toggleFieldEkspor() {
-            fieldEkspor.style.display = (tipeSelect.value === 'Ekspor') ? 'block' : 'none';
-        }
-        tipeSelect.addEventListener('change', toggleFieldEkspor);
-        toggleFieldEkspor();
+        // Dibungkus function + try/catch sendiri, supaya kalau ada error di bagian
+        // ini, bagian LAIN di bawah (dropdown size, tambah/hapus baris, dst) tetap
+        // jalan normal - tidak ikut mati gara-gara satu bagian gagal.
+        (function initToggleFieldEkspor() {
+            const tipeSelect = document.getElementById('tipe');
+            const fieldEkspor = document.getElementById('field-ekspor');
+            if (!tipeSelect || !fieldEkspor) return;
+
+            function toggleFieldEkspor() {
+                fieldEkspor.style.display = (tipeSelect.value === 'Ekspor') ? 'block' : 'none';
+            }
+
+            // Selectric (plugin dropdown custom utk field Tipe) SEHARUSNYA meneruskan
+            // event 'change' ke <select> aslinya, tapi supaya tidak bergantung 100% ke
+            // itu, event-nya didengarkan lewat DUA jalur sekaligus: vanilla JS (native)
+            // DAN jQuery (in case Selectric memicu lewat jQuery, bukan native dispatch).
+            tipeSelect.addEventListener('change', toggleFieldEkspor);
+            if (window.jQuery) {
+                window.jQuery(tipeSelect).on('change', toggleFieldEkspor);
+            }
+
+            toggleFieldEkspor();
+        })();
 
         const komoditiSelect = document.getElementById('komoditi_id');
         const hintSize = document.getElementById('hint-size');

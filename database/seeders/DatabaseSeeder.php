@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
             PenawaranSeeder::class,
             PermintaanSeeder::class,
             MatchingSeeder::class,
+            MediaSeeder::class,
         ]);
     }
 }

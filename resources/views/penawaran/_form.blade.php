@@ -254,15 +254,29 @@
     const sizesByKomoditi = {!! $sizesByKomoditi !!};
 
     document.addEventListener('DOMContentLoaded', function () {
-        // toggle field ekspor
-        const tipeSelect = document.getElementById('tipe');
-        const fieldEkspor = document.getElementById('field-ekspor');
-        function toggleFieldEkspor() {
-            const val = tipeSelect.value;
-            fieldEkspor.style.display = (val === 'Ekspor' || val === 'Ekspor & Lokal') ? 'block' : 'none';
-        }
-        tipeSelect.addEventListener('change', toggleFieldEkspor);
-        toggleFieldEkspor();
+        // Dibungkus function + try/catch sendiri, supaya kalau ada error di bagian
+        // ini, bagian LAIN di bawah (dropdown size, tambah/hapus baris, dst) tetap
+        // jalan normal - tidak ikut mati gara-gara satu bagian gagal.
+        (function initToggleFieldEkspor() {
+            const tipeSelect = document.getElementById('tipe');
+            const fieldEkspor = document.getElementById('field-ekspor');
+            if (!tipeSelect || !fieldEkspor) return;
+
+            function toggleFieldEkspor() {
+                const val = tipeSelect.value;
+                fieldEkspor.style.display = (val === 'Ekspor' || val === 'Ekspor & Lokal') ? 'block' : 'none';
+            }
+
+            // Selectric SEHARUSNYA meneruskan event 'change' ke <select> aslinya, tapi
+            // supaya tidak bergantung 100% ke itu, didengarkan lewat DUA jalur sekaligus:
+            // vanilla JS (native) DAN jQuery (in case Selectric memicu lewat jQuery).
+            tipeSelect.addEventListener('change', toggleFieldEkspor);
+            if (window.jQuery) {
+                window.jQuery(tipeSelect).on('change', toggleFieldEkspor);
+            }
+
+            toggleFieldEkspor();
+        })();
 
         // toggle label section biaya berdasarkan Jenis Penawaran (Produksi Sendiri vs Trading)
         const jenisPenawaranSelect = document.getElementById('jenis_penawaran');
