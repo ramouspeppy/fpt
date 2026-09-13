@@ -17,13 +17,13 @@ class PenawaranController extends Controller
 
     public function index(Request $request)
     {
-        $query = Penawaran::with(['user.cabang', 'rincianSize.komoditiSize', 'komoditi'])->latest();
+        $query = Penawaran::with(['user.cabang', 'rincianSize.komoditiSize', 'komoditi.tags', 'media'])->latest();
 
         if ($request->filled('cari')) {
             $query->where(function ($q) use ($request) {
                 $q->where('judul', 'like', '%' . $request->cari . '%')
-                    ->orWhereHas('komoditi', fn($qq) => $qq->where('nama', 'like', '%' . $request->cari . '%'))
-                    ->orWhereHas('komoditi.tags', fn($qq) => $qq->where('nama_tag', 'like', '%' . $request->cari . '%'));
+                  ->orWhereHas('komoditi', fn ($qq) => $qq->where('nama', 'like', '%' . $request->cari . '%'))
+                  ->orWhereHas('komoditi.tags', fn ($qq) => $qq->where('nama_tag', 'like', '%' . $request->cari . '%'));
             });
         }
 
@@ -165,8 +165,8 @@ class PenawaranController extends Controller
             'biaya_jumlah.*' => ['required', 'numeric', 'min:0'],
             'foto_gallery' => ['nullable', 'array'],
             'foto_gallery.*' => ['string'],
-            // 'video' => ['nullable', 'array'],
-            // 'video.*' => ['nullable', 'file', 'mimetypes:video/mp4,video/quicktime,video/webm', 'max:51200'],
+            'video' => ['nullable', 'array'],
+            'video.*' => ['file', 'mimetypes:video/mp4,video/quicktime,video/webm', 'max:51200'],
         ]);
 
         $this->validasiBatasVideo($penawaran->getMedia('video')->count(), $request->file('video', []));
@@ -292,7 +292,7 @@ class PenawaranController extends Controller
     {
         $map = \App\Models\KomoditiSize::disetujui()->urutTampil()->get()
             ->groupBy('komoditi_id')
-            ->map(fn($group) => $group->map(fn($s) => ['id' => $s->id, 'nama_size' => $s->nama_size])->values());
+            ->map(fn ($group) => $group->map(fn ($s) => ['id' => $s->id, 'nama_size' => $s->nama_size])->values());
 
         return $map->toJson();
     }
@@ -306,10 +306,10 @@ class PenawaranController extends Controller
             ->with(['kategoriKomoditi', 'tags'])
             ->get()
             ->sortBy([
-                fn($k) => $k->kategoriKomoditi->nama ?? 'zzz',
-                fn($k) => $k->nama,
+                fn ($k) => $k->kategoriKomoditi->nama ?? 'zzz',
+                fn ($k) => $k->nama,
             ])
-            ->groupBy(fn($k) => $k->kategoriKomoditi->nama ?? 'Lainnya');
+            ->groupBy(fn ($k) => $k->kategoriKomoditi->nama ?? 'Lainnya');
     }
 
     private function tolakJikaTerkunci(Penawaran $penawaran): void

@@ -18,7 +18,7 @@ class PermintaanController extends Controller
 
     public function index(Request $request)
     {
-        $query = Permintaan::with(['user.cabang', 'rincianSize.komoditiSize', 'komoditi'])->latest();
+        $query = Permintaan::with(['user.cabang', 'rincianSize.komoditiSize', 'komoditi.tags', 'media'])->latest();
 
         if ($request->filled('cari')) {
             $query->where(function ($q) use ($request) {

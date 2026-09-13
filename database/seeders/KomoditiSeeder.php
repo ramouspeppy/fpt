@@ -198,6 +198,7 @@ class KomoditiSeeder extends Seeder
         // ---------------------------------------------------------
 
         'Kerapu Sunu' => [
+            'Ikan Janang',
             'Kerapu Sunu',
             'Sunu',
             'Kerapu Merah',
@@ -213,7 +214,6 @@ class KomoditiSeeder extends Seeder
         // ---------------------------------------------------------
 
         'Kerapu Tiger' => [
-            'Kerapu Tiger',
             'Kerapu Macan',
             'Kerapu Harimau',
             'Kerapu Loreng',
@@ -228,10 +228,7 @@ class KomoditiSeeder extends Seeder
         // ---------------------------------------------------------
 
         'Kerapu Nanas' => [
-            'Kerapu Nanas',
             'Kerapu Sawai',
-            'Kerapu Sawai-sawai',
-            'Sawai',
             'Kerapu Ekor Kuning',
             'Kerapu Ekor Gunting',
             'Yellowtail Grouper',
@@ -239,9 +236,8 @@ class KomoditiSeeder extends Seeder
         ],
 
         'Kakaktua' => [
-            'Kakaktua',
-            'Kakatua',
-            'Ikan Kakaktua',
+            'Ikan Fal-fal',
+            'Ikan Bayam',
             'Ikan Kakatua',
             'Kakaktua Laut',
             'Parrotfish',
@@ -249,7 +245,6 @@ class KomoditiSeeder extends Seeder
         ],
 
         'Bawal' => [
-            'Bawal',
             'Bawal Putih',
             'Bawal Cermin',
             'Bawal Tambak',
@@ -258,7 +253,6 @@ class KomoditiSeeder extends Seeder
         ],
 
         'Tuna Sirip Kuning' => [
-            'Tuna Sirip Kuning',
             'Sirip Kuning',
             'Madidihang',
             'Madidihang Tuna',
@@ -271,7 +265,7 @@ class KomoditiSeeder extends Seeder
         ],
 
         'Layang' => [
-            'Layang',
+            'Meong-meong',
             'Ikan Layang',
             'Layang Benggol',
             'Layang Deles',
@@ -300,7 +294,7 @@ class KomoditiSeeder extends Seeder
         ],
 
         'Cakalang' => [
-            'Cakalang',
+            'Timpik',
             'Ikan Cakalang',
             'Cakalang Fufu',
             'Skipjack',
@@ -310,8 +304,6 @@ class KomoditiSeeder extends Seeder
         ],
 
         'Baronang' => [
-            'Baronang',
-            'Ikan Baronang',
             'Baronang Susu',
             'Baronang Lingkis',
             'Baronang Angin',
@@ -320,7 +312,6 @@ class KomoditiSeeder extends Seeder
         ],
 
         'Ekor Kuning' => [
-            'Ekor Kuning',
             'Ikan Ekor Kuning',
             'Delah',
             'Caesio Cuning',
@@ -330,7 +321,6 @@ class KomoditiSeeder extends Seeder
         ],
 
         'Giant Trevally (GT)' => [
-            'Giant Trevally',
             'GT',
             'Ikan GT',
             'Kuwe Gerong',
@@ -338,6 +328,7 @@ class KomoditiSeeder extends Seeder
             'Gerong',
             'Bubara',
             'Belitong',
+            'Gabui',
             'Giant Kingfish',
             'Caranx ignobilis',
         ],
@@ -347,7 +338,6 @@ class KomoditiSeeder extends Seeder
         // =========================================================
 
         'Udang Vaname' => [
-            'Udang Vaname',
             'Vaname',
             'Udang Putih',
             'White Shrimp',
@@ -358,7 +348,6 @@ class KomoditiSeeder extends Seeder
         ],
 
         'Lobster' => [
-            'Lobster',
             'Udang Lobster',
             'Udang Karang',
             'Udang Barong',
@@ -371,7 +360,6 @@ class KomoditiSeeder extends Seeder
         // =========================================================
 
         'Rajungan' => [
-            'Rajungan',
             'Kepiting Rajungan',
             'Rajungan Biru',
             'Blue Swimming Crab',
@@ -381,7 +369,6 @@ class KomoditiSeeder extends Seeder
         ],
 
         'Kepiting Bakau' => [
-            'Kepiting Bakau',
             'Kepiting Lumpur',
             'Kepiting Mangrove',
             'Mangrove Crab',
@@ -395,16 +382,15 @@ class KomoditiSeeder extends Seeder
         // CUMI & GURITA
         // =========================================================
 
-        'Giant Octopus' => [
-            'Giant Octopus',
+        'Octopus (Gurita)' => [
             'Gurita Besar',
             'Gurita Raksasa',
             'Gurita',
+            'Gurita Kaki Panjang',
             'Octopus',
         ],
 
         'Baby Octopus' => [
-            'Baby Octopus',
             'Baby Gurita',
             'Bayi Gurita',
             'Gurita Kecil',
@@ -417,7 +403,6 @@ class KomoditiSeeder extends Seeder
         ],
 
         'Cumi Jantung' => [
-            'Cumi Jantung',
             'Cumi-cumi Jantung',
             'Cumi Jantung-jantung',
             'Heart Squid',

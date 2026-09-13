@@ -135,4 +135,13 @@ export function autoInit() {
             dropzoneGalleryEls.forEach((el) => initDropzoneGallery(el));
         });
     }
+
+    // --- Morphext (teks tag komoditi berganti otomatis), pakai class .morphext ---
+    const morphextEls = document.querySelectorAll(".morphext");
+
+    if (morphextEls.length) {
+        import("./my-morphext").then(({ initMorphext }) => {
+            morphextEls.forEach((el) => initMorphext(el));
+        });
+    }
 }
