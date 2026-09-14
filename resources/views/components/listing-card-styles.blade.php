@@ -1,22 +1,33 @@
 @once
     <style>
         .listing-card {
-            border: none;
-            border-radius: 14px;
+            border: 1px solid rgba(15, 23, 42, 0.06);
+            border-radius: 18px;
             overflow: hidden;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            background: #fff;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+            transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
         }
 
         .listing-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 26px rgba(15, 23, 42, 0.14) !important;
+            transform: translateY(-6px);
+            box-shadow: 0 18px 38px rgba(15, 23, 42, 0.12) !important;
+            border-color: rgba(52, 144, 220, 0.18);
         }
 
         .listing-card-image {
             position: relative;
             aspect-ratio: 16 / 10;
-            background-color: #eef2f7;
+            background: linear-gradient(135deg, #eef3f9, #dae5f1);
             overflow: hidden;
+        }
+
+        .listing-card-image::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.05), rgba(15, 23, 42, 0.18));
+            pointer-events: none;
         }
 
         .listing-card-image img {
@@ -24,6 +35,11 @@
             height: 100%;
             object-fit: cover;
             display: block;
+            transition: transform 0.3s ease;
+        }
+
+        .listing-card:hover .listing-card-image img {
+            transform: scale(1.04);
         }
 
         .listing-card-image-placeholder {
@@ -32,16 +48,19 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.6rem;
-            color: #b9c2d0;
-            background: linear-gradient(135deg, #eef2f7, #dbe2ec);
+            font-size: 2.8rem;
+            color: #b7c4d8;
+            background: linear-gradient(135deg, #edf4fb, #dfeaf7);
         }
 
         .listing-card-status {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+            top: 12px;
+            right: 12px;
+            z-index: 1;
+            border-radius: 999px;
+            padding: 0.42rem 0.7rem;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
         }
 
         .listing-card-priority {
@@ -54,16 +73,19 @@
         }
 
         .listing-card-altname {
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             font-style: italic;
-            color: #3490dc;
-            min-height: 1.3em;
-            margin-bottom: 0.5rem;
+            color: #3a8bfd;
+            min-height: 1.4em;
+            margin-bottom: 0.55rem;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
         }
 
         .listing-card-altname i {
             font-style: normal;
-            margin-right: 3px;
+            opacity: 0.8;
         }
 
         .listing-card-altname .morphext {
@@ -77,7 +99,20 @@
         .listing-card .card-body {
             display: flex;
             flex-direction: column;
-            padding: 1.1rem 1.25rem;
+            padding: 1.15rem 1.2rem 1.1rem;
+            background: linear-gradient(180deg, #fff 0%, #fcfdff 100%);
+        }
+
+        .listing-card .card-title {
+            font-size: 1.05rem;
+            line-height: 1.45;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 0.7rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
         .listing-card-row {
@@ -88,18 +123,20 @@
         }
 
         .listing-card-divider {
-            border-top: 1px solid #eef1f5;
-            margin: 0.7rem 0;
+            border-top: 1px solid #edf1f6;
+            margin: 0.75rem 0;
         }
 
         .listing-card-stat-label {
-            color: #8a94a6;
+            color: #8b95a7;
             font-size: 0.78rem;
+            letter-spacing: 0.01em;
         }
 
         .listing-card-stat-value {
             font-weight: 700;
             color: #1f2937;
+            font-size: 0.92rem;
         }
 
         .listing-card-avatar {
@@ -107,13 +144,14 @@
             height: 40px;
             min-width: 40px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #3490dc, #6574cd);
+            background: linear-gradient(135deg, #3b82f6, #7c3aed);
             color: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
             font-size: 0.9rem;
+            box-shadow: 0 8px 18px rgba(59, 130, 246, 0.2);
         }
 
         .listing-card-user-name {
@@ -134,69 +172,83 @@
         }
 
         .listing-card-whatsapp {
-            width: 44px;
-            height: 44px;
-            min-width: 44px;
+            width: 34px;
+            height: 34px;
+            min-width: 34px;
             border-radius: 50%;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            background: #e9f9ef;
-            color: #1cbb5c;
-            font-size: 1.4rem;
+            background: linear-gradient(135deg, #dff7ea, #c9f1d8);
+            color: #1faa5a;
+            font-size: 1.1rem;
             line-height: 1;
             text-decoration: none;
-            transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+            border: 1px solid rgba(31, 170, 90, 0.14);
+            box-shadow: 0 4px 10px rgba(31, 170, 90, 0.12);
+            transition: all 0.2s ease;
+            padding: 0;
         }
 
         .listing-card-whatsapp i {
             line-height: 1;
-            display: block;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            font-size: 1.1rem;
         }
 
         .listing-card-whatsapp:hover {
-            background: #1cbb5c;
+            background: linear-gradient(135deg, #1faa5a, #168c4a);
             color: #fff;
-            transform: scale(1.08);
+            transform: scale(1.04);
+            box-shadow: 0 8px 16px rgba(31, 170, 90, 0.18);
             text-decoration: none;
+        }
+
+        .listing-card-whatsapp:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(31, 170, 90, 0.16);
         }
 
         .listing-card-meta {
             display: flex;
             align-items: center;
             flex-wrap: wrap;
-            gap: 0.4rem;
+            gap: 0.45rem;
             margin-bottom: 0.5rem;
         }
 
         .listing-card-komoditi {
             font-weight: 700;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             color: #1f2937;
         }
 
         .listing-badge-tipe {
             font-weight: 700;
-            font-size: 0.72rem;
-            letter-spacing: 0.02em;
-            padding: 0.35em 0.65em;
-            border-radius: 6px;
+            font-size: 0.7rem;
+            letter-spacing: 0.03em;
+            padding: 0.38em 0.7em;
+            border-radius: 8px;
             text-transform: uppercase;
         }
 
         .listing-badge-tipe-ekspor {
-            background: #fdf1e7;
-            color: #d97c1f;
+            background: #fff2e7;
+            color: #d97706;
         }
 
         .listing-badge-tipe-lokal {
-            background: #e6f7ee;
-            color: #189a52;
+            background: #eafaf2;
+            color: #199a5a;
         }
 
         .listing-badge-tipe-ekspor-lokal {
-            background: #eef1fd;
-            color: #5563c1;
+            background: #edf1ff;
+            color: #4657d7;
         }
 
         .listing-card-actions {
@@ -206,6 +258,20 @@
 
         .listing-card-actions .btn {
             flex: 1;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .listing-card-actions .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border: none;
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.2);
+        }
+
+        .listing-card-actions .btn-warning {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            border: none;
+            color: #fff;
         }
     </style>
 @endonce

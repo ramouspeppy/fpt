@@ -2,17 +2,45 @@
 
 @section('title', 'Daftar Penawaran')
 
+@section('breadcrumb')
+    <div class="breadcrumb-item active"><a href="{{ route('dashboard') }}">Dashboard</a></div>
+    <div class="breadcrumb-item">Penawaran</div>
+@endsection
+
 @section('content')
     <x-listing-card-styles />
 
-    <div class="card mb-3">
-        <div class="card-body py-3">
-            <form method="GET">
-                <div class="row align-items-center">
-                    <div class="col-md-6 col-lg-7 mb-2 mb-md-0">
-                        <input type="text" name="cari" value="{{ request('cari') }}" class="form-control" placeholder="Cari komoditi / judul / nama daerah...">
+    <div class="mb-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                    <div>
+                        <div class="text-uppercase text-muted small font-weight-bold mb-1">Daftar komoditi</div>
+                        <h4 class="mb-0">Penawaran aktif</h4>
                     </div>
-                    <div class="col-md-3 mb-2 mb-md-0">
+                    <a href="{{ route('penawaran.create') }}" class="btn btn-primary btn-icon icon-left mt-3 mt-md-0">
+                        <i class="fas fa-plus"></i> Tambah Penawaran
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-4">
+            <form method="GET">
+                <div class="row align-items-end">
+                    <div class="col-lg-5 col-md-12 mb-3 mb-lg-0">
+                        <label class="form-label text-muted small font-weight-bold mb-2">Pencarian</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            </div>
+                            <input type="text" name="cari" value="{{ request('cari') }}" class="form-control" placeholder="Cari komoditi / judul / nama daerah...">
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3 mb-lg-0">
+                        <label class="form-label text-muted small font-weight-bold mb-2">Tipe</label>
                         <select name="tipe" class="form-control selectric">
                             <option value="">Semua Tipe</option>
                             <option value="Ekspor" @selected(request('tipe') == 'Ekspor')>Ekspor</option>
@@ -20,19 +48,44 @@
                             <option value="Ekspor & Lokal" @selected(request('tipe') == 'Ekspor & Lokal')>Ekspor & Lokal</option>
                         </select>
                     </div>
-                    <div class="col-md-3 col-lg-2">
-                        <button class="btn btn-secondary btn-block">Filter</button>
+                    <div class="col-lg-3 col-md-6 mb-3 mb-lg-0">
+                        <label class="form-label text-muted small font-weight-bold mb-2">Status</label>
+                        <select name="status" class="form-control selectric">
+                            <option value="">Semua Status</option>
+                            <option value="tersedia" @selected(request('status') == 'tersedia')>Tersedia</option>
+                            <option value="sedang_diproses" @selected(request('status') == 'sedang_diproses')>Sedang Diproses</option>
+                            <option value="selesai" @selected(request('status') == 'selesai')>Selesai</option>
+                            <option value="tutup" @selected(request('status') == 'tutup')>Tutup</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-1 col-md-12">
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-filter"></i>
+                        </button>
                     </div>
                 </div>
             </form>
         </div>
     </div>
 
-    <div class="d-flex justify-content-end mb-2">
-        <a href="{{ route('penawaran.create') }}" class="btn btn-info">
-            <i class="fas fa-plus"></i> Tambah Penawaran
-        </a>
-    </div>
+    @if (request()->anyFilled(['cari', 'tipe', 'status']))
+        <div class="mb-3">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <span class="text-muted">Filter aktif:</span>
+                @if (request('cari'))
+                    <span class="badge badge-info">{{ request('cari') }}</span>
+                @endif
+                @if (request('tipe'))
+                    <span class="badge badge-primary">{{ request('tipe') }}</span>
+                @endif
+                @if (request('status'))
+                    @php $labelStatus = ['tersedia' => 'Tersedia', 'sedang_diproses' => 'Sedang Diproses', 'selesai' => 'Selesai', 'tutup' => 'Tutup']; @endphp
+                    <span class="badge badge-secondary">{{ $labelStatus[request('status')] ?? request('status') }}</span>
+                @endif
+                <a href="{{ route('penawaran.index') }}" class="small text-muted">reset</a>
+            </div>
+        </div>
+    @endif
 
     <div class="row">
         @forelse ($penawaran as $item)
@@ -40,11 +93,10 @@
                 $warnaStatus = ['tersedia' => 'success', 'sedang_diproses' => 'primary', 'selesai' => 'dark', 'tutup' => 'secondary'];
                 $labelStatus = ['tersedia' => 'Tersedia', 'sedang_diproses' => 'Sedang Diproses', 'selesai' => 'Selesai', 'tutup' => 'Tutup'];
                 $namaLain = $item->komoditi?->tags->pluck('nama_tag')->filter()->unique();
-                // Fallback foto: galeri Penawaran sendiri -> foto Komoditi -> placeholder ikon
                 $gambarUrl = $item->getFirstMediaUrl('foto', 'thumb') ?: $item->komoditi?->fotoUtama()?->getUrl('thumb');
             @endphp
             <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card listing-card h-100 shadow-sm">
+                <div class="card listing-card h-100 shadow-sm border-0">
                     <div class="listing-card-image">
                         @if ($gambarUrl)
                             <img src="{{ $gambarUrl }}" alt="{{ $item->komoditi->nama ?? $item->judul }}">
@@ -116,7 +168,9 @@
             </div>
         @empty
             <div class="col-12">
-                <div class="alert alert-info">Belum ada penawaran.</div>
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle"></i> Belum ada penawaran yang sesuai dengan filter saat ini.
+                </div>
             </div>
         @endforelse
     </div>
