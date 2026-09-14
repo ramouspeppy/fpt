@@ -40,6 +40,8 @@
             $labelStatus = ['tersedia' => 'Tersedia', 'sedang_diproses' => 'Sedang Diproses', 'selesai' => 'Selesai', 'tutup' => 'Tutup'];
             $warnaPrioritas = ['merah' => '#dc3545', 'kuning' => '#ffc107', 'hijau' => '#28a745'];
             $namaLain = $item->komoditi?->tags->pluck('nama_tag')->filter()->unique();
+            // Fallback foto: galeri Permintaan sendiri -> foto Komoditi -> placeholder ikon
+            $gambarUrl = $item->getFirstMediaUrl('foto', 'thumb') ?: $item->komoditi?->fotoUtama()?->getUrl('thumb');
         @endphp
         <div class="col-md-6 col-lg-4 mb-4">
             <div class="card listing-card h-100 shadow-sm position-relative">
@@ -47,8 +49,8 @@
                     <div class="listing-card-priority" style="background-color: {{ $warnaPrioritas[$item->prioritas_warna] ?? '#ccc' }};"></div>
                 @endif
                 <div class="listing-card-image">
-                    @if ($item->getFirstMediaUrl('foto'))
-                        <img src="{{ $item->getFirstMediaUrl('foto', 'thumb') }}" alt="{{ $item->komoditi->nama ?? $item->judul }}">
+                    @if ($gambarUrl)
+                        <img src="{{ $gambarUrl }}" alt="{{ $item->komoditi->nama ?? $item->judul }}">
                     @else
                         <div class="listing-card-image-placeholder"><i class="fas fa-fish"></i></div>
                     @endif
@@ -58,8 +60,9 @@
                 </div>
                 <div class="card-body">
                     <h5 class="card-title mb-1">{{ $item->judul }}</h5>
-                    <div class="text-muted small mb-1">
-                        {{ $item->tipe }} &middot; {{ $item->komoditi->nama ?? '-' }}
+                    <div class="listing-card-meta">
+                        <span class="badge listing-badge-tipe listing-badge-tipe-{{ \Illuminate\Support\Str::slug($item->tipe) }}">{{ $item->tipe }}</span>
+                        <span class="listing-card-komoditi">{{ $item->komoditi->nama ?? '-' }}</span>
                         @if ($item->sudah_terkunci)
                             <span class="badge badge-dark"><i class="fas fa-lock"></i> Project</span>
                         @endif

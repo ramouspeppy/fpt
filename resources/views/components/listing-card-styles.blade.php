@@ -103,9 +103,9 @@
         }
 
         .listing-card-avatar {
-            width: 36px;
-            height: 36px;
-            min-width: 36px;
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
             border-radius: 50%;
             background: linear-gradient(135deg, #3490dc, #6574cd);
             color: #fff;
@@ -113,7 +113,7 @@
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
         }
 
         .listing-card-user-name {
@@ -134,23 +134,69 @@
         }
 
         .listing-card-whatsapp {
-            width: 36px;
-            height: 36px;
-            min-width: 36px;
+            width: 44px;
+            height: 44px;
+            min-width: 44px;
             border-radius: 50%;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             background: #e9f9ef;
             color: #1cbb5c;
-            font-size: 1.05rem;
+            font-size: 1.4rem;
+            line-height: 1;
+            text-decoration: none;
             transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+        }
+
+        .listing-card-whatsapp i {
+            line-height: 1;
+            display: block;
         }
 
         .listing-card-whatsapp:hover {
             background: #1cbb5c;
             color: #fff;
-            transform: scale(1.06);
+            transform: scale(1.08);
+            text-decoration: none;
+        }
+
+        .listing-card-meta {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .listing-card-komoditi {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #1f2937;
+        }
+
+        .listing-badge-tipe {
+            font-weight: 700;
+            font-size: 0.72rem;
+            letter-spacing: 0.02em;
+            padding: 0.35em 0.65em;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+
+        .listing-badge-tipe-ekspor {
+            background: #fdf1e7;
+            color: #d97c1f;
+        }
+
+        .listing-badge-tipe-lokal {
+            background: #e6f7ee;
+            color: #189a52;
+        }
+
+        .listing-badge-tipe-ekspor-lokal {
+            background: #eef1fd;
+            color: #5563c1;
         }
 
         .listing-card-actions {

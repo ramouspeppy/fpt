@@ -12,9 +12,10 @@
 
     <div class="form-group">
         <label>Judul <span class="text-danger">*</span></label>
-        <input type="text" name="judul" value="{{ old('judul', $isEdit ? $penawaran->judul : '') }}"
-            class="form-control @error('judul') is-invalid @enderror" placeholder="mis. Surplus Gurita Berbagai Size - Cabang Medan">
-        @error('judul') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        <input type="text" name="judul" value="{{ old('judul', $isEdit ? $penawaran->judul : '') }}" class="form-control @error('judul') is-invalid @enderror" placeholder="mis. Surplus Gurita Berbagai Size - Cabang Medan">
+        @error('judul')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
     </div>
 
     <div class="row">
@@ -24,36 +25,41 @@
                 @unless ($isEdit)
                     <option value="">-- Pilih Tipe --</option>
                 @endunless
-                <option value="Lokal" @selected(old('tipe', $isEdit ? $penawaran->tipe : null)=='Lokal')>Lokal</option>
-                <option value="Ekspor" @selected(old('tipe', $isEdit ? $penawaran->tipe : null)=='Ekspor')>Ekspor</option>
-                <option value="Ekspor & Lokal" @selected(old('tipe', $isEdit ? $penawaran->tipe : null)=='Ekspor & Lokal')>Ekspor & Lokal</option>
+                <option value="Lokal" @selected(old('tipe', $isEdit ? $penawaran->tipe : null) == 'Lokal')>Lokal</option>
+                <option value="Ekspor" @selected(old('tipe', $isEdit ? $penawaran->tipe : null) == 'Ekspor')>Ekspor</option>
+                <option value="Ekspor & Lokal" @selected(old('tipe', $isEdit ? $penawaran->tipe : null) == 'Ekspor & Lokal')>Ekspor & Lokal</option>
             </select>
-            @error('tipe') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+            @error('tipe')
+                <div class="invalid-feedback d-block">{{ $message }}</div>
+            @enderror
         </div>
         <div class="col-md-{{ $isEdit ? 3 : 4 }} form-group">
             <label>Jenis Penawaran <span class="text-danger">*</span></label>
             <select name="jenis_penawaran" id="jenis_penawaran" class="form-control selectric @error('jenis_penawaran') is-invalid @enderror">
-                <option value="Produksi Sendiri" @selected(old('jenis_penawaran', $isEdit ? $penawaran->jenis_penawaran : null)=='Produksi Sendiri')>Produksi Sendiri</option>
-                <option value="Trading" @selected(old('jenis_penawaran', $isEdit ? $penawaran->jenis_penawaran : null)=='Trading')>Trading / Beli Jadi dari Mitra</option>
+                <option value="Produksi Sendiri" @selected(old('jenis_penawaran', $isEdit ? $penawaran->jenis_penawaran : null) == 'Produksi Sendiri')>Produksi Sendiri</option>
+                <option value="Trading" @selected(old('jenis_penawaran', $isEdit ? $penawaran->jenis_penawaran : null) == 'Trading')>Trading / Beli Jadi dari Mitra</option>
             </select>
-            @error('jenis_penawaran') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+            @error('jenis_penawaran')
+                <div class="invalid-feedback d-block">{{ $message }}</div>
+            @enderror
         </div>
         <div class="col-md-{{ $isEdit ? 3 : 4 }} form-group">
             <label>Komoditi <span class="text-danger">*</span></label>
-            <select name="komoditi_id" id="komoditi_id" class="form-control select2 @error('komoditi_id') is-invalid @enderror"
-                @unless ($isEdit) data-placeholder="-- Pilih Komoditi --" @endunless>
+            <select name="komoditi_id" id="komoditi_id" class="form-control select2 @error('komoditi_id') is-invalid @enderror" @unless ($isEdit) data-placeholder="-- Pilih Komoditi --" @endunless>
                 @unless ($isEdit)
                     <option value=""></option>
                 @endunless
                 @foreach ($komoditiList as $kategori => $daftar)
                     <optgroup label="{{ $kategori ?? 'Lainnya' }}">
                         @foreach ($daftar as $k)
-                            <option value="{{ $k->id }}" @selected(old('komoditi_id', $isEdit ? $penawaran->komoditi_id : null)==$k->id)>{{ $k->nama }}{{ $k->tags->isNotEmpty() ? ' (' . $k->tags->pluck('nama_tag')->implode(', ') . ')' : '' }}</option>
+                            <option value="{{ $k->id }}" @selected(old('komoditi_id', $isEdit ? $penawaran->komoditi_id : null) == $k->id)>{{ $k->nama }}</option>
                         @endforeach
                     </optgroup>
                 @endforeach
             </select>
-            @error('komoditi_id') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+            @error('komoditi_id')
+                <div class="invalid-feedback d-block">{{ $message }}</div>
+            @enderror
             @if ($isEdit)
                 <small class="form-text text-muted">
                     <a href="/komoditi/{{ $penawaran->komoditi_id }}/tag" id="link-nama-daerah" target="_blank">Kelola nama daerah komoditi ini</a>
@@ -71,9 +77,9 @@
             <div class="col-md-3 form-group">
                 <label>Status <span class="text-danger">*</span></label>
                 <select name="status" class="form-control selectric">
-                    <option value="tersedia" @selected($penawaran->status=='tersedia')>Tersedia</option>
-                    <option value="selesai" @selected($penawaran->status=='selesai')>Selesai</option>
-                    <option value="tutup" @selected($penawaran->status=='tutup')>Tutup</option>
+                    <option value="tersedia" @selected($penawaran->status == 'tersedia')>Tersedia</option>
+                    <option value="selesai" @selected($penawaran->status == 'selesai')>Selesai</option>
+                    <option value="tutup" @selected($penawaran->status == 'tutup')>Tutup</option>
                 </select>
             </div>
         @endif
@@ -81,8 +87,7 @@
 
     <div class="form-group">
         <label>Kondisi Ikan</label>
-        <input type="text" name="kondisi_ikan" value="{{ old('kondisi_ikan', $isEdit ? $penawaran->kondisi_ikan : '') }}"
-            class="form-control" placeholder="Segar / Beku">
+        <input type="text" name="kondisi_ikan" value="{{ old('kondisi_ikan', $isEdit ? $penawaran->kondisi_ikan : '') }}" class="form-control" placeholder="Segar / Beku">
     </div>
 
     <div class="form-group">
@@ -198,15 +203,15 @@
         <div class="row">
             <div class="col-md-4 form-group">
                 <label>Sertifikasi</label>
-                <input type="text" name="sertifikasi" value="{{ old('sertifikasi', $isEdit ? ($penawaran->detailEkspor->sertifikasi ?? '') : '') }}" class="form-control" placeholder="mis. HACCP">
+                <input type="text" name="sertifikasi" value="{{ old('sertifikasi', $isEdit ? $penawaran->detailEkspor->sertifikasi ?? '' : '') }}" class="form-control" placeholder="mis. HACCP">
             </div>
             <div class="col-md-4 form-group">
                 <label>Kontinuitas Suplai</label>
-                <input type="text" name="kontinuitas_suplai" value="{{ old('kontinuitas_suplai', $isEdit ? ($penawaran->detailEkspor->kontinuitas_suplai ?? '') : '') }}" class="form-control" placeholder="Self-declare, mis. 'Rutin tiap minggu'">
+                <input type="text" name="kontinuitas_suplai" value="{{ old('kontinuitas_suplai', $isEdit ? $penawaran->detailEkspor->kontinuitas_suplai ?? '' : '') }}" class="form-control" placeholder="Self-declare, mis. 'Rutin tiap minggu'">
             </div>
             <div class="col-md-4 form-group">
                 <label>Negara Tujuan</label>
-                <input type="text" name="negara_tujuan" value="{{ old('negara_tujuan', $isEdit ? ($penawaran->detailEkspor->negara_tujuan ?? '') : '') }}" class="form-control">
+                <input type="text" name="negara_tujuan" value="{{ old('negara_tujuan', $isEdit ? $penawaran->detailEkspor->negara_tujuan ?? '' : '') }}" class="form-control">
             </div>
         </div>
     </div>
@@ -214,27 +219,14 @@
     <!-- Galeri Foto & Video - sengaja ditaruh paling bawah, setelah Detail Ekspor -->
     <div class="card card-body bg-light mb-3">
         <h4 class="mb-3">Galeri Foto</h4>
-        <x-dropzone-gallery
-            name="foto_gallery"
-            context="foto"
-            :existing-media="$isEdit ? $penawaran->getMedia('foto') : null"
-            :upload-route="route('mediaTemp.upload')"
-            :delete-temp-route="route('mediaTemp.delete')"
-            :delete-existing-url-base="$isEdit ? url('/penawaran/' . $penawaran->id . '/media') : null"
-            accepted-files="image/jpeg,image/png,image/webp"
-        />
+        <x-dropzone-gallery name="foto_gallery" context="foto" :existing-media="$isEdit ? $penawaran->getMedia('foto') : null" :upload-route="route('mediaTemp.upload')" :delete-temp-route="route('mediaTemp.delete')" :delete-existing-url-base="$isEdit ? url('/penawaran/' . $penawaran->id . '/media') : null" accepted-files="image/jpeg,image/png,image/webp" />
         <small class="form-text text-muted">Format JPG/PNG/WEBP, maksimal 5 MB per foto. Jumlah bebas.</small>
     </div>
 
     <div class="card card-body bg-light mb-3">
         <h4 class="mb-3">Video <span class="text-muted font-weight-normal">(maks 2)</span></h4>
-        <input type="file" name="video[]" class="filepond" multiple
-            accept="video/mp4,video/quicktime,video/webm"
-            data-max-files="2"
-            @if ($isEdit)
-                data-existing-files='{{ $penawaran->getMedia("video")->map(fn ($m) => ["id" => $m->id, "url" => $m->getUrl(), "name" => $m->file_name, "size" => $m->size])->values()->toJson() }}'
-                data-delete-existing-url-base="{{ url('/penawaran/' . $penawaran->id . '/media') }}"
-            @endif>
+        <input type="file" name="video[]" class="filepond" multiple accept="video/mp4,video/quicktime,video/webm" data-max-files="2" @if ($isEdit) data-existing-files='{{ $penawaran->getMedia('video')->map(fn($m) => ['id' => $m->id, 'url' => $m->getUrl(), 'name' => $m->file_name, 'size' => $m->size])->values()->toJson() }}'
+                data-delete-existing-url-base="{{ url('/penawaran/' . $penawaran->id . '/media') }}" @endif>
         <small class="form-text text-muted">Format MP4/MOV/WEBM, maksimal 50 MB per video, maksimal 2 video.</small>
     </div>
 
@@ -249,173 +241,173 @@
 </form>
 
 @section('scripts')
-<script>
-    // Peta komoditi_id => daftar size disetujui miliknya (dari server).
-    const sizesByKomoditi = {!! $sizesByKomoditi !!};
+    <script>
+        // Peta komoditi_id => daftar size disetujui miliknya (dari server).
+        const sizesByKomoditi = {!! $sizesByKomoditi !!};
 
-    document.addEventListener('DOMContentLoaded', function () {
-        // Dibungkus function + try/catch sendiri, supaya kalau ada error di bagian
-        // ini, bagian LAIN di bawah (dropdown size, tambah/hapus baris, dst) tetap
-        // jalan normal - tidak ikut mati gara-gara satu bagian gagal.
-        (function initToggleFieldEkspor() {
-            const tipeSelect = document.getElementById('tipe');
-            const fieldEkspor = document.getElementById('field-ekspor');
-            if (!tipeSelect || !fieldEkspor) return;
+        document.addEventListener('DOMContentLoaded', function() {
+            // Dibungkus function + try/catch sendiri, supaya kalau ada error di bagian
+            // ini, bagian LAIN di bawah (dropdown size, tambah/hapus baris, dst) tetap
+            // jalan normal - tidak ikut mati gara-gara satu bagian gagal.
+            (function initToggleFieldEkspor() {
+                const tipeSelect = document.getElementById('tipe');
+                const fieldEkspor = document.getElementById('field-ekspor');
+                if (!tipeSelect || !fieldEkspor) return;
 
-            function toggleFieldEkspor() {
-                const val = tipeSelect.value;
-                fieldEkspor.style.display = (val === 'Ekspor' || val === 'Ekspor & Lokal') ? 'block' : 'none';
+                function toggleFieldEkspor() {
+                    const val = tipeSelect.value;
+                    fieldEkspor.style.display = (val === 'Ekspor' || val === 'Ekspor & Lokal') ? 'block' : 'none';
+                }
+
+                // Selectric SEHARUSNYA meneruskan event 'change' ke <select> aslinya, tapi
+                // supaya tidak bergantung 100% ke itu, didengarkan lewat DUA jalur sekaligus:
+                // vanilla JS (native) DAN jQuery (in case Selectric memicu lewat jQuery).
+                tipeSelect.addEventListener('change', toggleFieldEkspor);
+                if (window.jQuery) {
+                    window.jQuery(tipeSelect).on('change', toggleFieldEkspor);
+                }
+
+                toggleFieldEkspor();
+            })();
+
+            // toggle label section biaya berdasarkan Jenis Penawaran (Produksi Sendiri vs Trading)
+            const jenisPenawaranSelect = document.getElementById('jenis_penawaran');
+            const judulSectionBiaya = document.getElementById('judul-section-biaya');
+            const hintSectionBiaya = document.getElementById('hint-section-biaya');
+            const contohSectionBiaya = document.getElementById('contoh-section-biaya');
+
+            function toggleLabelBiaya() {
+                if (jenisPenawaranSelect.value === 'Trading') {
+                    judulSectionBiaya.innerHTML = 'Margin / Keuntungan <span class="text-danger">*</span>';
+                    hintSectionBiaya.textContent = 'Karena barang sudah jadi dari mitra (biaya proses/packing/dll sudah ditanggung mitra), cukup isi margin/keuntungan yang Anda inginkan per kg. Wajib diisi minimal 1 baris.';
+                    contohSectionBiaya.textContent = 'Contoh label: Margin/Keuntungan, atau biaya tambahan lain jika ada (mis. Transport dari Mitra).';
+                } else {
+                    judulSectionBiaya.innerHTML = 'Rincian Biaya HPP <span class="text-danger">*</span>';
+                    hintSectionBiaya.textContent = 'Biaya operasional per kg (proses, packing, listrik, tenaga kerja, pengiriman, asuransi, dll) — berlaku SAMA untuk semua size di atas, dan otomatis ditambahkan ke harga beli saat dihitung sebagai Harga Jual. Wajib diisi minimal 1 baris.';
+                    contohSectionBiaya.textContent = 'Contoh label: Biaya Proses, Biaya Packing, Biaya Listrik, Biaya Tenaga Kerja, Biaya Pengiriman, Asuransi, atau biaya lain sesuai komoditi Anda.';
+                }
+            }
+            jenisPenawaranSelect.addEventListener('change', toggleLabelBiaya);
+            toggleLabelBiaya();
+
+            // ---- Dropdown size, cascading berdasarkan Komoditi yang dipilih ----
+            const komoditiSelect = document.getElementById('komoditi_id');
+            const hintSize = document.getElementById('hint-size');
+            const tambahBarisBtn = document.getElementById('tambah-baris');
+
+            // pertahankanNilaiLama: dipakai waktu load pertama di form Edit (atau form Create
+            // yang muncul lagi karena validasi gagal) - supaya baris yang sudah punya
+            // data-selected tidak kehilangan pilihan size-nya.
+            function isiDropdownSize(selectEl, komoditiId, pertahankanNilaiLama) {
+                const nilaiTerpilih = pertahankanNilaiLama ? selectEl.dataset.selected : '';
+                const daftar = sizesByKomoditi[komoditiId] || [];
+                selectEl.innerHTML = '';
+
+                if (!komoditiId || daftar.length === 0) {
+                    selectEl.innerHTML = '<option value="">-- ' + (komoditiId ? 'Belum ada size untuk komoditi ini' : 'Pilih Komoditi dulu') + ' --</option>';
+                    selectEl.disabled = true;
+                    return;
+                }
+
+                selectEl.innerHTML = '<option value="">-- Pilih Size --</option>' +
+                    daftar.map(s => `<option value="${s.id}" ${String(s.id) === String(nilaiTerpilih) ? 'selected' : ''}>${s.nama_size}</option>`).join('');
+                selectEl.disabled = false;
             }
 
-            // Selectric SEHARUSNYA meneruskan event 'change' ke <select> aslinya, tapi
-            // supaya tidak bergantung 100% ke itu, didengarkan lewat DUA jalur sekaligus:
-            // vanilla JS (native) DAN jQuery (in case Selectric memicu lewat jQuery).
-            tipeSelect.addEventListener('change', toggleFieldEkspor);
-            if (window.jQuery) {
-                window.jQuery(tipeSelect).on('change', toggleFieldEkspor);
+            function perbaruiSemuaDropdownSize(pertahankanNilaiLama) {
+                const komoditiId = komoditiSelect.value;
+                document.querySelectorAll('.komoditi-size-select').forEach(el => isiDropdownSize(el, komoditiId, pertahankanNilaiLama));
+
+                const linkUsulkanSize = document.getElementById('link-usulkan-size');
+                if (komoditiId) {
+                    hintSize.innerHTML = 'Tidak menemukan size yang dicari? <a href="/komoditi/' + komoditiId + '/size/usulkan" id="link-usulkan-size" target="_blank">Usulkan size baru</a>.';
+                } else {
+                    hintSize.textContent = 'Pilih Komoditi terlebih dahulu supaya daftar size-nya muncul di sini.';
+                }
+
+                tambahBarisBtn.disabled = !(sizesByKomoditi[komoditiId] && sizesByKomoditi[komoditiId].length);
+
+                perbaruiLinkNamaDaerah(komoditiId);
             }
 
-            toggleFieldEkspor();
-        })();
+            // Link "nama daerah" ikut menyesuaikan komoditi yang dipilih.
+            function perbaruiLinkNamaDaerah(komoditiId) {
+                const link = document.getElementById('link-nama-daerah');
+                if (!link) return;
 
-        // toggle label section biaya berdasarkan Jenis Penawaran (Produksi Sendiri vs Trading)
-        const jenisPenawaranSelect = document.getElementById('jenis_penawaran');
-        const judulSectionBiaya = document.getElementById('judul-section-biaya');
-        const hintSectionBiaya = document.getElementById('hint-section-biaya');
-        const contohSectionBiaya = document.getElementById('contoh-section-biaya');
-
-        function toggleLabelBiaya() {
-            if (jenisPenawaranSelect.value === 'Trading') {
-                judulSectionBiaya.innerHTML = 'Margin / Keuntungan <span class="text-danger">*</span>';
-                hintSectionBiaya.textContent = 'Karena barang sudah jadi dari mitra (biaya proses/packing/dll sudah ditanggung mitra), cukup isi margin/keuntungan yang Anda inginkan per kg. Wajib diisi minimal 1 baris.';
-                contohSectionBiaya.textContent = 'Contoh label: Margin/Keuntungan, atau biaya tambahan lain jika ada (mis. Transport dari Mitra).';
-            } else {
-                judulSectionBiaya.innerHTML = 'Rincian Biaya HPP <span class="text-danger">*</span>';
-                hintSectionBiaya.textContent = 'Biaya operasional per kg (proses, packing, listrik, tenaga kerja, pengiriman, asuransi, dll) — berlaku SAMA untuk semua size di atas, dan otomatis ditambahkan ke harga beli saat dihitung sebagai Harga Jual. Wajib diisi minimal 1 baris.';
-                contohSectionBiaya.textContent = 'Contoh label: Biaya Proses, Biaya Packing, Biaya Listrik, Biaya Tenaga Kerja, Biaya Pengiriman, Asuransi, atau biaya lain sesuai komoditi Anda.';
-            }
-        }
-        jenisPenawaranSelect.addEventListener('change', toggleLabelBiaya);
-        toggleLabelBiaya();
-
-        // ---- Dropdown size, cascading berdasarkan Komoditi yang dipilih ----
-        const komoditiSelect = document.getElementById('komoditi_id');
-        const hintSize = document.getElementById('hint-size');
-        const tambahBarisBtn = document.getElementById('tambah-baris');
-
-        // pertahankanNilaiLama: dipakai waktu load pertama di form Edit (atau form Create
-        // yang muncul lagi karena validasi gagal) - supaya baris yang sudah punya
-        // data-selected tidak kehilangan pilihan size-nya.
-        function isiDropdownSize(selectEl, komoditiId, pertahankanNilaiLama) {
-            const nilaiTerpilih = pertahankanNilaiLama ? selectEl.dataset.selected : '';
-            const daftar = sizesByKomoditi[komoditiId] || [];
-            selectEl.innerHTML = '';
-
-            if (!komoditiId || daftar.length === 0) {
-                selectEl.innerHTML = '<option value="">-- ' + (komoditiId ? 'Belum ada size untuk komoditi ini' : 'Pilih Komoditi dulu') + ' --</option>';
-                selectEl.disabled = true;
-                return;
+                if (komoditiId) {
+                    link.href = '/komoditi/' + komoditiId + '/tag';
+                    link.textContent = 'kelola nama daerah komoditi ini';
+                    link.classList.remove('disabled');
+                    link.style.pointerEvents = '';
+                    link.style.opacity = '';
+                } else {
+                    link.href = '#';
+                    link.textContent = 'pilih komoditi dulu';
+                    link.classList.add('disabled');
+                    link.style.pointerEvents = 'none';
+                    link.style.opacity = '.5';
+                }
             }
 
-            selectEl.innerHTML = '<option value="">-- Pilih Size --</option>' +
-                daftar.map(s => `<option value="${s.id}" ${String(s.id) === String(nilaiTerpilih) ? 'selected' : ''}>${s.nama_size}</option>`).join('');
-            selectEl.disabled = false;
-        }
+            // Load pertama: pertahankan size yang sudah tersimpan (baris Edit, atau baris
+            // Create yang muncul lagi karena validasi gagal).
+            perbaruiSemuaDropdownSize(true);
 
-        function perbaruiSemuaDropdownSize(pertahankanNilaiLama) {
-            const komoditiId = komoditiSelect.value;
-            document.querySelectorAll('.komoditi-size-select').forEach(el => isiDropdownSize(el, komoditiId, pertahankanNilaiLama));
+            // Kalau Komoditi diganti manual: size direset (tidak ada relevansi ke size lama)
+            komoditiSelect.addEventListener('change', () => perbaruiSemuaDropdownSize(false));
+            $(komoditiSelect).on('select2:select select2:clear', () => perbaruiSemuaDropdownSize(false));
 
-            const linkUsulkanSize = document.getElementById('link-usulkan-size');
-            if (komoditiId) {
-                hintSize.innerHTML = 'Tidak menemukan size yang dicari? <a href="/komoditi/' + komoditiId + '/size/usulkan" id="link-usulkan-size" target="_blank">Usulkan size baru</a>.';
-            } else {
-                hintSize.textContent = 'Pilih Komoditi terlebih dahulu supaya daftar size-nya muncul di sini.';
-            }
-
-            tambahBarisBtn.disabled = !(sizesByKomoditi[komoditiId] && sizesByKomoditi[komoditiId].length);
-
-            perbaruiLinkNamaDaerah(komoditiId);
-        }
-
-        // Link "nama daerah" ikut menyesuaikan komoditi yang dipilih.
-        function perbaruiLinkNamaDaerah(komoditiId) {
-            const link = document.getElementById('link-nama-daerah');
-            if (!link) return;
-
-            if (komoditiId) {
-                link.href = '/komoditi/' + komoditiId + '/tag';
-                link.textContent = 'kelola nama daerah komoditi ini';
-                link.classList.remove('disabled');
-                link.style.pointerEvents = '';
-                link.style.opacity = '';
-            } else {
-                link.href = '#';
-                link.textContent = 'pilih komoditi dulu';
-                link.classList.add('disabled');
-                link.style.pointerEvents = 'none';
-                link.style.opacity = '.5';
-            }
-        }
-
-        // Load pertama: pertahankan size yang sudah tersimpan (baris Edit, atau baris
-        // Create yang muncul lagi karena validasi gagal).
-        perbaruiSemuaDropdownSize(true);
-
-        // Kalau Komoditi diganti manual: size direset (tidak ada relevansi ke size lama)
-        komoditiSelect.addEventListener('change', () => perbaruiSemuaDropdownSize(false));
-        $(komoditiSelect).on('select2:select select2:clear', () => perbaruiSemuaDropdownSize(false));
-
-        // tambah/hapus baris rincian size
-        const container = document.getElementById('baris-size-container');
-        tambahBarisBtn.addEventListener('click', function () {
-            const baris = container.querySelector('.baris-size').cloneNode(true);
-            baris.querySelectorAll('input').forEach(input => input.value = '');
-            isiDropdownSize(baris.querySelector('.komoditi-size-select'), komoditiSelect.value, false);
-            baris.querySelector('.hapus-baris').style.display = 'inline-block';
-            container.appendChild(baris);
-            perbaruiTombolHapus();
-        });
-
-        container.addEventListener('click', function (e) {
-            if (e.target.closest('.hapus-baris')) {
-                e.target.closest('.baris-size').remove();
+            // tambah/hapus baris rincian size
+            const container = document.getElementById('baris-size-container');
+            tambahBarisBtn.addEventListener('click', function() {
+                const baris = container.querySelector('.baris-size').cloneNode(true);
+                baris.querySelectorAll('input').forEach(input => input.value = '');
+                isiDropdownSize(baris.querySelector('.komoditi-size-select'), komoditiSelect.value, false);
+                baris.querySelector('.hapus-baris').style.display = 'inline-block';
+                container.appendChild(baris);
                 perbaruiTombolHapus();
-            }
-        });
-
-        function perbaruiTombolHapus() {
-            const semuaBaris = container.querySelectorAll('.baris-size');
-            semuaBaris.forEach((baris) => {
-                baris.querySelector('.hapus-baris').style.display = semuaBaris.length > 1 ? 'inline-block' : 'none';
             });
-        }
-        perbaruiTombolHapus();
 
-        // tambah/hapus baris biaya HPP - pola sama dengan rincian size
-        const containerBiaya = document.getElementById('baris-biaya-container');
-        document.getElementById('tambah-baris-biaya').addEventListener('click', function () {
-            const baris = containerBiaya.querySelector('.baris-biaya').cloneNode(true);
-            baris.querySelectorAll('input').forEach(input => input.value = '');
-            baris.querySelector('.hapus-baris-biaya').style.display = 'inline-block';
-            containerBiaya.appendChild(baris);
+            container.addEventListener('click', function(e) {
+                if (e.target.closest('.hapus-baris')) {
+                    e.target.closest('.baris-size').remove();
+                    perbaruiTombolHapus();
+                }
+            });
+
+            function perbaruiTombolHapus() {
+                const semuaBaris = container.querySelectorAll('.baris-size');
+                semuaBaris.forEach((baris) => {
+                    baris.querySelector('.hapus-baris').style.display = semuaBaris.length > 1 ? 'inline-block' : 'none';
+                });
+            }
+            perbaruiTombolHapus();
+
+            // tambah/hapus baris biaya HPP - pola sama dengan rincian size
+            const containerBiaya = document.getElementById('baris-biaya-container');
+            document.getElementById('tambah-baris-biaya').addEventListener('click', function() {
+                const baris = containerBiaya.querySelector('.baris-biaya').cloneNode(true);
+                baris.querySelectorAll('input').forEach(input => input.value = '');
+                baris.querySelector('.hapus-baris-biaya').style.display = 'inline-block';
+                containerBiaya.appendChild(baris);
+                perbaruiTombolHapusBiaya();
+            });
+
+            containerBiaya.addEventListener('click', function(e) {
+                if (e.target.closest('.hapus-baris-biaya')) {
+                    e.target.closest('.baris-biaya').remove();
+                    perbaruiTombolHapusBiaya();
+                }
+            });
+
+            function perbaruiTombolHapusBiaya() {
+                const semuaBaris = containerBiaya.querySelectorAll('.baris-biaya');
+                semuaBaris.forEach((baris) => {
+                    baris.querySelector('.hapus-baris-biaya').style.display = semuaBaris.length > 1 ? 'inline-block' : 'none';
+                });
+            }
             perbaruiTombolHapusBiaya();
         });
-
-        containerBiaya.addEventListener('click', function (e) {
-            if (e.target.closest('.hapus-baris-biaya')) {
-                e.target.closest('.baris-biaya').remove();
-                perbaruiTombolHapusBiaya();
-            }
-        });
-
-        function perbaruiTombolHapusBiaya() {
-            const semuaBaris = containerBiaya.querySelectorAll('.baris-biaya');
-            semuaBaris.forEach((baris) => {
-                baris.querySelector('.hapus-baris-biaya').style.display = semuaBaris.length > 1 ? 'inline-block' : 'none';
-            });
-        }
-        perbaruiTombolHapusBiaya();
-    });
-</script>
+    </script>
 @endsection
