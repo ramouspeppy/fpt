@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\CommitsTempMedia;
+use App\Http\Controllers\Concerns\SavesKomoditiTags;
 use App\Models\Komoditi;
 use App\Models\Penawaran;
 use App\Models\PenawaranDetailEkspor;
@@ -13,7 +14,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class PenawaranController extends Controller
 {
-    use CommitsTempMedia;
+    use CommitsTempMedia, SavesKomoditiTags;
 
     public function index(Request $request)
     {
@@ -44,8 +45,9 @@ class PenawaranController extends Controller
     {
         $komoditiList = $this->komoditiListUntukForm();
         $sizesByKomoditi = $this->sizesByKomoditiJson();
+        $tagsByKomoditi = $this->tagsByKomoditiJson();
 
-        return view('penawaran.create', compact('komoditiList', 'sizesByKomoditi'));
+        return view('penawaran.create', compact('komoditiList', 'sizesByKomoditi', 'tagsByKomoditi'));
     }
 
     public function store(Request $request, MatchingService $matchingService)
@@ -79,6 +81,9 @@ class PenawaranController extends Controller
             'foto_gallery.*' => ['string'],
             'video' => ['nullable', 'array'],
             'video.*' => ['file', 'mimetypes:video/mp4,video/quicktime,video/webm', 'max:51200'],
+            // Nama Ikan Lainnya - tag komoditi yang diketik langsung di form ini.
+            'nama_ikan_lainnya' => ['nullable', 'array'],
+            'nama_ikan_lainnya.*' => ['string', 'max:255'],
         ]);
 
         $this->validasiBatasVideo(0, $request->file('video', []));
@@ -102,6 +107,7 @@ class PenawaranController extends Controller
         foreach ($request->file('video', []) as $videoFile) {
             $penawaran->addMedia($videoFile)->toMediaCollection('video');
         }
+        $this->simpanTagBaruKomoditi($validated['komoditi_id'], $validated['nama_ikan_lainnya'] ?? []);
 
         if ($penawaran->mengandungEkspor()) {
             PenawaranDetailEkspor::create([
@@ -133,8 +139,9 @@ class PenawaranController extends Controller
         $penawaran->load(['detailEkspor', 'rincianSize.komoditiSize', 'komoditi', 'biayaHpp', 'media']);
         $komoditiList = $this->komoditiListUntukForm();
         $sizesByKomoditi = $this->sizesByKomoditiJson();
+        $tagsByKomoditi = $this->tagsByKomoditiJson();
 
-        return view('penawaran.edit', compact('penawaran', 'komoditiList', 'sizesByKomoditi'));
+        return view('penawaran.edit', compact('penawaran', 'komoditiList', 'sizesByKomoditi', 'tagsByKomoditi'));
     }
 
     public function update(Request $request, Penawaran $penawaran)
@@ -167,6 +174,9 @@ class PenawaranController extends Controller
             'foto_gallery.*' => ['string'],
             'video' => ['nullable', 'array'],
             'video.*' => ['file', 'mimetypes:video/mp4,video/quicktime,video/webm', 'max:51200'],
+            // Nama Ikan Lainnya - tag komoditi yang diketik langsung di form ini.
+            'nama_ikan_lainnya' => ['nullable', 'array'],
+            'nama_ikan_lainnya.*' => ['string', 'max:255'],
         ]);
 
         $this->validasiBatasVideo($penawaran->getMedia('video')->count(), $request->file('video', []));
@@ -193,6 +203,7 @@ class PenawaranController extends Controller
         foreach ($request->file('video', []) as $videoFile) {
             $penawaran->addMedia($videoFile)->toMediaCollection('video');
         }
+        $this->simpanTagBaruKomoditi($validated['komoditi_id'], $validated['nama_ikan_lainnya'] ?? []);
 
         if ($penawaran->mengandungEkspor()) {
             $penawaran->detailEkspor()->updateOrCreate(

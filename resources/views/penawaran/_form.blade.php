@@ -19,7 +19,7 @@
     </div>
 
     <div class="row">
-        <div class="col-md-{{ $isEdit ? 3 : 4 }} form-group">
+        <div class="col-md-{{ $isEdit ? 4 : 6 }} form-group">
             <label>Tipe <span class="text-danger">*</span></label>
             <select name="tipe" id="tipe" class="form-control selectric @error('tipe') is-invalid @enderror">
                 @unless ($isEdit)
@@ -33,7 +33,7 @@
                 <div class="invalid-feedback d-block">{{ $message }}</div>
             @enderror
         </div>
-        <div class="col-md-{{ $isEdit ? 3 : 4 }} form-group">
+        <div class="col-md-{{ $isEdit ? 4 : 6 }} form-group">
             <label>Jenis Penawaran <span class="text-danger">*</span></label>
             <select name="jenis_penawaran" id="jenis_penawaran" class="form-control selectric @error('jenis_penawaran') is-invalid @enderror">
                 <option value="Produksi Sendiri" @selected(old('jenis_penawaran', $isEdit ? $penawaran->jenis_penawaran : null) == 'Produksi Sendiri')>Produksi Sendiri</option>
@@ -43,38 +43,8 @@
                 <div class="invalid-feedback d-block">{{ $message }}</div>
             @enderror
         </div>
-        <div class="col-md-{{ $isEdit ? 3 : 4 }} form-group">
-            <label>Komoditi <span class="text-danger">*</span></label>
-            <select name="komoditi_id" id="komoditi_id" class="form-control select2 @error('komoditi_id') is-invalid @enderror" @unless ($isEdit) data-placeholder="-- Pilih Komoditi --" @endunless>
-                @unless ($isEdit)
-                    <option value=""></option>
-                @endunless
-                @foreach ($komoditiList as $kategori => $daftar)
-                    <optgroup label="{{ $kategori ?? 'Lainnya' }}">
-                        @foreach ($daftar as $k)
-                            <option value="{{ $k->id }}" @selected(old('komoditi_id', $isEdit ? $penawaran->komoditi_id : null) == $k->id)>{{ $k->nama }}</option>
-                        @endforeach
-                    </optgroup>
-                @endforeach
-            </select>
-            @error('komoditi_id')
-                <div class="invalid-feedback d-block">{{ $message }}</div>
-            @enderror
-            @if ($isEdit)
-                <small class="form-text text-muted">
-                    <a href="/komoditi/{{ $penawaran->komoditi_id }}/tag" id="link-nama-daerah" target="_blank">Kelola nama daerah komoditi ini</a>
-                </small>
-            @else
-                <small class="form-text text-muted">
-                    Tidak menemukan komoditi yang dicari?
-                    <a href="{{ route('komoditi.usulkan') }}" target="_blank">Usulkan komoditi baru</a>
-                    &middot; atau mungkin sudah ada dengan nama daerah lain -
-                    <a href="#" id="link-nama-daerah" target="_blank" class="disabled" style="pointer-events:none; opacity:.5;">pilih komoditi dulu</a>
-                </small>
-            @endif
-        </div>
         @if ($isEdit)
-            <div class="col-md-3 form-group">
+            <div class="col-md-4 form-group">
                 <label>Status <span class="text-danger">*</span></label>
                 <select name="status" class="form-control selectric">
                     <option value="tersedia" @selected($penawaran->status == 'tersedia')>Tersedia</option>
@@ -83,6 +53,44 @@
                 </select>
             </div>
         @endif
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 form-group">
+            <label>Komoditi <span class="text-danger">*</span></label>
+            <select name="komoditi_id" id="komoditi_id" class="form-control select2 @error('komoditi_id') is-invalid @enderror" @unless ($isEdit) data-placeholder="-- Pilih Komoditi --" @endunless>
+                @unless ($isEdit)
+                    <option value=""></option>
+                @endunless
+                @foreach ($komoditiList as $kategori => $daftar)
+                    <optgroup label="{{ $kategori ?? 'Lainnya' }}">
+                        @foreach ($daftar as $k)
+                            <option value="{{ $k->id }}" @selected(old('komoditi_id', $isEdit ? $penawaran->komoditi_id : null) == $k->id)>{{ $k->nama }}{{ $k->tags->isNotEmpty() ? ' (' . $k->tags->pluck('nama_tag')->implode(', ') . ')' : '' }}</option>
+                        @endforeach
+                    </optgroup>
+                @endforeach
+            </select>
+            @error('komoditi_id')
+                <div class="invalid-feedback d-block">{{ $message }}</div>
+            @enderror
+            <small class="form-text text-muted">
+                Tidak menemukan komoditi yang dicari?
+                <a href="{{ route('komoditi.usulkan') }}" target="_blank">Usulkan komoditi baru</a>.
+            </small>
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Nama Ikan Lainnya</label>
+            <select name="nama_ikan_lainnya[]" id="nama_ikan_lainnya" class="form-control select2-tags" multiple data-placeholder="-- Pilih komoditi dulu, atau ketik nama lain --"></select>
+            @error('nama_ikan_lainnya.*')
+                <div class="invalid-feedback d-block">{{ $message }}</div>
+            @enderror
+            <small class="form-text text-muted" id="hint-nama-ikan-lainnya">
+                Otomatis terisi nama lain komoditi yang sudah tercatat. Ketik untuk menambah yang
+                baru (mis. nama daerah/lokal) - langsung tersimpan begitu form ini disimpan, tanpa
+                perlu ke halaman
+                <a href="#" id="link-nama-daerah" target="_blank" class="disabled" style="pointer-events:none; opacity:.5;">Kelola Nama Ikan Lainnya</a>.
+            </small>
+        </div>
     </div>
 
     <div class="form-group">
@@ -244,6 +252,8 @@
     <script>
         // Peta komoditi_id => daftar size disetujui miliknya (dari server).
         const sizesByKomoditi = {!! $sizesByKomoditi !!};
+        // Peta komoditi_id => daftar nama lain (tag) yang sudah tercatat (dari server).
+        const tagsByKomoditi = {!! $tagsByKomoditi !!};
 
         document.addEventListener('DOMContentLoaded', function() {
             // Dibungkus function + try/catch sendiri, supaya kalau ada error di bagian
@@ -270,25 +280,37 @@
                 toggleFieldEkspor();
             })();
 
-            // toggle label section biaya berdasarkan Jenis Penawaran (Produksi Sendiri vs Trading)
-            const jenisPenawaranSelect = document.getElementById('jenis_penawaran');
-            const judulSectionBiaya = document.getElementById('judul-section-biaya');
-            const hintSectionBiaya = document.getElementById('hint-section-biaya');
-            const contohSectionBiaya = document.getElementById('contoh-section-biaya');
 
-            function toggleLabelBiaya() {
-                if (jenisPenawaranSelect.value === 'Trading') {
-                    judulSectionBiaya.innerHTML = 'Margin / Keuntungan <span class="text-danger">*</span>';
-                    hintSectionBiaya.textContent = 'Karena barang sudah jadi dari mitra (biaya proses/packing/dll sudah ditanggung mitra), cukup isi margin/keuntungan yang Anda inginkan per kg. Wajib diisi minimal 1 baris.';
-                    contohSectionBiaya.textContent = 'Contoh label: Margin/Keuntungan, atau biaya tambahan lain jika ada (mis. Transport dari Mitra).';
-                } else {
-                    judulSectionBiaya.innerHTML = 'Rincian Biaya HPP <span class="text-danger">*</span>';
-                    hintSectionBiaya.textContent = 'Biaya operasional per kg (proses, packing, listrik, tenaga kerja, pengiriman, asuransi, dll) — berlaku SAMA untuk semua size di atas, dan otomatis ditambahkan ke harga beli saat dihitung sebagai Harga Jual. Wajib diisi minimal 1 baris.';
-                    contohSectionBiaya.textContent = 'Contoh label: Biaya Proses, Biaya Packing, Biaya Listrik, Biaya Tenaga Kerja, Biaya Pengiriman, Asuransi, atau biaya lain sesuai komoditi Anda.';
+
+            // toggle label section biaya berdasarkan Jenis Penawaran (Produksi Sendiri vs Trading)
+            (function initToggleLabelBiaya() {
+                const jenisPenawaranSelect = document.getElementById('jenis_penawaran');
+                const judulSectionBiaya = document.getElementById('judul-section-biaya');
+                const hintSectionBiaya = document.getElementById('hint-section-biaya');
+                const contohSectionBiaya = document.getElementById('contoh-section-biaya');
+                if (!jenisPenawaranSelect || !judulSectionBiaya || !hintSectionBiaya || !contohSectionBiaya) return;
+
+                function toggleLabelBiaya() {
+                    if (jenisPenawaranSelect.value === 'Trading') {
+                        judulSectionBiaya.innerHTML = 'Margin / Keuntungan <span class="text-danger">*</span>';
+                        hintSectionBiaya.textContent = 'Karena barang sudah jadi dari mitra (biaya proses/packing/dll sudah ditanggung mitra), cukup isi margin/keuntungan yang Anda inginkan per kg. Wajib diisi minimal 1 baris.';
+                        contohSectionBiaya.textContent = 'Contoh label: Margin/Keuntungan, atau biaya tambahan lain jika ada (mis. Transport dari Mitra).';
+                    } else {
+                        judulSectionBiaya.innerHTML = 'Rincian Biaya HPP <span class="text-danger">*</span>';
+                        hintSectionBiaya.textContent = 'Biaya operasional per kg (proses, packing, listrik, tenaga kerja, pengiriman, asuransi, dll) — berlaku SAMA untuk semua size di atas, dan otomatis ditambahkan ke harga beli saat dihitung sebagai Harga Jual. Wajib diisi minimal 1 baris.';
+                        contohSectionBiaya.textContent = 'Contoh label: Biaya Proses, Biaya Packing, Biaya Listrik, Biaya Tenaga Kerja, Biaya Pengiriman, Asuransi, atau biaya lain sesuai komoditi Anda.';
+                    }
                 }
-            }
-            jenisPenawaranSelect.addEventListener('change', toggleLabelBiaya);
-            toggleLabelBiaya();
+
+                // Sama seperti toggle Tipe/Ekspor - didengarkan lewat 2 jalur (native + jQuery)
+                // supaya tidak bergantung 100% ke cara Selectric meneruskan event 'change'.
+                jenisPenawaranSelect.addEventListener('change', toggleLabelBiaya);
+                if (window.jQuery) {
+                    window.jQuery(jenisPenawaranSelect).on('change', toggleLabelBiaya);
+                }
+
+                toggleLabelBiaya();
+            })();
 
             // ---- Dropdown size, cascading berdasarkan Komoditi yang dipilih ----
             const komoditiSelect = document.getElementById('komoditi_id');
@@ -328,26 +350,46 @@
                 tambahBarisBtn.disabled = !(sizesByKomoditi[komoditiId] && sizesByKomoditi[komoditiId].length);
 
                 perbaruiLinkNamaDaerah(komoditiId);
+                perbaruiNamaIkanLainnya(komoditiId);
             }
 
-            // Link "nama daerah" ikut menyesuaikan komoditi yang dipilih.
+            // Link "Kelola Nama Ikan Lainnya" ikut menyesuaikan komoditi yang dipilih.
             function perbaruiLinkNamaDaerah(komoditiId) {
                 const link = document.getElementById('link-nama-daerah');
                 if (!link) return;
 
                 if (komoditiId) {
                     link.href = '/komoditi/' + komoditiId + '/tag';
-                    link.textContent = 'kelola nama daerah komoditi ini';
+                    link.textContent = 'Kelola Nama Ikan Lainnya';
                     link.classList.remove('disabled');
                     link.style.pointerEvents = '';
                     link.style.opacity = '';
                 } else {
                     link.href = '#';
-                    link.textContent = 'pilih komoditi dulu';
+                    link.textContent = 'Kelola Nama Ikan Lainnya';
                     link.classList.add('disabled');
                     link.style.pointerEvents = 'none';
                     link.style.opacity = '.5';
                 }
+            }
+
+            // Select2 "Nama Ikan Lainnya" - diisi ulang dengan nama-nama yang SUDAH tercatat
+            // untuk komoditi terpilih (semuanya langsung ke-select, sebagai info + supaya
+            // gampang dihapus kalau memang mau tidak disertakan). User tetap bisa MENGETIK
+            // nama baru (select2 tags:true) - itu yang nanti disimpan sebagai tag baru saat
+            // form disubmit (lihat SavesKomoditiTags di backend).
+            function perbaruiNamaIkanLainnya(komoditiId) {
+                const namaIkanSelect = document.getElementById('nama_ikan_lainnya');
+                if (!namaIkanSelect || !window.jQuery) return;
+
+                const $select = window.jQuery(namaIkanSelect);
+                $select.empty();
+
+                (tagsByKomoditi[komoditiId] || []).forEach((tag) => {
+                    $select.append(new Option(tag, tag, true, true));
+                });
+
+                $select.trigger('change');
             }
 
             // Load pertama: pertahankan size yang sudah tersimpan (baris Edit, atau baris

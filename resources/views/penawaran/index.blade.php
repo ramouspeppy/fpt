@@ -2,11 +2,6 @@
 
 @section('title', 'Daftar Penawaran')
 
-@section('breadcrumb')
-    <div class="breadcrumb-item active"><a href="{{ route('dashboard') }}">Dashboard</a></div>
-    <div class="breadcrumb-item">Penawaran</div>
-@endsection
-
 @section('content')
     <x-listing-card-styles />
 
@@ -68,24 +63,11 @@
         </div>
     </div>
 
-    @if (request()->anyFilled(['cari', 'tipe', 'status']))
-        <div class="mb-3">
-            <div class="d-flex flex-wrap align-items-center gap-2">
-                <span class="text-muted">Filter aktif:</span>
-                @if (request('cari'))
-                    <span class="badge badge-info">{{ request('cari') }}</span>
-                @endif
-                @if (request('tipe'))
-                    <span class="badge badge-primary">{{ request('tipe') }}</span>
-                @endif
-                @if (request('status'))
-                    @php $labelStatus = ['tersedia' => 'Tersedia', 'sedang_diproses' => 'Sedang Diproses', 'selesai' => 'Selesai', 'tutup' => 'Tutup']; @endphp
-                    <span class="badge badge-secondary">{{ $labelStatus[request('status')] ?? request('status') }}</span>
-                @endif
-                <a href="{{ route('penawaran.index') }}" class="small text-muted">reset</a>
-            </div>
-        </div>
-    @endif
+    <div class="d-flex justify-content-end mb-2">
+        <a href="{{ route('penawaran.create') }}" class="btn btn-info">
+            <i class="fas fa-plus"></i> Tambah Penawaran
+        </a>
+    </div>
 
     <div class="row">
         @forelse ($penawaran as $item)
@@ -93,10 +75,11 @@
                 $warnaStatus = ['tersedia' => 'success', 'sedang_diproses' => 'primary', 'selesai' => 'dark', 'tutup' => 'secondary'];
                 $labelStatus = ['tersedia' => 'Tersedia', 'sedang_diproses' => 'Sedang Diproses', 'selesai' => 'Selesai', 'tutup' => 'Tutup'];
                 $namaLain = $item->komoditi?->tags->pluck('nama_tag')->filter()->unique();
+                // Fallback foto: galeri Penawaran sendiri -> foto Komoditi -> placeholder ikon
                 $gambarUrl = $item->getFirstMediaUrl('foto', 'thumb') ?: $item->komoditi?->fotoUtama()?->getUrl('thumb');
             @endphp
             <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card listing-card h-100 shadow-sm border-0">
+                <div class="card listing-card h-100 shadow-sm">
                     <div class="listing-card-image">
                         @if ($gambarUrl)
                             <img src="{{ $gambarUrl }}" alt="{{ $item->komoditi->nama ?? $item->judul }}">
@@ -168,9 +151,7 @@
             </div>
         @empty
             <div class="col-12">
-                <div class="alert alert-info mb-0">
-                    <i class="fas fa-info-circle"></i> Belum ada penawaran yang sesuai dengan filter saat ini.
-                </div>
+                <div class="alert alert-info">Belum ada penawaran.</div>
             </div>
         @endforelse
     </div>

@@ -5,7 +5,7 @@
 @section('content')
     @php
         $warnaStatus = ['disetujui' => 'success', 'menunggu_approval' => 'warning', 'ditolak' => 'danger'];
-
+        $paletKategori = ['primary', 'success', 'warning', 'info', 'purple', 'navy', 'maroon', 'lime', 'indigo', 'danger'];
     @endphp
 
     <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
@@ -64,7 +64,8 @@
                             <tr>
                                 <td class="text-center">
                                     @if ($item->fotoUtama())
-                                        <img src="{{ $item->fotoUtama()->getUrl('thumb') }}" alt="{{ $item->nama }}" class="rounded border" style="width: 36px; height: 36px; object-fit: cover;">
+                                        <img src="{{ $item->fotoUtama()->getUrl('thumb') }}" alt="{{ $item->nama }}"
+                                            class="rounded border" style="width: 36px; height: 36px; object-fit: cover;">
                                     @else
                                         <span class="text-muted"><i class="fas fa-image"></i></span>
                                     @endif
@@ -74,7 +75,7 @@
                                 </td>
                                 <td>
                                     @if ($item->kategoriKomoditi)
-                                        <span>
+                                        <span class="badge badge-{{ $paletKategori[$item->kategori_id % count($paletKategori)] }}">
                                             {{ $item->kategoriKomoditi->nama }}
                                         </span>
                                     @else
@@ -83,7 +84,7 @@
                                 </td>
                                 <td>
                                     @forelse ($item->tags as $tag)
-                                        <span class="badge badge-light text-muted border mr-1 mb-1">{{ $tag->nama_tag }}</span>
+                                        <span class="badge badge-light border mr-1 mb-1">{{ $tag->nama_tag }}</span>
                                     @empty
                                         <span class="text-muted">-</span>
                                     @endforelse
@@ -104,7 +105,7 @@
                                                 <i class="fas fa-ruler"></i>
                                             </a>
                                         @endif
-                                        <a href="{{ route('komoditi.tag.index', $item) }}" class="btn btn-sm btn-icon icon-left btn-secondary" title="Kelola Nama Daerah">
+                                        <a href="{{ route('komoditi.tag.index', $item) }}" class="btn btn-sm btn-icon icon-left btn-secondary" title="Kelola Nama Ikan Lainnya">
                                             <i class="fas fa-tag"></i>
                                         </a>
                                     @endif

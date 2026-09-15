@@ -10,7 +10,7 @@
         <form method="GET">
             <div class="row align-items-center">
                 <div class="col-md-6 col-lg-7 mb-2 mb-md-0">
-                    <input type="text" name="cari" value="{{ request('cari') }}" class="form-control" placeholder="Cari komoditi / judul / nama daerah...">
+                    <input type="text" name="cari" value="{{ request('cari') }}" class="form-control" placeholder="Cari komoditi / judul / nama ikan lainnya...">
                 </div>
                 <div class="col-md-3 mb-2 mb-md-0">
                     <select name="tipe" class="form-control selectric">

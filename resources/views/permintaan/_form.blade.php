@@ -28,7 +28,20 @@
             </select>
             @error('tipe') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
         </div>
-        <div class="col-md-{{ $isEdit ? 4 : 6 }} form-group">
+        @if ($isEdit)
+            <div class="col-md-4 form-group">
+                <label>Status <span class="text-danger">*</span></label>
+                <select name="status" class="form-control selectric">
+                    <option value="tersedia" @selected($permintaan->status=='tersedia')>Tersedia</option>
+                    <option value="selesai" @selected($permintaan->status=='selesai')>Selesai</option>
+                    <option value="tutup" @selected($permintaan->status=='tutup')>Tutup</option>
+                </select>
+            </div>
+        @endif
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 form-group">
             <label>Komoditi <span class="text-danger">*</span></label>
             <select name="komoditi_id" id="komoditi_id" class="form-control select2 @error('komoditi_id') is-invalid @enderror"
                 @unless ($isEdit) data-placeholder="-- Pilih Komoditi --" @endunless>
@@ -44,29 +57,23 @@
                 @endforeach
             </select>
             @error('komoditi_id') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
-            @if ($isEdit)
-                <small class="form-text text-muted">
-                    <a href="/komoditi/{{ $permintaan->komoditi_id }}/tag" id="link-nama-daerah" target="_blank">Kelola nama daerah komoditi ini</a>
-                </small>
-            @else
-                <small class="form-text text-muted">
-                    Tidak menemukan komoditi yang dicari?
-                    <a href="{{ route('komoditi.usulkan') }}" target="_blank">Usulkan komoditi baru</a>
-                    &middot; atau mungkin sudah ada dengan nama daerah lain -
-                    <a href="#" id="link-nama-daerah" target="_blank" class="disabled" style="pointer-events:none; opacity:.5;">pilih komoditi dulu</a>
-                </small>
-            @endif
+            <small class="form-text text-muted">
+                Tidak menemukan komoditi yang dicari?
+                <a href="{{ route('komoditi.usulkan') }}" target="_blank">Usulkan komoditi baru</a>.
+            </small>
         </div>
-        @if ($isEdit)
-            <div class="col-md-4 form-group">
-                <label>Status <span class="text-danger">*</span></label>
-                <select name="status" class="form-control selectric">
-                    <option value="tersedia" @selected($permintaan->status=='tersedia')>Tersedia</option>
-                    <option value="selesai" @selected($permintaan->status=='selesai')>Selesai</option>
-                    <option value="tutup" @selected($permintaan->status=='tutup')>Tutup</option>
-                </select>
-            </div>
-        @endif
+        <div class="col-md-6 form-group">
+            <label>Nama Ikan Lainnya</label>
+            <select name="nama_ikan_lainnya[]" id="nama_ikan_lainnya" class="form-control select2-tags" multiple
+                data-placeholder="-- Pilih komoditi dulu, atau ketik nama lain --"></select>
+            @error('nama_ikan_lainnya.*') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+            <small class="form-text text-muted" id="hint-nama-ikan-lainnya">
+                Otomatis terisi nama lain komoditi yang sudah tercatat. Ketik untuk menambah yang
+                baru (mis. nama daerah/lokal) - langsung tersimpan begitu form ini disimpan, tanpa
+                perlu ke halaman
+                <a href="#" id="link-nama-daerah" target="_blank" class="disabled" style="pointer-events:none; opacity:.5;">Kelola Nama Ikan Lainnya</a>.
+            </small>
+        </div>
     </div>
 
     <div class="form-group">
@@ -208,6 +215,7 @@
 @section('scripts')
 <script>
     const sizesByKomoditi = {!! $sizesByKomoditi !!};
+    const tagsByKomoditi = {!! $tagsByKomoditi !!};
 
     document.addEventListener('DOMContentLoaded', function () {
         // Dibungkus function + try/catch sendiri, supaya kalau ada error di bagian
@@ -232,6 +240,34 @@
             }
 
             toggleFieldEkspor();
+        })();
+
+        // BARU: loading overlay (my-card-progress.js, dimuat global di app.js) - kedip
+        // sebentar tiap kali Tipe/Komoditi diganti, dan MENETAP + tombol Simpan
+        // dinonaktifkan begitu form disubmit - supaya user tidak bisa klik dobel
+        // kalau koneksinya lambat.
+        (function initCardProgress() {
+            const formEl = document.querySelector('form');
+            if (!formEl || !window.cardProgress) return;
+            const cardEl = formEl.closest('.card') || formEl;
+
+            function kedipkanLoading() {
+                window.cardProgress(cardEl);
+                setTimeout(() => window.cardProgressDismiss(cardEl), 350);
+            }
+
+            ['tipe', 'komoditi_id'].forEach((id) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('change', kedipkanLoading);
+                if (window.jQuery) window.jQuery(el).on('change', kedipkanLoading);
+            });
+
+            formEl.addEventListener('submit', function () {
+                window.cardProgress(cardEl);
+                const submitBtn = formEl.querySelector('button[type="submit"]');
+                if (submitBtn) submitBtn.disabled = true;
+            });
         })();
 
         const komoditiSelect = document.getElementById('komoditi_id');
@@ -270,6 +306,7 @@
             tambahBarisBtn.disabled = !(sizesByKomoditi[komoditiId] && sizesByKomoditi[komoditiId].length);
 
             perbaruiLinkNamaDaerah(komoditiId);
+            perbaruiNamaIkanLainnya(komoditiId);
         }
 
         function perbaruiLinkNamaDaerah(komoditiId) {
@@ -278,17 +315,35 @@
 
             if (komoditiId) {
                 link.href = '/komoditi/' + komoditiId + '/tag';
-                link.textContent = 'kelola nama daerah komoditi ini';
+                link.textContent = 'Kelola Nama Ikan Lainnya';
                 link.classList.remove('disabled');
                 link.style.pointerEvents = '';
                 link.style.opacity = '';
             } else {
                 link.href = '#';
-                link.textContent = 'pilih komoditi dulu';
+                link.textContent = 'Kelola Nama Ikan Lainnya';
                 link.classList.add('disabled');
                 link.style.pointerEvents = 'none';
                 link.style.opacity = '.5';
             }
+        }
+
+        // Select2 "Nama Ikan Lainnya" - diisi ulang dengan nama-nama yang SUDAH tercatat
+        // untuk komoditi terpilih. User tetap bisa MENGETIK nama baru (select2 tags:true) -
+        // itu yang nanti disimpan sebagai tag baru saat form disubmit (lihat
+        // SavesKomoditiTags di backend).
+        function perbaruiNamaIkanLainnya(komoditiId) {
+            const namaIkanSelect = document.getElementById('nama_ikan_lainnya');
+            if (!namaIkanSelect || !window.jQuery) return;
+
+            const $select = window.jQuery(namaIkanSelect);
+            $select.empty();
+
+            (tagsByKomoditi[komoditiId] || []).forEach((tag) => {
+                $select.append(new Option(tag, tag, true, true));
+            });
+
+            $select.trigger('change');
         }
 
         perbaruiSemuaDropdownSize(true);

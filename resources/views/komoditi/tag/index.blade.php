@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Nama Daerah - ' . $komoditi->nama)
+@section('title', 'Nama Ikan Lainnya - ' . $komoditi->nama)
 
 @section('content')
 <div class="row">
@@ -12,18 +12,18 @@
             <div class="card-body">
                 <div class="text-muted small mb-3">
                     {{ $komoditi->kategoriKomoditi->nama ?? '-' }} &middot;
-                    Nama daerah/alias di bawah ini membantu pencarian - siapapun yang tahu nama lain
+                    Nama ikan lainnya (alias) di bawah ini membantu pencarian - siapapun yang tahu nama lain
                     untuk komoditi ini di daerahnya boleh menambahkan.
                 </div>
 
                 @if ($komoditi->tags->isEmpty())
-                    <div class="alert alert-info">Belum ada nama daerah untuk komoditi ini.</div>
+                    <div class="alert alert-info">Belum ada nama ikan lainnya untuk komoditi ini.</div>
                 @else
                     <div class="table-responsive">
                         <table class="table table-striped">
                             <thead>
                                 <tr>
-                                    <th>Nama Daerah</th>
+                                    <th>Nama Ikan Lainnya</th>
                                     <th>Ditambahkan Oleh</th>
                                     <th class="text-right">Aksi</th>
                                 </tr>
@@ -34,7 +34,7 @@
                                         <td>{{ $tag->nama_tag }}</td>
                                         <td class="text-muted small">{{ $tag->penambah->name ?? '-' }}</td>
                                         <td class="text-right">
-                                            <form method="POST" action="{{ route('komoditi.tag.destroy', [$komoditi, $tag]) }}" class="d-inline" onsubmit="return confirm('Hapus nama daerah ini?')">
+                                            <form method="POST" action="{{ route('komoditi.tag.destroy', [$komoditi, $tag]) }}" class="d-inline" onsubmit="return confirm('Hapus nama ikan lainnya ini?')">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button class="btn btn-sm btn-danger" title="Hapus"><i class="fas fa-trash"></i></button>
@@ -53,7 +53,7 @@
     <div class="col-md-5">
         <div class="card">
             <div class="card-header">
-                <h4>Tambah Nama Daerah</h4>
+                <h4>Tambah Nama Ikan Lainnya</h4>
             </div>
             <div class="card-body">
                 <div class="text-muted small mb-3">
