@@ -19,7 +19,7 @@
     </div>
 
     <div class="row">
-        <div class="col-md-{{ $isEdit ? 4 : 6 }} form-group">
+        <div class="col-md-4 }} form-group">
             <label>Tipe <span class="text-danger">*</span></label>
             <select name="tipe" id="tipe" class="form-control selectric @error('tipe') is-invalid @enderror">
                 @unless ($isEdit)
@@ -33,13 +33,20 @@
                 <div class="invalid-feedback d-block">{{ $message }}</div>
             @enderror
         </div>
-        <div class="col-md-{{ $isEdit ? 4 : 6 }} form-group">
+        <div class="col-md-4 }} form-group">
             <label>Jenis Penawaran <span class="text-danger">*</span></label>
             <select name="jenis_penawaran" id="jenis_penawaran" class="form-control selectric @error('jenis_penawaran') is-invalid @enderror">
                 <option value="Produksi Sendiri" @selected(old('jenis_penawaran', $isEdit ? $penawaran->jenis_penawaran : null) == 'Produksi Sendiri')>Produksi Sendiri</option>
                 <option value="Trading" @selected(old('jenis_penawaran', $isEdit ? $penawaran->jenis_penawaran : null) == 'Trading')>Trading / Beli Jadi dari Mitra</option>
             </select>
             @error('jenis_penawaran')
+                <div class="invalid-feedback d-block">{{ $message }}</div>
+            @enderror
+        </div>
+        <div class="col-md-4 }} form-group">
+            <label>Kondisi Ikan</label>
+            <input type="text" name="kondisi_ikan" value="{{ old('kondisi_ikan', $isEdit ? $penawaran->kondisi_ikan : '') }}" class="form-control" placeholder="Segar / Beku">
+            @error('kondisi_ikan')
                 <div class="invalid-feedback d-block">{{ $message }}</div>
             @enderror
         </div>
@@ -56,7 +63,7 @@
     </div>
 
     <div class="row">
-        <div class="col-md-6 form-group">
+        <div class="col-md-12 form-group">
             <label>Komoditi <span class="text-danger">*</span></label>
             <select name="komoditi_id" id="komoditi_id" class="form-control select2 @error('komoditi_id') is-invalid @enderror" @unless ($isEdit) data-placeholder="-- Pilih Komoditi --" @endunless>
                 @unless ($isEdit)
@@ -65,7 +72,7 @@
                 @foreach ($komoditiList as $kategori => $daftar)
                     <optgroup label="{{ $kategori ?? 'Lainnya' }}">
                         @foreach ($daftar as $k)
-                            <option value="{{ $k->id }}" @selected(old('komoditi_id', $isEdit ? $penawaran->komoditi_id : null) == $k->id)>{{ $k->nama }}{{ $k->tags->isNotEmpty() ? ' (' . $k->tags->pluck('nama_tag')->implode(', ') . ')' : '' }}</option>
+                            <option value="{{ $k->id }}" @selected(old('komoditi_id', $isEdit ? $penawaran->komoditi_id : null) == $k->id)>{{ $k->nama }}</option>
                         @endforeach
                     </optgroup>
                 @endforeach
@@ -78,9 +85,9 @@
                 <a href="{{ route('komoditi.usulkan') }}" target="_blank">Usulkan komoditi baru</a>.
             </small>
         </div>
-        <div class="col-md-6 form-group">
+        <div class="col-md-12 form-group">
             <label>Nama Ikan Lainnya</label>
-            <select name="nama_ikan_lainnya[]" id="nama_ikan_lainnya" class="form-control select2-tags" multiple data-placeholder="-- Pilih komoditi dulu, atau ketik nama lain --"></select>
+            <select name="nama_ikan_lainnya[]" id="nama_ikan_lainnya" class="form-control select2-tags" multiple></select>
             @error('nama_ikan_lainnya.*')
                 <div class="invalid-feedback d-block">{{ $message }}</div>
             @enderror
@@ -93,10 +100,7 @@
         </div>
     </div>
 
-    <div class="form-group">
-        <label>Kondisi Ikan</label>
-        <input type="text" name="kondisi_ikan" value="{{ old('kondisi_ikan', $isEdit ? $penawaran->kondisi_ikan : '') }}" class="form-control" placeholder="Segar / Beku">
-    </div>
+
 
     <div class="form-group">
         <label>Keterangan</label>
@@ -256,6 +260,26 @@
         const tagsByKomoditi = {!! $tagsByKomoditi !!};
 
         document.addEventListener('DOMContentLoaded', function() {
+            const dataCard = document.getElementById('card-data');
+
+            function showKomoditiLoading(task) {
+                if (!dataCard || typeof window.cardProgress !== 'function') {
+                    task();
+                    return;
+                }
+
+                window.cardProgress(dataCard, {
+                    dismiss: false
+                });
+                window.setTimeout(() => {
+                    try {
+                        task();
+                    } finally {
+                        window.cardProgressDismiss(dataCard);
+                    }
+                }, 180);
+            }
+
             // Dibungkus function + try/catch sendiri, supaya kalau ada error di bagian
             // ini, bagian LAIN di bawah (dropdown size, tambah/hapus baris, dst) tetap
             // jalan normal - tidak ikut mati gara-gara satu bagian gagal.
@@ -279,8 +303,6 @@
 
                 toggleFieldEkspor();
             })();
-
-
 
             // toggle label section biaya berdasarkan Jenis Penawaran (Produksi Sendiri vs Trading)
             (function initToggleLabelBiaya() {
@@ -396,9 +418,14 @@
             // Create yang muncul lagi karena validasi gagal).
             perbaruiSemuaDropdownSize(true);
 
-            // Kalau Komoditi diganti manual: size direset (tidak ada relevansi ke size lama)
-            komoditiSelect.addEventListener('change', () => perbaruiSemuaDropdownSize(false));
-            $(komoditiSelect).on('select2:select select2:clear', () => perbaruiSemuaDropdownSize(false));
+            // Kalau Komoditi diganti manual: tampilkan loading saat size/tag di-refresh,
+            // lalu lanjutkan update dropdown dan tag yang terkait.
+            komoditiSelect.addEventListener('change', () => {
+                showKomoditiLoading(() => perbaruiSemuaDropdownSize(false));
+            });
+            $(komoditiSelect).on('select2:select select2:clear', () => {
+                showKomoditiLoading(() => perbaruiSemuaDropdownSize(false));
+            });
 
             // tambah/hapus baris rincian size
             const container = document.getElementById('baris-size-container');

@@ -1,11 +1,5 @@
 import "./bootstrap";
 
-// Loading overlay untuk card (dipakai di banyak script inline Blade, mis. form
-// Penawaran/Permintaan) - dimuat statis di sini (bukan dynamic import) supaya
-// window.cardProgress/cardProgressDismiss SELALU tersedia begitu halaman siap,
-// termasuk dipanggil dari <script> inline yang tidak ikut di-bundle Vite.
-import "./helpers/my-card-progress";
-
 // put your lib here =========================
 
 // Star
@@ -46,6 +40,7 @@ import "../lib/datatables-checkboxes/dataTables.checkboxes";
 import "./backendApp/nicescroll";
 import "./backendApp/stisla";
 import "./backendApp/scripts";
+import "./helpers/my-card-progress";
 
 // REFACTOR====================
 

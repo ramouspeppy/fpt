@@ -3,9 +3,9 @@
 @section('title', 'Tambah Penawaran')
 
 @section('content')
-<div class="card">
-    <div class="card-body">
-        @include('penawaran._form')
+    <div class="card" id="card-data">
+        <div class="card-body">
+            @include('penawaran._form')
+        </div>
     </div>
-</div>
 @endsection
