@@ -24,7 +24,7 @@
                         <tbody>
                             @forelse ($sizes as $item)
                                 @php
-                                    $warnaStatus = ['disetujui' => 'success', 'menunggu_approval' => 'warning', 'ditolak' => 'danger'];
+                                    $warnaStatus = ['disetujui' => 'emerald', 'menunggu_approval' => 'warning', 'ditolak' => 'danger'];
                                 @endphp
                                 <tr>
                                     <td>{{ $item->urutan ?? '-' }}</td>
@@ -40,7 +40,7 @@
                                             <form method="POST" action="{{ route('komoditi.size.approve', [$komoditi, $item]) }}" class="d-inline">
                                                 @csrf
                                                 @method('PATCH')
-                                                <button class="btn btn-sm btn-success">Setujui</button>
+                                                <button class="btn btn-sm btn-emerald">Setujui</button>
                                             </form>
                                             <form method="POST" action="{{ route('komoditi.size.tolak', [$komoditi, $item]) }}" class="d-inline">
                                                 @csrf

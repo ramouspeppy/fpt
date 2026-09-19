@@ -59,6 +59,67 @@ class MatchSuggestion extends Model
         return $this->hasOne(Project::class);
     }
 
+    // === Estimasi Profit (logika mengikuti contoh excel gap_margin.xlsx - "Tabel Hitung Margin") ===
+    // Per baris match (1 size), kuantiti yang dipakai adalah KG Permintaan (bukan KG Penawaran),
+    // dikalikan Harga HPP Penawaran (harga beli + biaya tambahan proses/packing dari penawaran induk).
+
+    public function getKgPermintaanAttribute(): float
+    {
+        return (float) ($this->permintaanRincian->kuantiti ?? 0);
+    }
+
+    public function getHargaJualPermintaanAttribute(): float
+    {
+        return (float) ($this->permintaanRincian->harga ?? 0);
+    }
+
+    // "Total Permintaan" di excel = nilai jual kalau Permintaan ini terpenuhi (KG x Harga Permintaan).
+    public function getTotalNilaiPermintaanAttribute(): float
+    {
+        return $this->kg_permintaan * $this->harga_jual_permintaan;
+    }
+
+    public function getHargaHppPenawaranAttribute(): float
+    {
+        return (float) ($this->penawaranRincian->harga_jual ?? 0);
+    }
+
+    // "TOTAL MARGIN" di excel = sebenarnya nilai modal/HPP untuk kuantiti Permintaan (KG Permintaan x HPP Penawaran).
+    public function getTotalHppAttribute(): float
+    {
+        return $this->kg_permintaan * $this->harga_hpp_penawaran;
+    }
+
+    // "Gap" di excel = Total Permintaan - Total HPP -> ini estimasi profit sesungguhnya.
+    public function getEstimasiProfitAttribute(): float
+    {
+        return $this->total_nilai_permintaan - $this->total_hpp;
+    }
+
+    // "Gap %" di excel = Gap / Total Permintaan.
+    public function getPersenProfitAttribute(): float
+    {
+        return $this->total_nilai_permintaan > 0
+            ? $this->estimasi_profit / $this->total_nilai_permintaan
+            : 0.0;
+    }
+
+    // Warna badge/pill: <10% merah (danger), <20% oren (warning), >=20% hijau (emerald - custom, bukan success bawaan).
+    public function getWarnaProfitAttribute(): string
+    {
+        $persen = $this->persen_profit * 100;
+
+        if ($persen < 10) {
+            return 'danger';
+        }
+
+        if ($persen < 20) {
+            return 'warning';
+        }
+
+        return 'emerald';
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

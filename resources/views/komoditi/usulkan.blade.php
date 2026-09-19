@@ -4,7 +4,7 @@
 
 @section('content')
     @php
-        $warnaStatus = ['disetujui' => 'success', 'menunggu_approval' => 'warning', 'ditolak' => 'danger'];
+        $warnaStatus = ['disetujui' => 'emerald', 'menunggu_approval' => 'warning', 'ditolak' => 'danger'];
         $labelStatus = ['disetujui' => 'Disetujui', 'menunggu_approval' => 'Menunggu Approval', 'ditolak' => 'Ditolak'];
     @endphp
 

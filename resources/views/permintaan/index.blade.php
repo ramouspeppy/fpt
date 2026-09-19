@@ -36,7 +36,7 @@
 <div class="row">
     @forelse ($permintaan as $item)
         @php
-            $warnaStatus = ['tersedia' => 'success', 'sedang_diproses' => 'primary', 'selesai' => 'dark', 'tutup' => 'secondary'];
+            $warnaStatus = ['tersedia' => 'emerald', 'sedang_diproses' => 'primary', 'selesai' => 'dark', 'tutup' => 'secondary'];
             $labelStatus = ['tersedia' => 'Tersedia', 'sedang_diproses' => 'Sedang Diproses', 'selesai' => 'Selesai', 'tutup' => 'Tutup'];
             $warnaPrioritas = ['merah' => '#dc3545', 'kuning' => '#ffc107', 'hijau' => '#28a745'];
             $namaLain = $item->komoditi?->tags->pluck('nama_tag')->filter()->unique();

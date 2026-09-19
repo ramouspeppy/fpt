@@ -5,7 +5,7 @@
 @section('content')
 @php
     $labelStatus = ['terbuka' => 'Terbuka', 'dipilih' => 'Sudah Dipilih'];
-    $warnaStatus = ['terbuka' => 'warning', 'dipilih' => 'success'];
+    $warnaStatus = ['terbuka' => 'warning', 'dipilih' => 'emerald'];
 @endphp
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -66,6 +66,78 @@
                 </tbody>
             </table>
         </div>
+    </div>
+</div>
+
+@php
+    $totalKg = $semuaKandidat->sum('kg_permintaan');
+    $totalNilaiPermintaan = $semuaKandidat->sum('total_nilai_permintaan');
+    $totalHpp = $semuaKandidat->sum('total_hpp');
+    $estimasiProfit = $totalNilaiPermintaan - $totalHpp;
+    $persenProfit = $totalNilaiPermintaan > 0 ? $estimasiProfit / $totalNilaiPermintaan : 0;
+    $warnaProfit = $persenProfit * 100 < 10 ? 'danger' : ($persenProfit * 100 < 20 ? 'warning' : 'emerald');
+@endphp
+
+<!-- Tabel Estimasi Profit (setara "Tabel Hitung Margin" di excel gap_margin.xlsx) -->
+<div class="card mb-3">
+    <div class="card-header bg-light">
+        <h4 class="mb-0"><i class="fas fa-calculator"></i> Tabel Estimasi Profit</h4>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th>Size</th>
+                        <th>KG Permintaan</th>
+                        <th>Harga HPP Penawaran</th>
+                        <th>Total HPP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($semuaKandidat as $kandidat)
+                        <tr>
+                            <td><strong>{{ $kandidat->permintaanRincian->komoditiSize->nama_size ?? '-' }}</strong></td>
+                            <td>{{ number_format($kandidat->kg_permintaan, 0) }} kg</td>
+                            <td>Rp {{ number_format($kandidat->harga_hpp_penawaran, 0) }}</td>
+                            <td>Rp {{ number_format($kandidat->total_hpp, 0) }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+                <tfoot>
+                    <tr class="font-weight-bold">
+                        <td>Total</td>
+                        <td>{{ number_format($totalKg, 0) }} kg</td>
+                        <td></td>
+                        <td>Rp {{ number_format($totalHpp, 0) }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Ringkasan (setara "Ringkasan" di excel gap_margin.xlsx) -->
+<div class="card mb-3">
+    <div class="card-header bg-light">
+        <h4 class="mb-0"><i class="fas fa-chart-pie"></i> Ringkasan</h4>
+    </div>
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-6 col-md-3">Total Permintaan</dt>
+            <dd class="col-6 col-md-3">Rp {{ number_format($totalNilaiPermintaan, 0) }}</dd>
+
+            <dt class="col-6 col-md-3">Total HPP</dt>
+            <dd class="col-6 col-md-3">Rp {{ number_format($totalHpp, 0) }}</dd>
+
+            <dt class="col-6 col-md-3">Estimasi Profit</dt>
+            <dd class="col-6 col-md-3">Rp {{ number_format($estimasiProfit, 0) }}</dd>
+
+            <dt class="col-6 col-md-3">% Profit</dt>
+            <dd class="col-6 col-md-3">
+                <span class="badge badge-{{ $warnaProfit }} p-2">{{ number_format($persenProfit * 100, 1) }}%</span>
+            </dd>
+        </dl>
     </div>
 </div>
 
@@ -136,7 +208,7 @@
                 @endif
 
                 @if ($match->penawaran->user->whatsapp_link)
-                    <a href="{{ $match->penawaran->user->whatsapp_link }}" target="_blank" class="btn btn-sm btn-success">
+                    <a href="{{ $match->penawaran->user->whatsapp_link }}" target="_blank" class="btn btn-sm btn-emerald">
                         <i class="fab fa-whatsapp"></i> Hubungi {{ $match->penawaran->user->name }}
                     </a>
                 @endif
@@ -155,7 +227,7 @@
                 <div class="mb-2">
                     <span class="badge badge-info">{{ $match->permintaan->tipe }}</span>
                     @if ($match->permintaan->prioritas_warna)
-                        @php $warnaPrioritas = ['merah' => 'danger', 'kuning' => 'warning', 'hijau' => 'success']; @endphp
+                        @php $warnaPrioritas = ['merah' => 'danger', 'kuning' => 'warning', 'hijau' => 'emerald']; @endphp
                         <span class="badge badge-{{ $warnaPrioritas[$match->permintaan->prioritas_warna] ?? 'secondary' }}">
                             Prioritas: {{ ucfirst($match->permintaan->prioritas_warna) }}
                         </span>
@@ -214,7 +286,7 @@
                 @endif
 
                 @if ($match->permintaan->user->whatsapp_link)
-                    <a href="{{ $match->permintaan->user->whatsapp_link }}" target="_blank" class="btn btn-sm btn-success">
+                    <a href="{{ $match->permintaan->user->whatsapp_link }}" target="_blank" class="btn btn-sm btn-emerald">
                         <i class="fab fa-whatsapp"></i> Hubungi {{ $match->permintaan->user->name }}
                     </a>
                 @endif
@@ -233,7 +305,7 @@
             </p>
             <form method="POST" action="{{ route('match.pilih', $match) }}" onsubmit="return confirm('Pilih pasangan ini sebagai pemenang? Penawaran & Permintaan terkait akan langsung terkunci dan jadi Project.')">
                 @csrf
-                <button class="btn btn-success btn-lg"><i class="fas fa-check"></i> Pilih Jadi Project</button>
+                <button class="btn btn-emerald btn-lg"><i class="fas fa-check"></i> Pilih Jadi Project</button>
             </form>
         </div>
     </div>

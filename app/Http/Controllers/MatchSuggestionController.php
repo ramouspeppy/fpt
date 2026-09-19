@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Komoditi;
 use App\Models\MatchSuggestion;
 use App\Models\Penawaran;
 use App\Models\Permintaan;
@@ -22,6 +23,7 @@ class MatchSuggestionController extends Controller
             'penawaran.user.cabang',
             'permintaan.user.cabang',
             'penawaranRincian.komoditiSize',
+            'penawaranRincian.penawaran.biayaHpp',
             'permintaanRincian.komoditiSize',
         ])
             // Kandidat yang statusnya 'terbuka' tapi Penawaran/Permintaan-nya sudah
@@ -58,6 +60,12 @@ class MatchSuggestionController extends Controller
             $query->where('permintaan_id', $request->permintaan_id);
         }
 
+        // Filter per Komoditi - matching selalu mensyaratkan komoditi yang sama di kedua
+        // sisi (Penawaran & Permintaan), jadi cukup difilter lewat salah satunya saja.
+        if ($request->filled('komoditi_id')) {
+            $query->whereHas('penawaran', fn ($q) => $q->where('komoditi_id', $request->komoditi_id));
+        }
+
         // Kelompokkan per pasangan Penawaran-Permintaan supaya tidak tampil berulang
         // kalau ada beberapa size yang sama-sama cocok - representatif diambil yang
         // skor_matching paling tinggi, ditandai jumlah size yang cocok di pasangan itu.
@@ -69,9 +77,33 @@ class MatchSuggestionController extends Controller
                 $representatif = $grup->sortByDesc('skor_matching')->first();
                 $representatif->jumlah_size_cocok = $grup->count();
 
+                // Estimasi profit ditotal dari SEMUA size yang cocok di pasangan ini
+                // (bukan cuma size representatif), supaya mencerminkan potensi profit
+                // seluruh pasangan Penawaran-Permintaan - jadi pertimbangan Pusat.
+                $totalNilaiPermintaan = $grup->sum('total_nilai_permintaan');
+                $totalProfit = $grup->sum('estimasi_profit');
+
+                $representatif->total_profit_kelompok = $totalProfit;
+                $representatif->persen_profit_kelompok = $totalNilaiPermintaan > 0
+                    ? $totalProfit / $totalNilaiPermintaan
+                    : 0.0;
+
+                $persen = $representatif->persen_profit_kelompok * 100;
+                $representatif->warna_profit_kelompok = $persen < 10 ? 'danger' : ($persen < 20 ? 'warning' : 'emerald');
+
                 return $representatif;
             })
             ->values();
+
+        // Urutan default: profit terbesar dulu, supaya jadi pertimbangan Pusat.
+        // Bisa diganti ke persen profit terbesar atau terbaru lewat dropdown.
+        $urutan = $request->get('urutan', 'profit');
+
+        $kelompok = match ($urutan) {
+            'persen' => $kelompok->sortByDesc('persen_profit_kelompok')->values(),
+            'terbaru' => $kelompok->sortByDesc(fn ($m) => $m->created_at)->values(),
+            default => $kelompok->sortByDesc('total_profit_kelompok')->values(),
+        };
 
         $halaman = (int) $request->get('page', 1);
         $perHalaman = 15;
@@ -96,7 +128,20 @@ class MatchSuggestionController extends Controller
             ->orderBy('judul')
             ->get(['id', 'judul']);
 
-        return view('match.index', compact('matches', 'opsiPenawaran', 'opsiPermintaan'));
+        $opsiKomoditi = Komoditi::where(function ($q) {
+                $q->whereHas('penawaran.matchSuggestions')
+                  ->orWhereHas('permintaan.matchSuggestions');
+            })
+            ->when($user->hasRole('Cabang'), function ($q) use ($user) {
+                $q->where(function ($qq) use ($user) {
+                    $qq->whereHas('penawaran', fn ($p) => $p->where('user_id', $user->id))
+                       ->orWhereHas('permintaan', fn ($p) => $p->where('user_id', $user->id));
+                });
+            })
+            ->orderBy('nama')
+            ->get(['id', 'nama']);
+
+        return view('match.index', compact('matches', 'opsiPenawaran', 'opsiPermintaan', 'opsiKomoditi', 'urutan'));
     }
 
     public function jalankan(MatchingService $service)
@@ -135,7 +180,11 @@ class MatchSuggestionController extends Controller
         // (kalau ada beberapa size yang sama-sama cocok), supaya ditampilkan sekaligus.
         $semuaKandidat = MatchSuggestion::where('penawaran_id', $match->penawaran_id)
             ->where('permintaan_id', $match->permintaan_id)
-            ->with(['penawaranRincian.komoditiSize', 'permintaanRincian.komoditiSize'])
+            ->with([
+                'penawaranRincian.komoditiSize',
+                'penawaranRincian.penawaran.biayaHpp',
+                'permintaanRincian.komoditiSize',
+            ])
             ->get();
 
         $penawaranRincianIdCocok = $semuaKandidat->pluck('penawaran_rincian_id');

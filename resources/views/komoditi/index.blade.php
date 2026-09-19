@@ -4,8 +4,8 @@
 
 @section('content')
     @php
-        $warnaStatus = ['disetujui' => 'success', 'menunggu_approval' => 'warning', 'ditolak' => 'danger'];
-        $paletKategori = ['primary', 'success', 'warning', 'info', 'purple', 'navy', 'maroon', 'lime', 'indigo', 'danger'];
+        $warnaStatus = ['disetujui' => 'emerald', 'menunggu_approval' => 'warning', 'ditolak' => 'danger'];
+        $paletKategori = ['primary', 'emerald', 'warning', 'info', 'purple', 'navy', 'maroon', 'lime', 'indigo', 'danger'];
     @endphp
 
     <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
@@ -113,7 +113,7 @@
                                         <form method="POST" action="{{ route('komoditi.approve', $item) }}" class="d-inline">
                                             @csrf
                                             @method('PATCH')
-                                            <button class="btn btn-sm btn-success">Setujui</button>
+                                            <button class="btn btn-sm btn-emerald">Setujui</button>
                                         </form>
                                         <form method="POST" action="{{ route('komoditi.tolak', $item) }}" class="d-inline">
                                             @csrf

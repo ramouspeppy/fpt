@@ -10,7 +10,7 @@
 @section('content')
     @php
         $labelStatus = ['sedang_diproses' => 'Sedang Diproses', 'selesai' => 'Selesai', 'tutup' => 'Tutup'];
-        $warnaStatus = ['sedang_diproses' => 'primary', 'selesai' => 'success', 'tutup' => 'secondary'];
+        $warnaStatus = ['sedang_diproses' => 'primary', 'selesai' => 'emerald', 'tutup' => 'secondary'];
         $ikonStatus = ['sedang_diproses' => 'fa-sync-alt', 'selesai' => 'fa-check-circle', 'tutup' => 'fa-lock'];
     @endphp
 

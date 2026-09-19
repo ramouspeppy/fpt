@@ -11,11 +11,11 @@
 @section('content')
     @php
         $labelStatus = ['sedang_diproses' => 'Sedang Diproses', 'selesai' => 'Selesai', 'tutup' => 'Tutup'];
-        $warnaStatus = ['sedang_diproses' => 'primary', 'selesai' => 'success', 'tutup' => 'secondary'];
+        $warnaStatus = ['sedang_diproses' => 'primary', 'selesai' => 'emerald', 'tutup' => 'secondary'];
         $ikonStatus = ['sedang_diproses' => 'fa-sync-alt', 'selesai' => 'fa-check-circle', 'tutup' => 'fa-lock'];
-        $warnaStatusPosting = ['tersedia' => 'success', 'sedang_diproses' => 'primary', 'selesai' => 'dark', 'tutup' => 'secondary'];
+        $warnaStatusPosting = ['tersedia' => 'emerald', 'sedang_diproses' => 'primary', 'selesai' => 'dark', 'tutup' => 'secondary'];
         $labelStatusPosting = ['tersedia' => 'Tersedia', 'sedang_diproses' => 'Sedang Diproses', 'selesai' => 'Selesai', 'tutup' => 'Tutup'];
-        $warnaPrioritas = ['merah' => 'danger', 'kuning' => 'warning', 'hijau' => 'success'];
+        $warnaPrioritas = ['merah' => 'danger', 'kuning' => 'warning', 'hijau' => 'emerald'];
     @endphp
 
     <div class="section-body">
@@ -102,7 +102,7 @@
                         @endif
 
                         @if ($project->penawaran->user->whatsapp_link)
-                            <a href="{{ $project->penawaran->user->whatsapp_link }}" target="_blank" class="btn btn-sm btn-success">
+                            <a href="{{ $project->penawaran->user->whatsapp_link }}" target="_blank" class="btn btn-sm btn-emerald">
                                 <i class="fab fa-whatsapp"></i> Hubungi {{ $project->penawaran->user->name }}
                             </a>
                         @endif
@@ -186,7 +186,7 @@
                         @endif
 
                         @if ($project->permintaan->user->whatsapp_link)
-                            <a href="{{ $project->permintaan->user->whatsapp_link }}" target="_blank" class="btn btn-sm btn-success">
+                            <a href="{{ $project->permintaan->user->whatsapp_link }}" target="_blank" class="btn btn-sm btn-emerald">
                                 <i class="fab fa-whatsapp"></i> Hubungi {{ $project->permintaan->user->name }}
                             </a>
                         @endif

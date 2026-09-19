@@ -72,7 +72,7 @@
     <div class="row">
         @forelse ($penawaran as $item)
             @php
-                $warnaStatus = ['tersedia' => 'success', 'sedang_diproses' => 'primary', 'selesai' => 'dark', 'tutup' => 'secondary'];
+                $warnaStatus = ['tersedia' => 'emerald', 'sedang_diproses' => 'primary', 'selesai' => 'dark', 'tutup' => 'secondary'];
                 $labelStatus = ['tersedia' => 'Tersedia', 'sedang_diproses' => 'Sedang Diproses', 'selesai' => 'Selesai', 'tutup' => 'Tutup'];
                 $namaLain = $item->komoditi?->tags->pluck('nama_tag')->filter()->unique();
                 // Fallback foto: galeri Penawaran sendiri -> foto Komoditi -> placeholder ikon

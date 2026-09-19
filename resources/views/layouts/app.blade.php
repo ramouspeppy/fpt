@@ -30,7 +30,7 @@
                     </div>
 
                     @if (session('status'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <div class="alert alert-emerald alert-dismissible fade show" role="alert">
                             {{ session('status') }}
                             <button type="button" class="close" data-dismiss="alert">&times;</button>
                         </div>

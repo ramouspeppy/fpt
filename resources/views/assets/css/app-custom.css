@@ -6,6 +6,34 @@
 /* badge warna tambahan di luar palet default Bootstrap 4 */
 .badge-purple { color: #fff; background-color: #6f42c1; }
 
+/* varian hijau custom ("emerald") - pengganti badge/btn/alert-success bawaan Bootstrap
+   yang warnanya terlalu terang/mencolok. Dipakai di seluruh aplikasi, TIDAK menimpa
+   class .badge-success/.btn-success/.alert-success default Stisla/Bootstrap. */
+.badge-emerald { color: #fff; background-color: #10b981; }
+
+.btn-emerald,
+a.btn-emerald { color: #fff; background-color: #10b981; border-color: #0ea975; }
+.btn-emerald:hover,
+a.btn-emerald:hover,
+.btn-emerald:focus,
+a.btn-emerald:focus {
+    color: #fff !important;
+    background-color: #0d9488 !important;
+    border-color: #0c8a7e !important;
+}
+.btn-emerald:focus, .btn-emerald.focus { box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, .5); }
+.btn-emerald:disabled, .btn-emerald.disabled { background-color: #10b981; border-color: #0ea975; }
+.btn-emerald:not(:disabled):not(.disabled):active,
+.btn-emerald:not(:disabled):not(.disabled).active {
+    color: #fff !important;
+    background-color: #0c8a7e !important;
+    border-color: #0b7d72 !important;
+}
+
+.alert-emerald { color: #0b6e51; background-color: #d7f5ea; border-color: #c1eede; }
+.alert-emerald hr { border-top-color: #aee7d1; }
+.alert-emerald .alert-link { color: #073d2d; }
+
 /* indikator prioritas (pengganti card-status-top Tabler) */
 .card-priority-indicator {
     position: absolute;

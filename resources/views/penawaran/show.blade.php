@@ -4,7 +4,7 @@
 
 @section('content')
 @php
-    $warnaStatus = ['tersedia' => 'success', 'sedang_diproses' => 'primary', 'selesai' => 'dark', 'tutup' => 'secondary'];
+    $warnaStatus = ['tersedia' => 'emerald', 'sedang_diproses' => 'primary', 'selesai' => 'dark', 'tutup' => 'secondary'];
     $labelStatus = ['tersedia' => 'Tersedia', 'sedang_diproses' => 'Sedang Diproses', 'selesai' => 'Selesai', 'tutup' => 'Tutup'];
 @endphp
 <div class="card">
@@ -162,7 +162,7 @@
             <dt class="col-3">WhatsApp</dt>
             <dd class="col-9">
                 @if ($penawaran->user->whatsapp_link)
-                    <a href="{{ $penawaran->user->whatsapp_link }}" target="_blank" class="btn btn-sm btn-success">
+                    <a href="{{ $penawaran->user->whatsapp_link }}" target="_blank" class="btn btn-sm btn-emerald">
                         <i class="fab fa-whatsapp"></i> Hubungi via WhatsApp
                     </a>
                 @else
